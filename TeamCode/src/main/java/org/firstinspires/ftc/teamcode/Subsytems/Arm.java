@@ -31,10 +31,9 @@ public class Arm {
     private static final double WORM_HOMING_POWER     = -Math.abs(Properties.WORM_HOMING_POWER);
 
     private static final double SAFETY_VOLTAGE = 0.4;
-    private static final double WRIST_DOWN_POS = 0.5;
 
     private static DcMotorImplEx wormMotor, elevatorMotor;
-    private static ServoImplEx wrist, leftDoor, rightDoor;
+    private static ServoImplEx leftDoor, rightDoor;
     private static RevTouchSensor wormLimitSwitch, elevatorLimitSwitch;
     private static AnalogInput wormPotentiometer;
 
@@ -62,9 +61,6 @@ public class Arm {
         leftDoor = hardwareMap.get(ServoImplEx.class, "LeftDoorServo");
         // Expansion Hub Port 2
         rightDoor = hardwareMap.get(ServoImplEx.class, "RightDoorServo");
-        // ????
-        wrist = hardwareMap.get(ServoImplEx.class, "WristServo");
-        wrist.setPosition(0.0);
 
         wormPotentiometer = hardwareMap.analogInput.get("WormPotentiometer");
 
@@ -77,8 +73,8 @@ public class Arm {
         wormTargetPos     = 0;
         moveDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS); // TODO: This might need to change, this is just a default value
 
-        normalPeriodArmState = UNKNOWN;
-        homingState          = START;
+        normalPeriodArmState = AT_POS;
+        homingState          = IDLE;
     }
 
     /**
@@ -86,12 +82,6 @@ public class Arm {
      * and checks if the arm should be homing.
      */
     public static void update(boolean intaking) {
-        if (elevatorMotor.getCurrentPosition() > 1100) { // Control Delivery Tray Position
-            angleDeliveryTray(WRIST_DOWN_POS);
-        } else {
-            angleDeliveryTray(0.0);
-        }
-
         if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && !intaking) { // Delivery Tray Door Override
             moveDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
         }
@@ -138,7 +128,6 @@ public class Arm {
             case HOMING: // Homing sequence should only be called when the arm state is homing
                 home();
                 break;
-
         }
     }
 
@@ -190,7 +179,7 @@ public class Arm {
                 } else {
                     wormMotor.setPower(1.0);
                     elevatorMotor.setPower(-0.05);
-                    if(elevatorLimitSwitchIsPressed()){
+                    if(elevatorLimitSwitchIsPressed()) {
                         wormMotor.setPower(0.0);
                         homingState = HOMING_ELEVATOR;
                     }
@@ -290,14 +279,6 @@ public class Arm {
     }
 
     /**
-     * Angles the tray to the supplied position. NOT DEGREES, a servo position between 0 and 1
-     * @param pos The position to move the tray to (between 0 and 1)
-     */
-    private static void angleDeliveryTray(double pos) {
-        wrist.setPosition(pos);
-    }
-
-    /**
      * Displays debug information about the arm
      * @param telemetry The telemetry to display the information on
      */
@@ -330,12 +311,8 @@ public class Arm {
         // however, since these are the higher quality servos we just change it in firmware
         // so what the SDK thinks the direction is and the actual direction are different
 
-        telemetry.addData("Wrist Servo Commanded Position", wrist.getPosition());
-        telemetry.addData("Wrist Servo PWM Range", wrist.getPwmRange());
         telemetry.addData("Left Door Servo Commanded Position", leftDoor.getPosition());
-        telemetry.addData("Left Door PWM Range", leftDoor.getPwmRange());
         telemetry.addData("Right Door Servo Commanded Position", rightDoor.getPosition());
-        telemetry.addData("Right Door Servo PWM Range", rightDoor.getPwmRange());
 
         telemetry.addLine("Arm Debug");
 
