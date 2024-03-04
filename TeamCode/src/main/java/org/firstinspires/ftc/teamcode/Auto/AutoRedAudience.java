@@ -17,7 +17,7 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@Autonomous(name = "Auto Red - Audience", group = "Red")
+@Autonomous(name = "Red - Audience", group = "Red")
 @Config
 public class AutoRedAudience extends LinearOpMode {
     PropDetector propDetector;
