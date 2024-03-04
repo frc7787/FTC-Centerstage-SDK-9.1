@@ -24,7 +24,7 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
     private final FirstVisionProcessor processor = new FirstVisionProcessor();
     private AprilTagProcessor aprilTagProcessor;
 
-    private static final int DESIRED_TAG_ID = -1; // -1 locks on to any tag
+    private static final int DESIRED_TAG_ID = 5; // -1 locks on to any tag
 
     private VisionPortal visionPortal;
 
@@ -90,11 +90,12 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
             }
 
             if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                telemetry.addData("Desired Tag Detected. Id", detection.id);
-                break;
+                telemetry.addData("Detected Tag", detection.id);
+                telemetry.addData("Distance From Detected Tag", detection.ftcPose.range);
+                telemetry.addData("Yaw From Tag", detection.ftcPose.yaw);
+                telemetry.addData("Pitch From Tag", detection.ftcPose.pitch);
+                telemetry.addData("Roll From Tag", detection.ftcPose.roll);
             }
-
-            telemetry.addData("Tag detected with Id", detection.id);
         }
 
         if (gamepad1.left_bumper)        myExposure += 1;
