@@ -3,8 +3,10 @@ package org.firstinspires.ftc.teamcode.Auto.Expiremental;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.roadrunner.drive.Drive;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -20,68 +22,36 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Test - Center On April Tag", group = "Test")
-public class CenterOnAprilTagTest extends LinearOpMode {
-    final FirstVisionProcessor processor = new FirstVisionProcessor();  // element detection pipeline
-    private AprilTagProcessor aprilTagProcessor;  // Used for managing the AprilTag detection process.
-    private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
-    private static final int DESIRED_TAG_ID = 3;     // Choose the tag you want to approach or set to -1 for ANY tag.
+public class CenterOnAprilTagTest extends OpMode {
+    FirstVisionProcessor processor = new FirstVisionProcessor();
+    AprilTagProcessor aprilTagProcessor;
+    AprilTagDetection desiredTag = null;
+    int DESIRED_TAG_ID = 5;
 
-    private VisionPortal visionPortal;
+    VisionPortal visionPortal;
 
-    private int myExposure     = 3;
-    private int myGain         = 255;
-    private int myWhiteBalance = 4800;
-
-    public FirstVisionProcessor.ParkingPosition elementPosition = FirstVisionProcessor.ParkingPosition.CENTER;
+    int myExposure     = 3;
+    int myGain         = 255;
+    int myWhiteBalance = 4800;
 
     final double DESIRED_DISTANCE = 4.0;
 
-    // CHANGED test values
-    final double SPEED_GAIN  =  0.015;
-    final double STRAFE_GAIN =  0.01;   //  Strafe Speed Control "Gain".  eg: Ramp up to 25% power at a 25 degree Yaw error.   (0.25 / 25.0)
-    final double TURN_GAIN   =  0.001;  //  Turn Control "Gain".  eg: Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
+    // Error Correction Values
+    final double SPEED_GAIN  = 0.015;
+    final double STRAFE_GAIN = 0.01;
+    final double TURN_GAIN   = 0.001;
 
-    final double MAX_AUTO_SPEED = 0.25;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_STRAFE= 0.3;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_TURN  = 0.15;   //  Clip the turn speed to this max value (adjust for your robot)
+    // Speed clip
+    final double MAX_AUTO_SPEED  = 0.25;
+    final double MAX_AUTO_STRAFE = 0.3;
+    final double MAX_AUTO_TURN   = 0.15;
 
-    @Override
-    public void runOpMode() {
+    @Override public void init() {
         DriveBase.init(hardwareMap);
-
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
         initVideo();
-        // Wait for the match to begin.
-        telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
-        telemetry.addData(">", "Touch Play to start OpMode");
-
-        elementPosition = processor.getPosition();
-        telemetry.addData("POSITION: ", elementPosition);
-        telemetry.update();
-
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
-
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-            telemetry.addData("Setting Trajectories", "Ready to begin");
-            telemetry.update();
-
-            telemetry.addData("Follow Sequence 1", "On my way");
-
-            telemetry.addData("End of Sequence 2", "Switching to April Tag Drive");
-            sleep(1000);
-            aprilTagBackdrop();
-
-            telemetry.update();
-            sleep(30000);
-        } // end of while opModeIsActive
-    } // end of runOpMode
+    }
 
     public void initVideo() {
-
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagID(true)
                 .setDrawTagOutline(true)
@@ -98,50 +68,41 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
-        FtcDashboard.getInstance().startCameraStream(processor, 0);
+        FtcDashboard.getInstance().startCameraStream(processor, 10);
+
         setManualExposure(myExposure, myGain, myWhiteBalance);
     }
 
+    @Override public void loop() {
+        aprilTagBackdrop();
+    }
+
+    @Override public void stop() {
+        DriveBase.driveManualFieldCentric(0,0,0);
+    }
+
     private void setManualExposure(int exposureMS, int gain, int white) {
-        // Ensure Vision Portal has been setup.
-        if (visionPortal == null) {
-            throw new NullPointerException();
-        }
-
-        // Wait for the camera to be open
-        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
-            telemetry.addData("Set Manual Exposure, Camera", "Waiting");
-            telemetry.update();
-
-            while (!isStopRequested() && (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
-                sleep(20);
-            }
-
-            telemetry.addData("Set Manual Exposure, Camera", "Ready");
+        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) { // Wait for camera to start streaming
+            telemetry.addLine("Waiting for camera");
             telemetry.update();
         }
 
-        // Set camera controls unless we are stopping.
-        if (!isStopRequested()) {
-            ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
+        ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
 
-            exposureControl.setMode(ExposureControl.Mode.Manual);
-            exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
+        exposureControl.setMode(ExposureControl.Mode.Manual);
+        exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
 
-            GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
-            gainControl.setGain(gain);
+        GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
+        gainControl.setGain(gain);
 
-            // Set White Balance.
-            WhiteBalanceControl whiteBalanceControl = visionPortal.getCameraControl(WhiteBalanceControl.class);
+        WhiteBalanceControl whiteBalanceControl = visionPortal.getCameraControl(WhiteBalanceControl.class);
 
-            whiteBalanceControl.setMode(WhiteBalanceControl.Mode.MANUAL);
-            whiteBalanceControl.setWhiteBalanceTemperature(myWhiteBalance);
-
-        }
-    } // end of boolean setManualExposure
+        whiteBalanceControl.setMode(WhiteBalanceControl.Mode.MANUAL);
+        whiteBalanceControl.setWhiteBalanceTemperature(white);
+    }
 
     public void aprilTagBackdrop() {
-        boolean targetFound     = false;    // Set to true when an AprilTag target is detected
+        boolean targetFound;    // Set to true when an AprilTag target is detected
         boolean targetReached   = false;    // Set to true when the AprilTage target has been reached
         double  drive   = 0;
         double  strafe  = 0;
@@ -149,10 +110,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         desiredTag  = null;
 
-        telemetry.addData("Inside April Tag Drive", "Embark on adventure");
-        sleep(1000);
-
-        while (opModeIsActive() && !targetReached) {
+        while (!targetReached) {
             targetFound = false;
 
             // Step through the list of detected tags and look for a matching tag
@@ -179,58 +137,39 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             } // end for detection
 
             if (targetFound) {
-                // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
-                double rangeError = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+                // Determines the range, heading, and yaw error
+                double rangeError   = desiredTag.ftcPose.range - DESIRED_DISTANCE;
                 double headingError = desiredTag.ftcPose.bearing;
-                double yawError = desiredTag.ftcPose.yaw;
+                double yawError     = desiredTag.ftcPose.yaw;
 
-                // Use the speed and turn "gains" to calculate how we want the robot to move.
                 drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
                 strafe = -1.0 * Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
                 turn   = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
-                telemetry.addData("Auto", "Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
-                telemetry.addData("Distance", "Range %5.2f, RangeError %5.2f, HeadingError %5.2f, TurnError %5.2f ", desiredTag.ftcPose.range ,rangeError, headingError, yawError);
+                telemetry.addData("Drive", drive);
+                telemetry.addData("Strafe", strafe);
+                telemetry.addData("Turn", turn);
 
-                // Apply desired axes motions to the drivetrain.
+                telemetry.addData("Range", desiredTag.ftcPose.range);
+
+                telemetry.addData("Range Error", rangeError);
+                telemetry.addData("Heading Error", headingError);
+                telemetry.addData("Yaw Error", yawError);
+
                 if (rangeError <= 0.1) {
                     targetReached = true;
-                    telemetry.addData("Target Reached!! rangeError:", rangeError);
-                } else {
-                    DriveBase.driveManualRobotCentric(drive, strafe, turn);
-                    sleep(10);
+                    continue;
                 }
+
+                DriveBase.driveManualRobotCentric(drive, strafe, turn);
+
                 telemetry.update();
-            } // end of if targetFound
+            }
 
-        } // end of while !targetReached
-
-        moveRobot(drive, strafe, turn);
-
-    } // end of aprilTagBackdrop
-
-    public void moveRobot(double x, double y, double yaw) {
-        // Calculate wheel powers.
-        double leftFrontPower    =  x - y - yaw;
-        double rightFrontPower   =  x + y + yaw;
-        double leftBackPower     =  x + y - yaw;
-        double rightBackPower    =  x - y + yaw;
-
-        // Normalize wheel powers to be less than 1.0
-        double max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
-        max = Math.max(max, Math.abs(leftBackPower));
-        max = Math.max(max, Math.abs(rightBackPower));
-
-        if (max > 1.0) {
-            leftFrontPower  /= max;
-            rightFrontPower /= max;
-            leftBackPower   /= max;
-            rightBackPower  /= max;
         }
 
-        // Send powers to the wheels.
-        telemetry.addData("Move Robot", "Giddyup!");
-        DriveBase.setMotorPowers(leftFrontPower, leftBackPower, rightBackPower, rightFrontPower);
-    } // end of moveRobot
+        DriveBase.driveManualRobotCentric(0,0,0);
+    }
 
-} // end of public class
+
+}
