@@ -3,14 +3,8 @@ package org.firstinspires.ftc.teamcode.Auto.Expiremental;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -25,16 +19,12 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous (name="TestAutoColourRoadrunnerAprilDec10", group = "Linear OpMode")
+@Autonomous(name = "Test - Center On April Tag", group = "Test")
 public class CenterOnAprilTagTest extends LinearOpMode {
-
-    // Declare OpMode members.
-
     final FirstVisionProcessor processor = new FirstVisionProcessor();  // element detection pipeline
     private AprilTagProcessor aprilTagProcessor;  // Used for managing the AprilTag detection process.
     private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
     private static final int DESIRED_TAG_ID = 3;     // Choose the tag you want to approach or set to -1 for ANY tag.
-    boolean targetFound     = false;    // Set to true when an AprilTag target is detected
 
     private VisionPortal visionPortal;
 
@@ -196,7 +186,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
                 // Use the speed and turn "gains" to calculate how we want the robot to move.
                 drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                strafe = -1.0*Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+                strafe = -1.0 * Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
                 turn   = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
                 telemetry.addData("Auto", "Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
@@ -221,10 +211,10 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     public void moveRobot(double x, double y, double yaw) {
         // Calculate wheel powers.
-        double leftFrontPower    =  x -y -yaw;
-        double rightFrontPower   =  x +y +yaw;
-        double leftBackPower     =  x +y -yaw;
-        double rightBackPower    =  x -y +yaw;
+        double leftFrontPower    =  x - y - yaw;
+        double rightFrontPower   =  x + y + yaw;
+        double leftBackPower     =  x + y - yaw;
+        double rightBackPower    =  x - y + yaw;
 
         // Normalize wheel powers to be less than 1.0
         double max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
@@ -232,10 +222,10 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         max = Math.max(max, Math.abs(rightBackPower));
 
         if (max > 1.0) {
-            leftFrontPower /= max;
+            leftFrontPower  /= max;
             rightFrontPower /= max;
-            leftBackPower /= max;
-            rightBackPower /= max;
+            leftBackPower   /= max;
+            rightBackPower  /= max;
         }
 
         // Send powers to the wheels.

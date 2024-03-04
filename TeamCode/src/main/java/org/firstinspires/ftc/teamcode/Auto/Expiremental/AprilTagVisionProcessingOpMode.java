@@ -19,7 +19,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@TeleOp(name="April Tag Vision Processing OpMode", group = "Utility")
+@TeleOp(name = "April Tag Vision Processing OpMode", group = "Utility")
 public class AprilTagVisionProcessingOpMode extends OpMode {
     private final FirstVisionProcessor processor = new FirstVisionProcessor();
     private AprilTagProcessor aprilTagProcessor;
@@ -28,17 +28,17 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
 
     private VisionPortal visionPortal;
 
-    private FirstVisionProcessor.ParkingPosition elementPosition = FirstVisionProcessor.ParkingPosition.CENTER;
+    private int minExposure,
+                maxExposure,
+                myExposure;
 
-    private int minExposure;
-    private int maxExposure;
-    private int myExposure;
-    private int minGain;
-    private int maxGain;
-    private int myGain;
-    private int minWhiteBalance;
-    private int maxWhiteBalance;
-    private int myWhiteBalance;
+    private int minGain,
+                myGain,
+                maxGain;
+
+    private int minWhiteBalance,
+                myWhiteBalance,
+                maxWhiteBalance;
 
     @Override public void init() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
@@ -66,20 +66,9 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
         myWhiteBalance = (minWhiteBalance + maxWhiteBalance) / 2;
 
         setCameraProperties(myExposure, myGain, myWhiteBalance);
-
-        telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
-        telemetry.addData(">", "Touch Play to start OpMode");
-
-        elementPosition = processor.getPosition();
-
-        telemetry.addData("POSITION: ", elementPosition);
-        telemetry.update();
     }
 
     @Override public void loop() {
-        elementPosition = processor.getPosition();
-
-        telemetry.addData("POSITION: ", elementPosition);
         telemetry.addData("Exposure", myExposure);
         telemetry.addData("Gain", myGain);
         telemetry.addData("White Balance", myWhiteBalance);
@@ -95,18 +84,17 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
         }
 
         for (AprilTagDetection detection : currentDetections) {
-            // Look to see if we have size info on this tag.
-            if (detection.metadata != null) {
-                //  Check to see if we want to track towards this tag.
-                if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                    telemetry.addData("Desired Tag Detected. Id", detection.id);
-                    break;  // don't look any further.
-                }
-                telemetry.addData("Tage Detected. Id", detection.id);
-            } else {
-
-                telemetry.addData("Size info not available Id: ", detection.id);
+            if (detection.metadata == null) {
+                telemetry.addData("Size info not available on tag Id", detection.id);
+                continue;
             }
+
+            if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+                telemetry.addData("Desired Tag Detected. Id", detection.id);
+                break;
+            }
+
+            telemetry.addData("Tag detected with Id", detection.id);
         }
 
         if (gamepad1.left_bumper)        myExposure += 1;
@@ -118,8 +106,8 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
         if (gamepad1.dpad_up)   myWhiteBalance += 1;
         if (gamepad1.dpad_down) myWhiteBalance -= 1;
 
-        myExposure = Range.clip(myExposure, minExposure, maxExposure);
-        myGain     = Range.clip(myGain, minGain, maxGain);
+        myExposure     = Range.clip(myExposure, minExposure, maxExposure);
+        myGain         = Range.clip(myGain, minGain, maxGain);
         myWhiteBalance = Range.clip(myWhiteBalance, minWhiteBalance, maxWhiteBalance);
 
         setCameraProperties(myExposure, myGain, myWhiteBalance);
@@ -128,35 +116,20 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
     }
 
     private void getDefaultCameraSettings() {
-        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
-            telemetry.addData("Camera", "Waiting");
-            telemetry.update();
-
-            while (true) { // Wait for camera to open
-                if (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING) {
-                    break;
-                }
-            }
-
-            telemetry.addData("Camera", "Ready");
+        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) { // Wait for camera to start streaming
+            telemetry.addLine("Waiting for camera");
             telemetry.update();
         }
-
-        // ----- Exposure Control ----- //
 
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
 
         minExposure = (int) exposureControl.getMinExposure(TimeUnit.MILLISECONDS) + 1;
         maxExposure = (int) exposureControl.getMaxExposure(TimeUnit.MILLISECONDS);
 
-        // ----- Gain Control ----- //
-
         GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
 
         minGain = gainControl.getMinGain();
         maxGain = gainControl.getMaxGain();
-
-        // ----- White Balance Control ----- //
 
         WhiteBalanceControl whiteBalanceControl = visionPortal.getCameraControl(WhiteBalanceControl.class);
 
@@ -166,18 +139,9 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
     }
 
     private void setCameraProperties(int exposureMS, int gain, int white) {
-
-        // Wait for the camera to be open
-        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
-            telemetry.addData("Camera", "Waiting");
-
-            while (true) {
-                if (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING) {
-                    break;
-                }
-            }
-
-            telemetry.addData("Camera", "Ready");
+        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) { // Wait for camera to start streaming
+            telemetry.addLine("Waiting for camera");
+            telemetry.update();
         }
 
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);

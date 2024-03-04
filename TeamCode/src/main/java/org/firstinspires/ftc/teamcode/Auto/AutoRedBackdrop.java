@@ -27,8 +27,6 @@ public class AutoRedBackdrop extends LinearOpMode {
 
     MecanumDriveBase drive;
 
-
-
     @Override
     public void runOpMode() throws InterruptedException {
         propDetector = new PropDetector(PropColor.RED);
