@@ -101,13 +101,12 @@ public class CenterOnAprilTagTest extends OpMode {
         List<AprilTagDetection> currentDetections;
 
         boolean targetFound;
-        boolean targetReached = false;
 
         double drive, strafe, turn;
 
         desiredTag  = null;
 
-        while (!targetReached) {
+        while (true) {
             targetFound = false;
 
             while (true) {
@@ -153,8 +152,7 @@ public class CenterOnAprilTagTest extends OpMode {
                 telemetry.addData("Yaw Error", yawError);
 
                 if (rangeError <= 0.1 && headingError < 2) {
-                    targetReached = true;
-                    continue;
+                    break;
                 }
 
                 DriveBase.driveManualRobotCentric(drive, strafe, turn);
