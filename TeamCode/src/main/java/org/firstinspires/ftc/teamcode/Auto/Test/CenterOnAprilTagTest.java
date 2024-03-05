@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Test - Center On April Tag", group = "Test")
 public class CenterOnAprilTagTest extends OpMode {
-    FirstVisionProcessor processor = new FirstVisionProcessor();
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag = null;
     int DESIRED_TAG_ID = 5;
@@ -62,13 +61,10 @@ public class CenterOnAprilTagTest extends OpMode {
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .addProcessor(processor)
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(new Size(640, 480))
                 .setAutoStopLiveView(true)
                 .build();
-
-        FtcDashboard.getInstance().startCameraStream(processor, 10);
 
         setManualExposure(myExposure, myGain, myWhiteBalance);
     }
@@ -102,39 +98,39 @@ public class CenterOnAprilTagTest extends OpMode {
     }
 
     public void aprilTagBackdrop() {
-        boolean targetFound;    // Set to true when an AprilTag target is detected
-        boolean targetReached   = false;    // Set to true when the AprilTage target has been reached
-        double  drive   = 0;
-        double  strafe  = 0;
-        double  turn    = 0;
+        List<AprilTagDetection> currentDetections;
+
+        boolean targetFound;
+        boolean targetReached = false;
+
+        double drive, strafe, turn;
 
         desiredTag  = null;
 
         while (!targetReached) {
             targetFound = false;
 
-            // Step through the list of detected tags and look for a matching tag
-            telemetry.addData("Detecting April Tags", "Now");
-            List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
-            for (AprilTagDetection detection : currentDetections) {
-                // Look to see if we have size info on this tag.
-                if (detection.metadata != null) {
-                    //  Check to see if we want to track towards this tag.
-                    if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                        // Yes, we want to use this tag.
-                        telemetry.addData("April Tag found", detection.id);
-                        targetFound = true;
-                        desiredTag = detection;
-                        break;  // don't look any further.
-                    } else {
-                        // This tag is in the library, but we do not want to track it right now.
-                        telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
-                    }
-                } else {
-                    // This tag is NOT in the library, so we don't have enough information to track to it.
-                    telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
+            while (true) {
+                currentDetections = aprilTagProcessor.getDetections();
+
+                if (!currentDetections.isEmpty()) {
+                    break;
                 }
-            } // end for detection
+
+                telemetry.addLine("No AprilTags Detected. Waiting.");
+                telemetry.update();
+            }
+
+            for (AprilTagDetection detection : currentDetections) {
+                if (detection.metadata == null) continue;
+
+                if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+                    telemetry.addData("April Tag found", detection.id);
+                    targetFound = true;
+                    desiredTag = detection;
+                    break;  // don't look any further.
+                }
+            }
 
             if (targetFound) {
                 // Determines the range, heading, and yaw error
@@ -156,7 +152,7 @@ public class CenterOnAprilTagTest extends OpMode {
                 telemetry.addData("Heading Error", headingError);
                 telemetry.addData("Yaw Error", yawError);
 
-                if (rangeError <= 0.1) {
+                if (rangeError <= 0.1 && headingError < 2) {
                     targetReached = true;
                     continue;
                 }
@@ -165,7 +161,6 @@ public class CenterOnAprilTagTest extends OpMode {
 
                 telemetry.update();
             }
-
         }
 
         DriveBase.driveManualRobotCentric(0,0,0);
