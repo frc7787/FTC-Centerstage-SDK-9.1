@@ -17,12 +17,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Auto.TestYellowPixelWithArm;
 import org.firstinspires.ftc.teamcode.Properties;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.HomingState;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.YellowPixelPlacementPosition;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.YellowPixelPlacementState;
 
 public class Arm {
     public static final int WORM_SAFETY_LIMIT = 1341;
