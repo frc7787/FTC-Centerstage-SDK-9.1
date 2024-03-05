@@ -1,9 +1,9 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Auto.Expiremental;
 
 import static org.firstinspires.ftc.teamcode.Properties.LEFT_X;
 import static org.firstinspires.ftc.teamcode.Properties.RIGHT_X;
 
-import static org.firstinspires.ftc.teamcode.Auto.YellowPixelLocation.*;
+import static org.firstinspires.ftc.teamcode.Auto.Expiremental.YellowPixelLocation.*;
 
 import com.acmerobotics.dashboard.config.Config;
 
