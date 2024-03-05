@@ -90,7 +90,7 @@ public class TeleOpMain extends OpMode {
         }
 
         // Intake and delivery tray logic
-        if (Arm.getWormPos()<10){
+        if (Arm.getWormPos() < 10){
             if (gamepad2.left_trigger > 0.9) {
                 isIntaking = true;
                 Intake.intake();
@@ -115,10 +115,16 @@ public class TeleOpMain extends OpMode {
                 Intake.stop();
             }
 
-            if (gamepad2.right_bumper) {
-                Arm.setDoorPos(TRAY_DOOR_OPEN_POS);
+            if (gamepad2.left_bumper) {
+                Arm.openDeliveryTrayDoorLeft(TRAY_DOOR_OPEN_POS);
             } else {
-                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
+                Arm.openDeliveryTrayDoorLeft(0.0);
+            }
+
+            if (gamepad2.right_bumper) {
+                Arm.openDeliveryTrayDoorRight(TRAY_DOOR_OPEN_POS);
+            } else {
+                Arm.openDeliveryTrayDoorRight(0.0);
             }
         }
 
@@ -179,7 +185,7 @@ public class TeleOpMain extends OpMode {
 
                normalPeriodLoop();
 
-               if (gamepad2.share) {
+               if (gamepad1.share) {
                    gamePeriod = GamePeriod.ENDGAME;
                    gamepad1.rumble(1, 1, 1000);
                    gamepad2.rumble(1, 1, 1000);
@@ -187,6 +193,12 @@ public class TeleOpMain extends OpMode {
 
                break;
            case ENDGAME:
+               if (gamepad1.options) {
+                   gamePeriod = GamePeriod.NORMAL;
+                   gamepad1.rumble(1,1, 1000);
+                   gamepad2.rumble(1,1,1000);
+               }
+
                gamepad1.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
                gamepad2.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
 
