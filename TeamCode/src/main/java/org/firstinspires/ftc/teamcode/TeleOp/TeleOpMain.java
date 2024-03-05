@@ -108,8 +108,12 @@ public class TeleOpMain extends OpMode {
                 Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
             }
         } else {
-            isIntaking = false;
-            Intake.stop();
+            if (gamepad2.right_trigger > 0.5) {
+                Intake.outtake();
+            } else {
+                isIntaking = false;
+                Intake.stop();
+            }
 
             if (gamepad2.right_bumper) {
                 Arm.setDoorPos(TRAY_DOOR_OPEN_POS);

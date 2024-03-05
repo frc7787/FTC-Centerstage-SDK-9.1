@@ -36,7 +36,7 @@ public class Properties {
     // ----------- INTAKE PROPERTIES ---------- //
 
     public static volatile double DEFAULT_INTAKE_POWER       = 1.0;
-    public static volatile double DEFAULT_OUTTAKE_POWER      = 0.3;
+    public static volatile double DEFAULT_OUTTAKE_POWER      = 0.4;
     public static volatile double DEFAULT_INTAKE_BELT_POWER  = 1.0;
     public static volatile double DEFAULT_OUTTAKE_BELT_POWER = 1.0;
 
