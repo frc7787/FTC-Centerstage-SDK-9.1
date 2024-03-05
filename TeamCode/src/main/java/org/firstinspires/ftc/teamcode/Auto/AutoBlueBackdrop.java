@@ -16,14 +16,12 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@Autonomous(name = "Auto Blue - Backdrop", group = "Blue")
+@Autonomous(name = "Blue - Backdrop", group = "Blue")
 @Config
 public class AutoBlueBackdrop extends LinearOpMode {
-    Rect cropRectangle = new Rect(0, 120, 240, 120);
-
     PropDetector propDetector;
     PropLocation location;
-    public static OpenCvCamera camera;
+    OpenCvCamera camera;
 
     MecanumDriveBase drive;
 

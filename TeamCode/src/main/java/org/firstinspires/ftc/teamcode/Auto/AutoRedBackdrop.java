@@ -17,13 +17,13 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@Autonomous(name = "Auto Red - Backdrop", group = "Red")
+@Autonomous(name = "Red - Backdrop", group = "Red")
 @Config
 public class AutoRedBackdrop extends LinearOpMode {
     PropDetector propDetector;
     PropLocation location;
 
-    public static OpenCvCamera camera;
+    OpenCvCamera camera;
 
     MecanumDriveBase drive;
 

@@ -14,7 +14,7 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@Autonomous(name = "Auto Blue - Audience", group = "Blue")
+@Autonomous(name = "Blue - Audience", group = "Blue")
 public class AutoBlueAudience extends LinearOpMode {
     PropDetector propDetector;
     PropLocation location;
