@@ -18,11 +18,12 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous (name = "Test - Center On April Tag", group = "Linear OpMode")
+@Autonomous(name = "Test - Center On April Tag", group = "Linear OpMode")
 public class CenterOnAprilTagTest extends LinearOpMode {
-    AprilTagProcessor aprilTagProcessor;  // Used for managing the AprilTag detection process.
-    AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
-    final int DESIRED_TAG_ID = 5;     // Choose the tag you want to approach or set to -1 for ANY tag.
+    AprilTagProcessor aprilTagProcessor;
+    AprilTagDetection desiredTag;
+
+    final int DESIRED_TAG_ID = 5;
 
     VisionPortal visionPortal;
 
@@ -30,37 +31,40 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     int myGain         = 255;
     int myWhiteBalance = 4800;
 
-    // Adjust these numbers to suit your robot.
-    final double DESIRED_DISTANCE = 4.0; //  this is how close the camera should get to the target (inches)
+    final double DESIRED_DISTANCE = 4.0;
 
-    // CHANGED test values
     final double SPEED_GAIN  =  0.008;
     final double STRAFE_GAIN =  0.02;
     final double TURN_GAIN   =  0.01;
 
-    final double MAX_AUTO_SPEED = 0.3;
-    final double MAX_AUTO_STRAFE= 0.3;
-    final double MAX_AUTO_TURN  = 0.3;
+    final double MAX_AUTO_SPEED  = 0.3;
+    final double MAX_AUTO_STRAFE = 0.3;
+    final double MAX_AUTO_TURN   = 0.3;
+
+    AprilTagCenteringState aprilTagCenteringState = AprilTagCenteringState.START;
+
+    enum AprilTagCenteringState {
+        START,
+        CENTERING_YAW,
+        CENTERING_HEADING,
+        MOVING_TO_RANGE,
+        COMPLETE
+    }
 
     @Override
     public void runOpMode() {
         DriveBase.init(hardwareMap);
 
-        initVideo();
+        initVideo(); // Initializes the April Tag processor
 
         waitForStart();
 
-        // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             aprilTagBackdrop();
-
-            telemetry.update();
-            sleep(30000);
         }
     }
 
     public void initVideo() {
-
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagID(true)
                 .setDrawTagOutline(true)
@@ -77,7 +81,6 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .build();
 
         setManualExposure(myExposure, myGain, myWhiteBalance);
-
     }
 
     private void setManualExposure(int exposureMS, int gain, int whiteBalance) {
@@ -99,22 +102,17 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     }
 
     public void aprilTagBackdrop() {
-        boolean targetFound;
+        boolean targetFound   = false;
         boolean targetReached = false;
-        double  drive;
-        double  strafe;
-        double  turn;
 
-        desiredTag = null;
+        double drive, strafe, turn;
 
-        while (opModeIsActive() && !targetReached) {
-            targetFound = false;
+        while (!targetFound) {
+            telemetry.addLine("Searching For Target");
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
             for (AprilTagDetection detection : currentDetections) {
-                if (detection.metadata == null) {
-                    continue;
-                }
+                if (detection.metadata == null) continue; // Skip tags that we don't have information on
 
                 if (detection.id == DESIRED_TAG_ID) {
                     telemetry.addData("April Tag found. Id", detection.id);
@@ -124,35 +122,57 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 }
             }
 
-            if (targetFound) {
-                // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
-                double rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-                double headingError = desiredTag.ftcPose.bearing;
-                double yawError     = desiredTag.ftcPose.yaw;
+            telemetry.update();
+        }
 
-                // Use the speed and turn "gains" to calculate how we want the robot to move.
-                drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
-                strafe = Range.clip(headingError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-                turn   = Range.clip(-yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+        while (!targetReached) {
+            double rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+            double headingError = desiredTag.ftcPose.bearing;
+            double yawError     = desiredTag.ftcPose.yaw;
 
-                telemetry.addData("Drive", drive);
-                telemetry.addData("Strafe", strafe);
-                telemetry.addData("Turn", turn);
+            drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
+            strafe = Range.clip(headingError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+            turn   = Range.clip(-yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-                telemetry.addData("Range error", rangeError);
-                telemetry.addData("Heading error", headingError);
-                telemetry.addData("Yaw Error", yawError);
+            switch (aprilTagCenteringState) {
+                case START:
+                    DriveBase.driveManualRobotCentric(0,0,0);
 
-                // Apply desired axes motions to the drivetrain.
-                if (rangeError <= 0.1) {
-                    targetReached = true;
-                } else {
-                    DriveBase.driveManualRobotCentric(drive, strafe, turn);
-                }
-                telemetry.update();
-            } else {
-                DriveBase.driveManualRobotCentric(0,0,0);
+                    aprilTagCenteringState = AprilTagCenteringState.CENTERING_YAW;
+                    break;
+                case CENTERING_YAW:
+                    DriveBase.driveManualRobotCentric(0, strafe, 0);
+
+                    if (yawError < 0.5) aprilTagCenteringState = AprilTagCenteringState.CENTERING_HEADING;
+
+                    break;
+                case CENTERING_HEADING:
+                    DriveBase.driveManualRobotCentric(0,0, turn);
+
+                    if (yawError > 0.6) {
+                        aprilTagCenteringState = AprilTagCenteringState.CENTERING_HEADING;
+                        break;
+                    }
+
+                    if (headingError < 1.0) aprilTagCenteringState = AprilTagCenteringState.MOVING_TO_RANGE;
+
+                    break;
+                case MOVING_TO_RANGE:
+                    DriveBase.driveManualRobotCentric(drive, 0, 0);
+
+                    if (yawError > 0.6) {
+                        aprilTagCenteringState = AprilTagCenteringState.CENTERING_YAW;
+                        break;
+                    }
+
+                    if (headingError > 1.0) {
+                        aprilTagCenteringState = AprilTagCenteringState.CENTERING_HEADING;
+                    }
+                case COMPLETE:
+                    break;
             }
+
+            if (rangeError < 0.2 && headingError < 1 && yawError < 0.5) targetReached = true;
         }
 
         DriveBase.driveManualRobotCentric(0,0,0);
