@@ -22,7 +22,7 @@ import org.firstinspires.ftc.teamcode.Subsytems.Utility.HomingState;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 
 public class Arm {
-    public static final int WORM_SAFETY_LIMIT = 1341;
+    public static final int WORM_SAFETY_LIMIT = 1150;
 
     private static final double ELEVATOR_HOMING_POWER = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
     private static final double WORM_HOMING_POWER     = -Math.abs(Properties.WORM_HOMING_POWER);

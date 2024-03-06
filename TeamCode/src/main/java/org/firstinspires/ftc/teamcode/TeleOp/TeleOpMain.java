@@ -11,141 +11,20 @@ import org.firstinspires.ftc.teamcode.Subsytems.*;
 
 import static com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode.AUTO;
 import static org.firstinspires.ftc.teamcode.Properties.*;
+import static org.firstinspires.ftc.teamcode.TeleOp.TeleOpMain.GamePeriod.*;
 
 @TeleOp(name = "TeleOp - Provincials - Use This One", group = "Production")
 public class TeleOpMain extends OpMode {
-    /* Dead Wheels
-     *  Left Dead Wheel:   Control Hub Port 1
-     *  Right Dead Wheel:  Expansion Hub Port 1
-     *  Center Dead Wheel: Expansion Hub Port 3
-     *
-     * Drive
-     *   FrontLeftDriveMotor:  Control Hub Port 0
-     *   FrontRightDriveMotor: Expansion Hub Port 2
-     *   BackLeftDriveMotor:   Control Hub Port 1
-     *   BackRightDriveMotor:  Expansion Hub Port 1
-     *
-     * Arm:
-     *  ExtensionMotor:       Control Hub Port 3
-     *  WormMotor:            Expansion Hub Port 0
-     *  ExtensionLimitSwitch: Control Hub Digital Port 0
-     *  WormLimitSwitch:      Control Hub Digital Port 1
-     *
-     * Intake:
-     *  IntakeMotor: Expansion Hub Port
-     *
-     * Launcher:
-     *  LauncherServo: Control Hub Servo Port 1
-     * Hook:
-     *  HangerServo: Control Hub Servo Port 0
-     *
-     * DeliveryTray:
-     *  WristServo:     Expansion Hub Port 0
-     *  LeftDoorServo:  Expansion Hub Port 1
-     *  RightDoorServo: Expansion Hub Port 2
-     */
+    GamePeriod gamePeriod;
 
-    private GamePeriod gamePeriod = GamePeriod.NORMAL;
-
-    private boolean isIntaking = false;
-
-    private enum GamePeriod {
+    enum GamePeriod {
         NORMAL,
         ENDGAME
     }
 
-    private Gamepad prevGamepad2, currentGamepad2;
-
-    private LED LEDOne, LEDTwo;
-
-    private void endgameLoop() {
-       if (gamepad2.left_bumper) {
-           Arm.setTargetPos(0, LAUNCH_POS);
-       }
-
-       if (Arm.getWormTargetPos() == LAUNCH_POS) {
-           Auxiliaries.releaseHanger();
-
-           if (gamepad2.left_trigger > 0.9) {
-               Auxiliaries.releaseLauncher();
-           }
-
-           if (gamepad2.dpad_down) {
-               Arm.setTargetPos(0, -300);
-           }
-       }
-    }
-
-    private void normalPeriodLoop() {
-        if (gamepad1.dpad_up) {
-            Auxiliaries.movePixelPlacerToMosaicFixingPositionLeft();
-        } else if (gamepad1.dpad_down) {
-            Auxiliaries.retractPixelPlacerLeft();
-        }
-
-        if (gamepad1.triangle) {
-            Auxiliaries.movePixelPlacerToMosaicFixingPositionRight();
-        } else if (gamepad1.cross) {
-            Auxiliaries.retractPixelPlacerRight();
-        }
-
-        // Intake and delivery tray logic
-        if (Arm.getWormPos() < 10){
-            if (gamepad2.left_trigger > 0.9) {
-                isIntaking = true;
-                Intake.intake();
-                Arm.setDoorPos(TRAY_DOOR_OPEN_POS);
-            } else if (gamepad2.left_trigger < 0.9 && gamepad2.left_trigger > 0.5) {
-                isIntaking = true;
-                Intake.intake();
-                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
-            } else if (gamepad2.right_trigger > 0.9) {
-                isIntaking = false;
-                Intake.outtake();
-            } else {
-                isIntaking = false;
-                Intake.stop();
-                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
-            }
-        } else {
-            if (gamepad2.right_trigger > 0.5) {
-                Intake.outtake();
-            } else {
-                isIntaking = false;
-                Intake.stop();
-            }
-
-            if (gamepad2.left_bumper) {
-                Arm.openDeliveryTrayDoorLeft(TRAY_DOOR_OPEN_POS);
-            } else {
-                Arm.openDeliveryTrayDoorLeft(0.0);
-            }
-
-            if (gamepad2.right_bumper) {
-                Arm.openDeliveryTrayDoorRight(TRAY_DOOR_OPEN_POS);
-            } else {
-                Arm.openDeliveryTrayDoorRight(0.0);
-            }
-        }
-
-        // Arm Logic
-        if (gamepad2.dpad_down) {
-            Arm.setTargetPos(0,0);
-        } else if (gamepad2.cross) {
-            Arm.setTargetPos(BOTTOM_EXT_POS, BOTTOM_ROT_POS);
-        } else if (gamepad2.square) {
-            Arm.setTargetPos(LOW_EXT_POS, LOW_ROT_POS);
-        } else if (gamepad2.circle) {
-            Arm.setTargetPos(MED_EXT_POS, MED_ROT_POS);
-        } else if (gamepad2.triangle) {
-            Arm.setTargetPos(HIGH_EXT_POS, HIGH_ROT_POS);
-        }
-    }
+    LED LEDOne, LEDTwo;
     
     @Override public void init() {
-        currentGamepad2 = new Gamepad();
-        prevGamepad2    = new Gamepad();
-
         Intake.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
         DriveBase.init(hardwareMap);
@@ -160,14 +39,15 @@ public class TeleOpMain extends OpMode {
 
         LEDOne.enable(false);
         LEDTwo.enable(false);
+
+        gamePeriod = NORMAL;
     }
 
     @Override public void loop() {
-        Arm.update(isIntaking);
-        Arm.debug(telemetry);
+        Intake.update(); // This HAS to come before Arm.update()
 
-        prevGamepad2.copy(currentGamepad2);
-        currentGamepad2.copy(gamepad2);
+        Arm.update(Intake.isActive());
+        Arm.debug(telemetry);
 
         double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
         double strafe = gamepad1.left_stick_x;
@@ -186,7 +66,7 @@ public class TeleOpMain extends OpMode {
                normalPeriodLoop();
 
                if (gamepad1.share) {
-                   gamePeriod = GamePeriod.ENDGAME;
+                   gamePeriod = ENDGAME;
                    gamepad1.rumble(1, 1, 1000);
                    gamepad2.rumble(1, 1, 1000);
                }
@@ -194,7 +74,7 @@ public class TeleOpMain extends OpMode {
                break;
            case ENDGAME:
                if (gamepad1.options) {
-                   gamePeriod = GamePeriod.NORMAL;
+                   gamePeriod = NORMAL;
                    gamepad1.rumble(1,1, 1000);
                    gamepad2.rumble(1,1,1000);
                }
@@ -208,6 +88,82 @@ public class TeleOpMain extends OpMode {
                endgameLoop();
                break;
        }
+    }
 
+    private void endgameLoop() {
+        if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
+
+        if (Arm.getWormTargetPos() == ENDGAME_POSITION) {
+            Auxiliaries.releaseHanger();
+
+            if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
+
+            if (gamepad2.dpad_down) Arm.setTargetPos(0,0);
+        }
+    }
+
+    private void normalPeriodLoop() {
+        if (gamepad1.dpad_up) { // Mosaic Fixing Left Control
+            Auxiliaries.movePixelPlacerToMosaicFixingPositionLeft();
+        } else if (gamepad1.dpad_down) {
+            Auxiliaries.retractPixelPlacerLeft();
+        }
+
+        if (gamepad1.triangle) { // Mosaic Fixing Right Control
+            Auxiliaries.movePixelPlacerToMosaicFixingPositionRight();
+        } else if (gamepad1.cross) {
+            Auxiliaries.retractPixelPlacerRight();
+        }
+
+        if (Arm.getWormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
+            if (gamepad2.left_trigger > 0.9) {
+                Intake.intake();
+                Arm.setDoorPos(TRAY_DOOR_OPEN_POS);
+            } else if (gamepad2.left_trigger < 0.9 && gamepad2.left_trigger > 0.5) {
+                Intake.intake();
+                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
+            } else if (gamepad2.right_trigger > 0.9) {
+                Intake.outtake();
+            } else {
+                Intake.stop();
+                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
+            }
+        } else {
+            if (gamepad2.right_trigger > 0.5) {
+                Intake.outtake();
+            } else {
+                Intake.stop();
+            }
+
+            if (gamepad2.left_bumper) {
+                Arm.openDeliveryTrayDoorLeft(TRAY_DOOR_OPEN_POS);
+            } else {
+                Arm.openDeliveryTrayDoorLeft(0.0);
+            }
+
+            if (gamepad2.right_bumper) {
+                Arm.openDeliveryTrayDoorRight(TRAY_DOOR_OPEN_POS);
+            } else {
+                Arm.openDeliveryTrayDoorRight(0.0);
+            }
+        }
+
+        if (gamepad2.dpad_down) { // Arm Logic
+            Arm.setTargetPos(0,0);
+        } else if (gamepad2.dpad_left) {
+            Arm.setTargetPos(LOW_EXT_POS + ANGLE_OFFSET, LOW_ROT_POS);
+        } else if (gamepad2.dpad_right) {
+            Arm.setTargetPos(MED_EXT_POS + ANGLE_OFFSET, MED_ROT_POS);
+        } else if (gamepad2.dpad_up) {
+            Arm.setTargetPos(HIGH_EXT_POS + ANGLE_OFFSET, HIGH_ROT_POS);
+        } else if (gamepad2.cross) {
+            Arm.setTargetPos(BOTTOM_EXT_POS, BOTTOM_ROT_POS);
+        } else if (gamepad2.square) {
+            Arm.setTargetPos(LOW_EXT_POS, LOW_ROT_POS);
+        } else if (gamepad2.circle) {
+            Arm.setTargetPos(MED_EXT_POS, MED_ROT_POS);
+        } else if (gamepad2.triangle) {
+            Arm.setTargetPos(HIGH_EXT_POS, HIGH_ROT_POS);
+        }
     }
 }

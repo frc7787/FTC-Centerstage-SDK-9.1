@@ -7,12 +7,8 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 import static org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS;
 import static org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.MILLIAMPS;
-import static org.firstinspires.ftc.teamcode.Properties.DEFAULT_INTAKE_BELT_POWER;
 import static org.firstinspires.ftc.teamcode.Properties.DEFAULT_INTAKE_POWER;
-import static org.firstinspires.ftc.teamcode.Properties.DEFAULT_OUTTAKE_BELT_POWER;
 import static org.firstinspires.ftc.teamcode.Properties.DEFAULT_OUTTAKE_POWER;
-
-import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -24,7 +20,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
  * with the DeliveryTray subsystem.
  */
 public class Intake {
-    private static DcMotorImplEx intakeMotor;
+    static DcMotorImplEx intakeMotor;
+
+    static boolean isActive;
 
     /**
      * Initializes the motor subsystem.
@@ -34,6 +32,16 @@ public class Intake {
         // Expansion Hub Motor Port 3
         intakeMotor = hardwareMap.get(DcMotorImplEx.class, "IntakeMotor");
         intakeMotor.setZeroPowerBehavior(FLOAT);
+
+        isActive = false;
+    }
+
+    public static void update() {
+        isActive = intakeMotor.getPower() != 0;
+    }
+
+    public static boolean isActive() {
+        return isActive;
     }
 
     /**
@@ -68,15 +76,6 @@ public class Intake {
         }
     }
 
-    /**
-     * Spins the intake in the intake direction (FORWARD) for the specified amount of time at the
-     * power specified by DEFAULT_INTAKE_POWER and DEFAULT_INTAKE_BELT_POWER
-     *
-     * @param durationMills The time to spin the intake for in milliseconds
-     */
-    public static void intakeForDuration(long durationMills) {
-       intakeForDuration(durationMills, DEFAULT_INTAKE_POWER);
-    }
 
     /**
      * Spins the intake in the outtake direction at the speed defined by DEFAULT_OUTTAKE_POWER
