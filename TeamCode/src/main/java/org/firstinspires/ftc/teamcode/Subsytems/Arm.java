@@ -68,6 +68,7 @@ public class Arm {
 
         elevatorTargetPos = 0;
         wormTargetPos     = 0;
+
         moveDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
 
         normalPeriodArmState = UNKNOWN;
