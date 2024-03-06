@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "Utility - Arm Measurement")
 public class ArmMeasurementTeleOp extends OpMode {
-
     DcMotorImplEx wormMotor, elevatorMotor;
 
     @Override public void init() {

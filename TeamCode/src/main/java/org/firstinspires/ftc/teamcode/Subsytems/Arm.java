@@ -27,7 +27,7 @@ public class Arm {
     private static final double ELEVATOR_HOMING_POWER = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
     private static final double WORM_HOMING_POWER     = -Math.abs(Properties.WORM_HOMING_POWER);
 
-    private static final double SAFETY_VOLTAGE = 0.4;
+    private static final double SAFETY_VOLTAGE = 0.8;
 
     private static DcMotorImplEx wormMotor, elevatorMotor;
     private static ServoImplEx leftDoor, rightDoor;
@@ -68,10 +68,10 @@ public class Arm {
 
         elevatorTargetPos = 0;
         wormTargetPos     = 0;
-        moveDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS); // TODO: This might need to change, this is just a default value
+        moveDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
 
-        normalPeriodArmState = AT_POS;
-        homingState          = IDLE;
+        normalPeriodArmState = UNKNOWN;
+        homingState          = START;
     }
 
     /**
@@ -90,7 +90,7 @@ public class Arm {
                     wormMotor.setPower(0.0);
                 }
             case TO_POS:
-                // first if for going back to 0,0 check current state of arm and make sure it follows a safe sequence back
+                // Make sure we follow a safe sequence back
                 if (elevatorTargetPos == 0 && wormTargetPos == 0){
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 10) {
                         extendElevator(0);
@@ -190,7 +190,7 @@ public class Arm {
                 if (elevatorLimitSwitch.isPressed()) {
                     homingState = HOMING_WORM;
                     elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
-                    extendElevator(0,0.1);
+                    extendElevator(0,0.0);
                 }
                 break;
             case HOMING_WORM:

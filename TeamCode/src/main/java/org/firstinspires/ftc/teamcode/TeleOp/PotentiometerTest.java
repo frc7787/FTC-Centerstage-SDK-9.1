@@ -1,29 +1,19 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 
 @TeleOp(name = "Test - Potentiometer", group = "Test")
-@Disabled
-public class PotentiometerTest extends LinearOpMode {
+public class PotentiometerTest extends OpMode {
 
     AnalogInput analogSensor;
 
-    @Override public void runOpMode() {
+    @Override public void init() {
         analogSensor = hardwareMap.analogInput.get("WormPotentiometer");
+    }
 
-        waitForStart();
-
-        while (opModeIsActive()) {
-            double sensorValue = analogSensor.getVoltage();
-
-            telemetry.addData("Voltage: ", sensorValue);
-
-            telemetry.update();
-
-            sleep(100);
-        }
+    @Override public void loop() {
+        telemetry.addData("Potentiometer Voltage", analogSensor.getVoltage());
     }
 }
