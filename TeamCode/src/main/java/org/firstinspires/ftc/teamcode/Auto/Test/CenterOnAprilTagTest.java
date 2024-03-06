@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto.Test;
 
+import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
+
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -55,12 +57,12 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     public void runOpMode() {
         DriveBase.init(hardwareMap);
 
-        initVideo(); // Initializes the April Tag processor
+        initVideo(); // Initializes the Vision Processing
 
         waitForStart();
 
         while (opModeIsActive()) {
-            aprilTagBackdrop();
+            centerOnAprilTag(DESIRED_TAG_ID);
         }
     }
 
@@ -80,15 +82,16 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .setAutoStopLiveView(true)
                 .build();
 
+        while (visionPortal.getCameraState() != STREAMING) {
+            telemetry.addLine("Camera Waiting.");
+            telemetry.addData("Current Camera State", visionPortal.getCameraState().toString());
+            telemetry.update();
+        }
+
         setManualExposure(myExposure, myGain, myWhiteBalance);
     }
 
     private void setManualExposure(int exposureMS, int gain, int whiteBalance) {
-        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
-            telemetry.addLine("Camera Waiting");
-            telemetry.update();
-        }
-
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
         exposureControl.setMode(ExposureControl.Mode.Manual);
         exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
@@ -101,7 +104,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         whiteBalanceControl.setWhiteBalanceTemperature(whiteBalance);
     }
 
-    public void aprilTagBackdrop() {
+    public void centerOnAprilTag(int desiredTagId) {
         boolean targetFound   = false;
         boolean targetReached = false;
 
@@ -114,7 +117,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             for (AprilTagDetection detection : currentDetections) {
                 if (detection.metadata == null) continue; // Skip tags that we don't have information on
 
-                if (detection.id == DESIRED_TAG_ID) {
+                if (detection.id == desiredTagId) {
                     telemetry.addData("April Tag found. Id", detection.id);
                     targetFound = true;
                     desiredTag = detection;
