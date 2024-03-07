@@ -276,11 +276,7 @@ public class Arm {
         moveDeliveryTrayDoor(pos, pos);
     }
 
-    /**
-     * Displays debug information about the arm
-     * @param telemetry The telemetry to display the information on
-     */
-    public static void debug(@NonNull Telemetry telemetry) {
+    public static void debugWorm(@NonNull Telemetry telemetry) {
         telemetry.addLine("Worm Debug");
 
         telemetry.addData("Worm Limit Switch Is Pressed", wormLimitSwitch.isPressed());
@@ -291,7 +287,9 @@ public class Arm {
         telemetry.addData("Worm Target Pos", wormMotor.getTargetPosition());
         telemetry.addData("Elevator Motor LOCAL Target Pos", wormTargetPos);
         telemetry.addData("Worm Run Mode", wormMotor.getMode());
+    }
 
+    public static void debugElevator(@NonNull Telemetry telemetry) {
         telemetry.addLine("Elevator Debug");
 
         telemetry.addData("Elevator Limit Switch Is Pressed", elevatorLimitSwitch.isPressed());
@@ -302,7 +300,9 @@ public class Arm {
         telemetry.addData("Elevator Motor Target Pos", elevatorMotor.getTargetPosition());
         telemetry.addData("Elevator Motor LOCAL Target Pos", elevatorTargetPos);
         telemetry.addData("Elevator Motor Run Mode", elevatorMotor.getMode());
+    }
 
+    public static void debugDeliveryTray(@NonNull Telemetry telemetry) {
         telemetry.addLine("Delivery Tray Debug");
 
         // NOTE: You might think that adding the direction of the servos would be useful
@@ -311,12 +311,25 @@ public class Arm {
 
         telemetry.addData("Left Door Servo Commanded Position", leftDoor.getPosition());
         telemetry.addData("Right Door Servo Commanded Position", rightDoor.getPosition());
+    }
 
+    public static void debugArm(@NonNull Telemetry telemetry) {
         telemetry.addLine("Arm Debug");
 
         telemetry.addData("Arm State - Normal Period", normalPeriodArmState);
         telemetry.addData("Homing State", homingState);
         telemetry.addData("Total Arm Current (AMPS) ", elevatorMotor.getCurrent(AMPS) + wormMotor.getCurrent(AMPS));
+    }
+
+    /**
+     * Displays debug information about the arm
+     * @param telemetry The telemetry to display the information on
+     */
+    public static void debug(@NonNull Telemetry telemetry) {
+      debugWorm(telemetry);
+      debugElevator(telemetry);
+      debugDeliveryTray(telemetry);
+      debugArm(telemetry);
     }
 
     /**
