@@ -14,7 +14,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 @Autonomous(name = "Test - Prop Detector")
 @Disabled
 public class PropDetectorTest extends OpMode {
-    private long lastButtonPress = 0;
+    long lastButtonPress = 0;
 
     PropDetector detector;
     OpenCvCamera camera;
