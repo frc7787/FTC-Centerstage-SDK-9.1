@@ -37,48 +37,31 @@ public class AutoBlueAudience extends LinearOpMode {
         drive.setPoseEstimate(startPos);
 
         toSpikeLeft = drive.trajectorySequenceBuilder(startPos)
-                .lineTo(new Vector2d(-35, 34))
-                .strafeTo(new Vector2d(-31, 34))
-                .strafeTo(new Vector2d(-35, 34))
-                .lineTo(new Vector2d(-35, 12))
-                .strafeTo(new Vector2d(-30, 12))
+                .lineToLinearHeading(new Pose2d(-38, 51, Math.toRadians(-45)))
+                .lineToConstantHeading(new Vector2d(-23, 36))
                 .build();
 
         toSpikeCenter = drive.trajectorySequenceBuilder(startPos)
-                .lineTo(new Vector2d(-35, 40))
-                .strafeTo(new Vector2d(-54, 40))
-                .lineTo(new Vector2d(-54, 23))
-                .strafeTo(new Vector2d(-39, 23))
-                .strafeTo(new Vector2d(-45, 23))
-                .lineTo(new Vector2d(-45, 11))
+                .lineToConstantHeading(new Vector2d(-35, 28))
                 .build();
 
         toSpikeRight = drive.trajectorySequenceBuilder(startPos)
-                .lineTo(new Vector2d(-35, 40))
-                .strafeTo(new Vector2d(-42, 40))
-                .lineTo(new Vector2d(-42, 11))
-                .strafeTo(new Vector2d(-52, 11))
+                .lineToLinearHeading(new Pose2d(-47, 36, Math.toRadians(45)))
                 .build();
 
         toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 11))
-                .strafeTo(new Vector2d(45, 36))
-                .lineTo(new Vector2d(53, 36))
+                .lineToLinearHeading(new Pose2d(-25, 39, Math.toRadians(0)))
+                .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
         toBackdropCenter = drive.trajectorySequenceBuilder(toSpikeCenter.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 11))
-                .strafeTo(new Vector2d(45, 27))
-                .lineTo(new Vector2d(50, 27))
+                .lineToLinearHeading(new Pose2d(-38, 36, Math.toRadians(0)))
+                .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
         toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 11))
-                .strafeTo(new Vector2d(45, 21))
-                .lineTo(new Vector2d(52, 21))
+                .lineToLinearHeading(new Pose2d(-44, 39, Math.toRadians(0)))
+                .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
 
@@ -160,65 +143,24 @@ public class AutoBlueAudience extends LinearOpMode {
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
-
-                sleep(1000);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
-                Auxiliaries.retractPixelPlacerRight();
-
                 drive.followTrajectorySequence(toBackdropLeft);
-
-                sleep(1000);
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(1000);
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
             case CENTER:
                 drive.followTrajectorySequence(toSpikeCenter);
 
-                sleep(1000);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
-                Auxiliaries.retractPixelPlacerRight();
-
                 drive.followTrajectorySequence(toBackdropCenter);
 
-                sleep(1000);
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
             case RIGHT:
                 drive.followTrajectorySequence(toSpikeRight);
 
-                sleep(1000);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
-                Auxiliaries.retractPixelPlacerRight();
-
                 drive.followTrajectorySequence(toBackdropRight);
-
-                sleep(1000);
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
             case NONE: // This case should copy center
                 drive.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                sleep(9);
 
-                sleep(1000);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
-                Auxiliaries.placePixelOnBackdropRight();
-
-                Auxiliaries.retractPixelPlacerRight();
                 drive.followTrajectorySequence(toBackdropCenter);
-
-                sleep(1000);
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
         }
 
