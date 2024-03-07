@@ -1,8 +1,7 @@
-package org.firstinspires.ftc.teamcode.Auto.Expiremental;
+package org.firstinspires.ftc.teamcode.Auto.Utility;
 
 import android.util.Size;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
@@ -19,12 +18,11 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@TeleOp(name = "April Tag Vision Processing OpMode", group = "Utility")
-public class AprilTagVisionProcessingOpMode extends OpMode {
-    private final FirstVisionProcessor processor = new FirstVisionProcessor();
+@TeleOp(name = "Utility - April Tag Tuning", group = "Utility")
+public class AprilTagTuning extends OpMode {
     private AprilTagProcessor aprilTagProcessor;
 
-    private static final int DESIRED_TAG_ID = -1; // -1 locks on to any tag
+    private static final int DESIRED_TAG_ID = 5; // -1 locks on to any tag
 
     private VisionPortal visionPortal;
 
@@ -51,13 +49,10 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .addProcessor(processor)
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(new Size(640, 480))
                 .setAutoStopLiveView(true)
                 .build();
-
-        FtcDashboard.getInstance().startCameraStream(processor, 1);
 
         getDefaultCameraSettings();
 
@@ -90,11 +85,12 @@ public class AprilTagVisionProcessingOpMode extends OpMode {
             }
 
             if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                telemetry.addData("Desired Tag Detected. Id", detection.id);
-                break;
+                telemetry.addData("Detected Tag", detection.id);
+                telemetry.addData("Distance From Detected Tag", detection.ftcPose.range);
+                telemetry.addData("Yaw From Tag", detection.ftcPose.yaw);
+                telemetry.addData("Pitch From Tag", detection.ftcPose.pitch);
+                telemetry.addData("Roll From Tag", detection.ftcPose.roll);
             }
-
-            telemetry.addData("Tag detected with Id", detection.id);
         }
 
         if (gamepad1.left_bumper)        myExposure += 1;

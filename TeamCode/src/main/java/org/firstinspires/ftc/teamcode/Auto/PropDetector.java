@@ -1,16 +1,20 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static org.firstinspires.ftc.teamcode.Auto.PropLocation.CENTER;
-import static org.firstinspires.ftc.teamcode.Auto.PropLocation.LEFT;
-import static org.firstinspires.ftc.teamcode.Auto.PropLocation.NONE;
-import static org.firstinspires.ftc.teamcode.Auto.PropLocation.RIGHT;
+import static org.firstinspires.ftc.teamcode.Auto.Core.PropLocation.CENTER;
+import static org.firstinspires.ftc.teamcode.Auto.Core.PropLocation.LEFT;
+import static org.firstinspires.ftc.teamcode.Auto.Core.PropLocation.NONE;
+import static org.firstinspires.ftc.teamcode.Auto.Core.PropLocation.RIGHT;
 import static org.firstinspires.ftc.teamcode.Properties.LEFT_X;
 import static org.firstinspires.ftc.teamcode.Properties.RIGHT_X;
+
+import android.graphics.Bitmap;
 
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
 
+import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
+import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -23,12 +27,16 @@ import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * OpenCV pipeline to detect the prop in FTC 2023 - 2024 Centerstage
  */
 @Config
 public class PropDetector extends OpenCvPipeline {
+    private final AtomicReference<Bitmap> lastFrame =
+            new AtomicReference<>(Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565));
+
     public PropColor propColor;
 
     public static int VIEW_DISPLAYED = 1;
@@ -156,7 +164,8 @@ public class PropDetector extends OpenCvPipeline {
             return erodeOutput;
         }
 
-        return  hsvMat;
+
+        return hsvMat;
     }
 
     public PropLocation getPropLocation() { return this.propLocation; }
