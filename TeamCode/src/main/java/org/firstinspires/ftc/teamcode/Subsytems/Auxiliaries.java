@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Auxiliaries {
-    public static double PIXEL_PLACER_SERVO_SPIKE_STRIP_POS = 0.84;
+    public static double PIXEL_PLACER_SERVO_SPIKE_STRIP_POS = 0.45;
     public static double PIXEL_PLACER_SERVO_BACKDROP_POS    = 0.52;
 
     private static ServoImplEx hangerServo, launcherServo, pixelPlacerServoLeft, pixelPlacerServoRight;
