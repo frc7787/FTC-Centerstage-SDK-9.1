@@ -6,19 +6,19 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
+import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name = "Test - Wrist Servo")
+@TeleOp(name = "Test - Wrist Servo", group = "Test")
 @Disabled
 public class TestWristServo extends OpMode {
-
     ServoImplEx wristServo;
 
     DcMotorImplEx elevatorMotor;
 
-    private double SERVO_POS = 0.0;
+    double SERVO_POS = 0.0;
 
-    private boolean leftBumperWasPressed  = false;
-    private boolean rightBumperWasPressed = false;
+    boolean leftBumperWasPressed  = false;
+    boolean rightBumperWasPressed = false;
 
     @Override public void init() {
         // Expansion Hub Port 0
@@ -32,17 +32,11 @@ public class TestWristServo extends OpMode {
     }
 
     @Override public void loop() {
-        if (gamepad1.options) { // Reset Position
-            SERVO_POS = 0;
-        }
+        if (gamepad1.options) SERVO_POS = 0.0;
 
         if (gamepad1.left_bumper) { // Increment Position
            if (!leftBumperWasPressed) {
                SERVO_POS += 0.01;
-
-               if (SERVO_POS > 1.0) {
-                   SERVO_POS = 1;
-               }
 
                leftBumperWasPressed = true;
            }
@@ -54,20 +48,15 @@ public class TestWristServo extends OpMode {
             if (!rightBumperWasPressed) {
                 SERVO_POS -= 0.01;
 
-                if (SERVO_POS < 0.0) {
-                    SERVO_POS = 0;
-                }
-
                 rightBumperWasPressed = true;
             }
         } else {
             rightBumperWasPressed = false;
         }
 
-        wristServo.setPosition(SERVO_POS);
+        wristServo.setPosition(Range.clip(SERVO_POS, 0.0, 1.0));
 
         telemetry.addData("Wrist Servo Commanded Position", wristServo.getPosition());
-
         telemetry.update();
     }
 }

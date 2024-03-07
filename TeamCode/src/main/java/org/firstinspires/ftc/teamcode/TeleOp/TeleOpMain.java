@@ -53,9 +53,9 @@ public class TeleOpMain extends OpMode {
         double strafe = gamepad1.left_stick_x;
         double turn   = gamepad1.right_stick_x;
 
-       DriveBase.driveManualRobotCentric(drive, strafe, turn);
+        DriveBase.driveManualRobotCentric(drive, strafe, turn);
 
-       switch (gamePeriod) {
+        switch (gamePeriod) {
            case NORMAL:
                gamepad1.setLedColor(0, 0, 255, Gamepad.LED_DURATION_CONTINUOUS);
                gamepad2.setLedColor(0,0,255, Gamepad.LED_DURATION_CONTINUOUS);
@@ -94,7 +94,7 @@ public class TeleOpMain extends OpMode {
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
         if (Arm.getWormTargetPos() == ENDGAME_POSITION) {
-            Auxiliaries.releaseHanger();
+            Auxiliaries.releaseHanger(); // Automatically release hanging hook when we go to hang
 
             if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
 
