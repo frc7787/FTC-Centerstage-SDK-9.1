@@ -23,29 +23,32 @@ import java.util.concurrent.TimeUnit;
 public class CenterOnAprilTagTest extends LinearOpMode {
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
+    VisionPortal visionPortal;
 
     final int DESIRED_TAG_ID = 5;
 
-    final double yawErrorTolerance     = 0.1;
-    final double bearingErrorTolerance = 1.0;
-    final double rangeErrorTolerance   = 1.0;
-
-    VisionPortal visionPortal;
+    final double yawErrTolerance     = 0.1;
+    final double bearingErrTolerance = 0.5;
+    final double rangeErrTolerance   = 0.1;
 
     int myExposure     = 3;
     int myGain         = 255;
     int myWhiteBalance = 4800;
 
-    final double DESIRED_DISTANCE = 4.0;
+    final double DESIRED_DISTANCE = 8.0;
 
-    final double SPEED_GAIN  =  0.008;
+    final double SPEED_GAIN  =  0.01;
     final double STRAFE_GAIN =  0.02;
-    final double TURN_GAIN   =  0.01;
+    final double TURN_GAIN   =  0.02;
 
-    final double MAX_AUTO_SPEED  = 0.3;
-    final double MAX_AUTO_STRAFE = 0.3;
-    final double MAX_AUTO_TURN   = 0.3;
+    final double MAX_AUTO_SPEED  = 1.0;
+    final double MAX_AUTO_STRAFE = 1.0;
+    final double MAX_AUTO_TURN   = 1.0;
 
+    double drive, strafe, turn;
+    double rangeErr, yawErr, bearingErr;
+
+    boolean targetFound;
 
     @Override
     public void runOpMode() {
@@ -55,9 +58,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         waitForStart();
 
-        if (isStopRequested()) {
-            return;
-        }
+        if (isStopRequested() || !opModeIsActive()) return;
 
         while (opModeIsActive()) {
             centerOnAprilTag();
@@ -116,79 +117,85 @@ public class CenterOnAprilTagTest extends LinearOpMode {
      */
     @SuppressLint("DefaultLocale")
     public void centerOnAprilTag() {
-        double drive, strafe, turn;
-
-        boolean targetFound   = false;
         boolean targetReached = false;
 
+        String errValues, driveValues;
+
         while (!targetReached) { // Wait for the robot to center on the April Tag
-            if (isStopRequested()) return;
+            detectAprilTags(); // Get all of the April Tags; Blocking
 
-            while (!targetFound) { // Wait until we detect the desired April Tag
-                if (isStopRequested()) return;
-
-                DriveBase.driveManualRobotCentric(0,0,0);
-
-                telemetry.addLine("Searching For Target");
-
-                List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
-
-                if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
-
-                for (AprilTagDetection detection : currentDetections) {
-                    if (detection.metadata == null) continue;
-
-                    if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
-                        telemetry.addLine("Detected Desired Tag");
-
-                        desiredTag = detection;
-
-                        targetFound = true;
-
-                        break;
-                    }
-                }
-
-                telemetry.update();
-            }
-
-            targetFound = false;
+            if (isStopRequested() || !opModeIsActive()) return;
 
             telemetry.addLine("Attempting To Center On April Tag");
             telemetry.update();
 
-            double rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-            double bearingError = desiredTag.ftcPose.bearing;
-            double yawError     = desiredTag.ftcPose.yaw;
+            rangeErr  = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+            bearingErr = desiredTag.ftcPose.bearing;
+            yawErr     = desiredTag.ftcPose.yaw;
 
-            drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
-            strafe = Range.clip(bearingError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-            turn   = Range.clip(-yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) * -1.0;
+            drive  = Range.clip(rangeErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
+            strafe = Range.clip(-yawErr * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+            turn   = Range.clip(-bearingErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-            telemetry.addLine(String.format(
-                    "RangeError %6.4f, BearingError %6.4f, YawError %6.4f", rangeError, bearingError, yawError));
-            telemetry.addLine(String.format("Drive %6.4f, Strafe %6.4f, Turn %6.4f", drive, strafe, turn));
+            driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
+            errValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
 
-            if (rangeError < rangeErrorTolerance) {
-                drive = 0;
-            }
-
-            if (bearingError < bearingErrorTolerance) {
-                turn = 0;
-            }
-
-            if (strafe < yawErrorTolerance) {
-                strafe = 0;
-            }
+            telemetry.addLine(driveValues);
+            telemetry.addLine(errValues);
 
             DriveBase.driveManualRobotCentric(drive, strafe, turn);
 
-            if (rangeError < rangeErrorTolerance  && bearingError < bearingErrorTolerance && yawError < yawErrorTolerance) {
-                DriveBase.driveManualRobotCentric(0,0,0);
+            if (isWithinTargetTolerance()) {
                 targetReached = true;
+
+                DriveBase.driveManualRobotCentric(0,0,0);
             }
+
+            targetReached = isWithinTargetTolerance();
 
             telemetry.update();
         }
+    }
+
+    /**
+     * Note, this function is blocking
+     */
+    private void detectAprilTags() {
+        while (!targetFound) { // Wait until we detect the desired April Tag
+            if (isStopRequested() || !opModeIsActive()) return;
+
+            telemetry.addLine("Searching For Target");
+
+            List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
+
+            if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
+
+            for (AprilTagDetection detection : currentDetections) {
+                if (detection.metadata == null) continue;
+
+                if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
+                    telemetry.addLine("Detected Desired Tag");
+                    telemetry.update();
+
+                    desiredTag = detection;
+
+                    targetFound = true;
+
+                    return; // Stop looking, if we find the tag
+                }
+                telemetry.update();
+            }
+        }
+
+        targetFound = false;
+    }
+
+    /**
+     * Checks whether we are within the tolerances defined by rangeErrTolerance, bearingErrTolerance,
+     * and yawErrTolerance
+     * @return True if we are within tolerance, false if we are not
+     */
+    private boolean isWithinTargetTolerance() {
+       return rangeErr < rangeErrTolerance && bearingErr < bearingErrTolerance && yawErr < yawErrTolerance;
     }
 }
