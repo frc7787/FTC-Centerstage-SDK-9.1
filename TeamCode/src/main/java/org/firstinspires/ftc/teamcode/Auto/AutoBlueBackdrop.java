@@ -64,11 +64,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         TrajectorySequence toSpikeRight = drive.trajectorySequenceBuilder(startPose)
-                .lineTo(new Vector2d(11, 30))
-                .strafeTo(new Vector2d(7, 30))
-                .strafeTo(new Vector2d(11, 30))
-                .lineTo(new Vector2d(11, 13))
-                .strafeTo(new Vector2d(-6, 13))
+                .lineToConstantHeading(new Vector2d(-8, 32))
                 .build();
 
         TrajectorySequence toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
@@ -86,10 +82,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         TrajectorySequence toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 13))
-                .strafeTo(new Vector2d(45, 21))
-                .lineTo(new Vector2d(50, 21))
+                .lineToLinearHeading(new Pose2d(36, 38, Math.toRadians(0)))
+                .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
         TrajectorySequence toParkCenter = drive.trajectorySequenceBuilder(toBackdropCenter.end())
