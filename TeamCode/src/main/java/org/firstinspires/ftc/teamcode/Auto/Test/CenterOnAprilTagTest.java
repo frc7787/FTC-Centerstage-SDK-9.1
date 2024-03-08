@@ -28,18 +28,18 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     final int DESIRED_TAG_ID = 5;
 
     final double yawErrTolerance     = 0.1;
-    final double bearingErrTolerance = 0.5;
-    final double rangeErrTolerance   = 0.1;
+    final double bearingErrTolerance = 0.4;
+    final double rangeErrTolerance   = 1.0;
 
     int myExposure     = 3;
     int myGain         = 255;
     int myWhiteBalance = 4800;
 
-    final double DESIRED_DISTANCE = 8.0;
+    final double DESIRED_DISTANCE = 24.0;
 
-    final double SPEED_GAIN  =  0.01;
+    final double SPEED_GAIN  =  0.05;
     final double STRAFE_GAIN =  0.02;
-    final double TURN_GAIN   =  0.02;
+    final double TURN_GAIN   =  0.06;
 
     final double MAX_AUTO_SPEED  = 1.0;
     final double MAX_AUTO_STRAFE = 1.0;
@@ -76,6 +76,8 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .setDrawCubeProjection(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
                 .build();
+
+        aprilTagProcessor.setDecimation(1);
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
@@ -138,7 +140,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             turn   = Range.clip(-bearingErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
             driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-            errValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
+            errValues   = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
 
             telemetry.addLine(driveValues);
             telemetry.addLine(errValues);
@@ -146,12 +148,10 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             DriveBase.driveManualRobotCentric(drive, strafe, turn);
 
             if (isWithinTargetTolerance()) {
-                targetReached = true;
-
                 DriveBase.driveManualRobotCentric(0,0,0);
-            }
 
-            targetReached = isWithinTargetTolerance();
+                targetReached = true;
+            }
 
             telemetry.update();
         }
@@ -161,8 +161,14 @@ public class CenterOnAprilTagTest extends LinearOpMode {
      * Note, this function is blocking
      */
     private void detectAprilTags() {
+        int checkCount = 0;
+
         while (!targetFound) { // Wait until we detect the desired April Tag
             if (isStopRequested() || !opModeIsActive()) return;
+
+            if (checkCount > 1000) {
+                DriveBase.driveManualRobotCentric(0,0,0);
+            }
 
             telemetry.addLine("Searching For Target");
 
@@ -185,6 +191,8 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 }
                 telemetry.update();
             }
+
+            checkCount += 1;
         }
 
         targetFound = false;
