@@ -3,17 +3,12 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorImplEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name = "Test - Wrist Servo", group = "Test")
-@Disabled
 public class TestWristServo extends OpMode {
     ServoImplEx wristServo;
-
-    DcMotorImplEx elevatorMotor;
 
     double SERVO_POS = 0.0;
 
@@ -22,16 +17,17 @@ public class TestWristServo extends OpMode {
 
     @Override public void init() {
         // Expansion Hub Port 0
-        wristServo = hardwareMap.get(ServoImplEx.class, "WristServo");
-
-        // Control Hub Port 3; Encoder Port 3
-        elevatorMotor = hardwareMap.get(DcMotorImplEx.class,  "ExtensionMotor");
-        elevatorMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        wristServo = hardwareMap.get(ServoImplEx.class, "PixelPlacerServoRight");
 
         wristServo.setPosition(0.0);
     }
 
     @Override public void loop() {
+        telemetry.addLine("Press Left Bumper to increment position");
+        telemetry.addLine("Press Right Bumper to increment position");
+
+        telemetry.addLine("Press options (The one on the left) the reset the servo to zero");
+
         if (gamepad1.options) SERVO_POS = 0.0;
 
         if (gamepad1.left_bumper) { // Increment Position
@@ -56,7 +52,7 @@ public class TestWristServo extends OpMode {
 
         wristServo.setPosition(Range.clip(SERVO_POS, 0.0, 1.0));
 
-        telemetry.addData("Wrist Servo Commanded Position", wristServo.getPosition());
+        telemetry.addData("Servo Commanded Position", wristServo.getPosition());
         telemetry.update();
     }
 }
