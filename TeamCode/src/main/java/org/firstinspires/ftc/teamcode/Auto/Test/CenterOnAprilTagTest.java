@@ -119,36 +119,38 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         boolean targetFound   = false;
         boolean targetReached = false;
 
-        while (!targetFound) { // Wait until we detect the desired April Tag
-            if (isStopRequested()) return;
-
-            DriveBase.driveManualRobotCentric(0,0,0);
-
-            telemetry.addLine("Searching For Target");
-
-            List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
-
-            if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
-
-            for (AprilTagDetection detection : currentDetections) {
-                if (detection.metadata == null) continue;
-
-                if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
-                    telemetry.addLine("Detected Desired Tag");
-
-                    desiredTag = detection;
-
-                    targetFound = true;
-
-                    break;
-                }
-            }
-
-            telemetry.update();
-        }
-
         while (!targetReached) { // Wait for the robot to center on the April Tag
             if (isStopRequested()) return;
+
+            while (!targetFound) { // Wait until we detect the desired April Tag
+                if (isStopRequested()) return;
+
+                DriveBase.driveManualRobotCentric(0,0,0);
+
+                telemetry.addLine("Searching For Target");
+
+                List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
+
+                if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
+
+                for (AprilTagDetection detection : currentDetections) {
+                    if (detection.metadata == null) continue;
+
+                    if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
+                        telemetry.addLine("Detected Desired Tag");
+
+                        desiredTag = detection;
+
+                        targetFound = true;
+
+                        break;
+                    }
+                }
+
+                telemetry.update();
+            }
+
+            targetFound = false;
 
             telemetry.addLine("Attempting To Center On April Tag");
             telemetry.update();
@@ -165,12 +167,26 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                     "RangeError %6.4f, BearingError %6.4f, YawError %6.4f", rangeError, bearingError, yawError));
             telemetry.addLine(String.format("Drive %6.4f, Strafe %6.4f, Turn %6.4f", drive, strafe, turn));
 
+            if (rangeError < rangeErrorTolerance) {
+                drive = 0;
+            }
+
+            if (bearingError < bearingErrorTolerance) {
+                turn = 0;
+            }
+
+            if (strafe < yawErrorTolerance) {
+                strafe = 0;
+            }
+
             DriveBase.driveManualRobotCentric(drive, strafe, turn);
 
             if (rangeError < rangeErrorTolerance  && bearingError < bearingErrorTolerance && yawError < yawErrorTolerance) {
                 DriveBase.driveManualRobotCentric(0,0,0);
                 targetReached = true;
             }
+
+            telemetry.update();
         }
     }
 }
