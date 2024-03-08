@@ -194,15 +194,24 @@ public class Arm {
                     extendElevator(0,0.0);
                 }
                 break;
-            case HOMING_WORM:
-                wormMotor.setPower(WORM_HOMING_POWER);
+           case HOMING_WORM:
+               wormMotor.setPower(WORM_HOMING_POWER);
 
-                if (wormLimitSwitch.isPressed()) {
-                    homingState = COMPLETE;
-                    wormMotor.setMode(STOP_AND_RESET_ENCODER);
-                    rotateWorm(0,0.0);
-                }
-                break;
+               if (wormLimitSwitch.isPressed()) {
+                   homingState = REMOVING_WORM_BACKLASH;
+                   wormMotor.setMode(STOP_AND_RESET_ENCODER);
+                   rotateWorm(0,0.0);
+               }
+               break;
+           case REMOVING_WORM_BACKLASH:
+               wormMotor.setPower(-2*WORM_HOMING_POWER);
+
+               if (!wormLimitSwitch.isPressed()) {
+                   homingState = COMPLETE;
+                   wormMotor.setMode(STOP_AND_RESET_ENCODER);
+                   rotateWorm(-10,0.0);
+               }
+               break;
             case COMPLETE:
                 normalPeriodArmState = AT_POS;
                 homingState = IDLE;
