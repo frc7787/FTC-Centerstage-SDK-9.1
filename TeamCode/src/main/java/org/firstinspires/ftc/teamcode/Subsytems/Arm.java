@@ -26,6 +26,7 @@ public class Arm {
 
     private static final double ELEVATOR_HOMING_POWER = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
     private static final double WORM_HOMING_POWER     = -Math.abs(Properties.WORM_HOMING_POWER);
+    private static final double WORM_BACKLASH_REMOVING_POWER = 0.25;
 
     private static final double SAFETY_VOLTAGE = 0.8;
 
@@ -199,12 +200,11 @@ public class Arm {
 
                if (wormLimitSwitch.isPressed()) {
                    homingState = REMOVING_WORM_BACKLASH;
-                   wormMotor.setMode(STOP_AND_RESET_ENCODER);
-                   rotateWorm(0,0.0);
+                   wormMotor.setPower(0);
                }
                break;
            case REMOVING_WORM_BACKLASH:
-               wormMotor.setPower(-2*WORM_HOMING_POWER);
+               wormMotor.setPower(WORM_BACKLASH_REMOVING_POWER);
 
                if (!wormLimitSwitch.isPressed()) {
                    homingState = COMPLETE;

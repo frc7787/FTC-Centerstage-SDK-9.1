@@ -26,9 +26,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     final int DESIRED_TAG_ID = 5;
 
-    final double yawErrorTolerance     = 0.1;
-    final double bearingErrorTolerance = 1.0;
-    final double rangeErrorTolerance   = 1.0;
+    final double yawErrorToleranceInches   = 0.1d;
+    final double bearingErrorToleranceDeg  = 1.0d;
+    final double rangeErrorToleranceInches = 0.5d;
 
     VisionPortal visionPortal;
 
@@ -36,28 +36,25 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     int myGain         = 255;
     int myWhiteBalance = 4800;
 
-    final double DESIRED_DISTANCE = 4.0;
+    final double DESIRED_DISTANCE = 4.0d;
 
-    final double SPEED_GAIN  =  0.008;
-    final double STRAFE_GAIN =  0.02;
-    final double TURN_GAIN   =  0.01;
+    final double SPEED_GAIN  =  0.008d;
+    final double STRAFE_GAIN =  0.02d;
+    final double TURN_GAIN   =  0.01d;
 
-    final double MAX_AUTO_SPEED  = 0.3;
-    final double MAX_AUTO_STRAFE = 0.3;
-    final double MAX_AUTO_TURN   = 0.3;
+    final double MAX_AUTO_SPEED  = 1.0d;
+    final double MAX_AUTO_STRAFE = 1.0d;
+    final double MAX_AUTO_TURN   = 1.0d;
 
 
-    @Override
-    public void runOpMode() {
+    @Override public void runOpMode() {
         DriveBase.init(hardwareMap);
 
         initVisionProcessing();
 
         waitForStart();
 
-        if (isStopRequested()) {
-            return;
-        }
+        if (isStopRequested()) return;
 
         while (opModeIsActive()) {
             centerOnAprilTag();
@@ -122,7 +119,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         boolean targetReached = false;
 
         while (!targetFound) { // Wait until we detect the desired April Tag
-            if (isStopRequested()) return;
+            if (isStopRequested() || !opModeIsActive()) return;
 
             DriveBase.driveManualRobotCentric(0,0,0);
 
@@ -150,7 +147,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         }
 
         while (!targetReached) { // Wait for the robot to center on the April Tag
-            if (isStopRequested()) return;
+            if (isStopRequested() || !opModeIsActive()) return;
 
             telemetry.addLine("Attempting To Center On April Tag");
             telemetry.update();
@@ -159,17 +156,16 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             double bearingError = desiredTag.ftcPose.bearing;
             double yawError     = desiredTag.ftcPose.yaw;
 
-            drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
-            strafe = Range.clip(bearingError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-            turn   = Range.clip(-yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) * -1.0;
+            drive  = -Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+            turn   = Range.clip(-bearingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-            telemetry.addLine(String.format(
-                    "RangeError %6.4f, BearingError %6.4f, YawError %6.4f", rangeError, bearingError, yawError));
-            telemetry.addLine(String.format("Drive %6.4f, Strafe %6.4f, Turn %6.4f", drive, strafe, turn));
+            telemetry.addLine(String.format("RangeError %f, BearingError %f, YawError %f", rangeError, bearingError, yawError));
+            telemetry.addLine(String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn));
 
             DriveBase.driveManualRobotCentric(drive, strafe, turn);
 
-            if (rangeError < rangeErrorTolerance  && bearingError < bearingErrorTolerance && yawError < yawErrorTolerance) {
+            if (rangeError < rangeErrorToleranceInches && bearingError < bearingErrorToleranceDeg && yawError < yawErrorToleranceInches) {
                 DriveBase.driveManualRobotCentric(0,0,0);
                 targetReached = true;
             }
