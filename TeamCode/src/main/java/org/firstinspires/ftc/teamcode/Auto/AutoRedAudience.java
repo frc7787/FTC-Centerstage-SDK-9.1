@@ -156,21 +156,19 @@ public class AutoRedAudience extends LinearOpMode {
 
         Arm.rotateWorm(25);
 
-        sleep(4000);
+        sleep(400);
 
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
 
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1050);
-                Auxiliaries.retractPixelPlacerRight();
+                sleep(300);
+
 
                 drive.followTrajectorySequence(toBackdropLeft);
 
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(1000);
-                Auxiliaries.retractPixelPlacerLeft();
+
                 break;
             case CENTER:
                 drive.followTrajectorySequence(toSpikeCenter);

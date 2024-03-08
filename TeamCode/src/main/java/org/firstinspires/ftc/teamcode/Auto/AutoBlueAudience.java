@@ -37,8 +37,9 @@ public class AutoBlueAudience extends LinearOpMode {
         drive.setPoseEstimate(startPos);
 
         toSpikeLeft = drive.trajectorySequenceBuilder(startPos)
-                .lineToLinearHeading(new Pose2d(-38, 51, Math.toRadians(-45)))
-                .lineToConstantHeading(new Vector2d(-23, 36))
+                .lineToConstantHeading(new Vector2d(-36, 36))
+                .lineToLinearHeading(new Pose2d(-20, 32, Math.toRadians(0)))
+
                 .build();
 
         toSpikeCenter = drive.trajectorySequenceBuilder(startPos)
@@ -50,8 +51,12 @@ public class AutoBlueAudience extends LinearOpMode {
                 .build();
 
         toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
-                .lineToLinearHeading(new Pose2d(-25, 39, Math.toRadians(0)))
-                .lineToConstantHeading(new Vector2d(38, 36))
+                .strafeTo(new Vector2d(-20, 36))
+                .lineToConstantHeading(new Vector2d(-36, 36))
+                .strafeTo(new Vector2d(-36, 12))
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
+
                 .build();
 
         toBackdropCenter = drive.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -138,11 +143,10 @@ public class AutoBlueAudience extends LinearOpMode {
 
         Arm.rotateWorm(25);
 
-        sleep(4000);
-
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
+                Auxiliaries.placePixelOnSpikeStripRight();
                 drive.followTrajectorySequence(toBackdropLeft);
                 break;
             case CENTER:
