@@ -61,7 +61,7 @@ public class TeleOpMain extends OpMode {
         telemetry.addData("Turn", turn);
         telemetry.update();
 
-        MecanumDriveBase.driveManual(drive, strafe, turn);
+        MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.02);
 
         switch (gamePeriod) {
            case NORMAL:
