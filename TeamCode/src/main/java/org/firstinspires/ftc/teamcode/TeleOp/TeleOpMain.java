@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.LED;
 
+import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.Subsytems.*;
 
 import static com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode.AUTO;
@@ -23,11 +24,13 @@ public class TeleOpMain extends OpMode {
     }
 
     LED LEDOne, LEDTwo;
+    MecanumDriveBase driveBase ;
     
     @Override public void init() {
         Intake.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
-        DriveBase.init(hardwareMap);
+        driveBase= new MecanumDriveBase(hardwareMap);
+        driveBase.init();
         Arm.init(hardwareMap);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
@@ -47,13 +50,18 @@ public class TeleOpMain extends OpMode {
         Intake.update(); // This HAS to come before Arm.update()
 
         Arm.update(Intake.isActive());
-        Arm.debug(telemetry);
+        //Arm.debug(telemetry);
 
         double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
         double strafe = gamepad1.left_stick_x;
         double turn   = gamepad1.right_stick_x;
 
-        DriveBase.driveManualRobotCentric(drive, strafe, turn);
+        telemetry.addData("Drive", drive);
+        telemetry.addData("Strafe", strafe);
+        telemetry.addData("Turn", turn);
+        telemetry.update();
+
+        MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.02);
 
         switch (gamePeriod) {
            case NORMAL:

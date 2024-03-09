@@ -30,6 +30,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequenceRunner;
@@ -61,7 +62,7 @@ public class MecanumDriveBase extends MecanumDrive {
 
     private TrajectoryFollower follower;
 
-    private DcMotorEx fL, bL, bR, fR;
+    private static DcMotorEx fL, bL, bR, fR;
     private List<DcMotorEx> motors;
 
     private VoltageSensor batteryVoltageSensor;
@@ -71,7 +72,7 @@ public class MecanumDriveBase extends MecanumDrive {
 
     private HardwareMap hardwareMap;
 
-    private TrackingWheelLocalizer localizer;
+    private static TrackingWheelLocalizer localizer;
 
     public MecanumDriveBase(HardwareMap hardwareMap) {
         super(RoadRunnerConstants.kV, RoadRunnerConstants.kA, RoadRunnerConstants.kStatic, RoadRunnerConstants.TRACK_WIDTH, RoadRunnerConstants.TRACK_WIDTH, LATERAL_MULTIPLIER);
@@ -136,13 +137,17 @@ public class MecanumDriveBase extends MecanumDrive {
         setLocalizer(localizer);
     }
 
-    private double deadZone(double value) {
+    private static double deadZone(double value) {
         if (DEAD_ZONE_LOW < value && DEAD_ZONE_HIGH > value ) { return 0.0; }
         return value;
     }
+    private static double deadZoneFF(double stickValue, double FFvalue, double deadZoneValue) {
+        if (Math.abs(stickValue) < deadZoneValue  ) { return 0.0; }
+        return FFvalue;
+    }
 
-    public void driveManual(double drive, double strafe, double turn) {
-        drive  = deadZone(drive)  * -1.0;
+    public static void driveManual(double drive, double strafe, double turn) {
+        drive  = deadZone(drive) ;
         strafe = deadZone(strafe) * STRAFE_OFFSET;
         turn   = deadZone(turn);
 
@@ -152,6 +157,39 @@ public class MecanumDriveBase extends MecanumDrive {
         double fRPower = (drive - strafe - turn) / motorPowerRatio;
         double bLPower = (drive - strafe + turn) / motorPowerRatio;
         double bRPower = (drive + strafe - turn) / motorPowerRatio;
+
+        fL.setPower(fLPower);
+        fR.setPower(fRPower);
+        bL.setPower(bLPower);
+        bR.setPower(bRPower);
+    }
+    public static void driveManualFF(double drive, double strafe, double turn, double deadzone) {
+
+        drive  = deadZone(drive) ;
+        strafe = deadZone(strafe) * STRAFE_OFFSET;
+        turn   = deadZone(turn);
+
+        double driveFriction   = 0.08;
+        double turnFriction    = 0.07;
+        double strafeFriction  = 0.15;
+        double driveFF, turnFF, strafeFF;
+
+        if (localizer.getWheelVelocities().get(0) == 0 && localizer.getWheelVelocities().get(1) == 0){
+            driveFF  = deadZoneFF(drive,(drive + Math.copySign(driveFriction,drive)), deadzone); // 0=l 1=r 2=f
+            turnFF   = deadZoneFF(turn,(turn + Math.copySign(turnFriction,turn)), deadzone);
+            strafeFF = strafe;
+        } else {
+            driveFF  = deadZoneFF(drive,(drive + Math.copySign(driveFriction,(localizer.getWheelVelocities().get(0)+localizer.getWheelVelocities().get(1)))), deadzone);//0=l 1=r 2=f
+            turnFF   = deadZoneFF(turn,(turn + Math.copySign(turnFriction,(localizer.getWheelVelocities().get(0)-localizer.getWheelVelocities().get(1)))), deadzone);
+            strafeFF = strafe;
+        }
+
+        double motorPowerRatio = Math.max(Math.abs(driveFF) + Math.abs(strafeFF) + Math.abs(turnFF), 1);
+
+        double fLPower = (driveFF + strafeFF + turnFF) / motorPowerRatio;
+        double fRPower = (driveFF - strafeFF - turnFF) / motorPowerRatio;
+        double bLPower = (driveFF - strafeFF + turnFF) / motorPowerRatio;
+        double bRPower = (driveFF + strafeFF - turnFF) / motorPowerRatio;
 
         fL.setPower(fLPower);
         fR.setPower(fRPower);
