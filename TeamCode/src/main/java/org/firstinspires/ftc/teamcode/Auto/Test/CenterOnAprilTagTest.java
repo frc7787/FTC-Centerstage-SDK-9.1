@@ -55,9 +55,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         waitForStart();
 
-        if (isStopRequested()) {
-            return;
-        }
+        if (isStopRequested() || !opModeIsActive()) return;
 
         while (opModeIsActive()) {
             centerOnAprilTag();
