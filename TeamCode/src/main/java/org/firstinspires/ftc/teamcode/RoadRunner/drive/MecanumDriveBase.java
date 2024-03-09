@@ -61,7 +61,7 @@ public class MecanumDriveBase extends MecanumDrive {
 
     private TrajectoryFollower follower;
 
-    private DcMotorEx fL, bL, bR, fR;
+    private static DcMotorEx fL, bL, bR, fR;
     private List<DcMotorEx> motors;
 
     private VoltageSensor batteryVoltageSensor;
@@ -71,7 +71,7 @@ public class MecanumDriveBase extends MecanumDrive {
 
     private HardwareMap hardwareMap;
 
-    private TrackingWheelLocalizer localizer;
+    private static TrackingWheelLocalizer localizer;
 
     public MecanumDriveBase(HardwareMap hardwareMap) {
         super(RoadRunnerConstants.kV, RoadRunnerConstants.kA, RoadRunnerConstants.kStatic, RoadRunnerConstants.TRACK_WIDTH, RoadRunnerConstants.TRACK_WIDTH, LATERAL_MULTIPLIER);
@@ -136,13 +136,13 @@ public class MecanumDriveBase extends MecanumDrive {
         setLocalizer(localizer);
     }
 
-    private double deadZone(double value) {
+    private static double deadZone(double value) {
         if (DEAD_ZONE_LOW < value && DEAD_ZONE_HIGH > value ) { return 0.0; }
         return value;
     }
 
-    public void driveManual(double drive, double strafe, double turn) {
-        drive  = deadZone(drive)  * -1.0;
+    public static void driveManual(double drive, double strafe, double turn) {
+        drive  = deadZone(drive) ;
         strafe = deadZone(strafe) * STRAFE_OFFSET;
         turn   = deadZone(turn);
 
@@ -152,6 +152,39 @@ public class MecanumDriveBase extends MecanumDrive {
         double fRPower = (drive - strafe - turn) / motorPowerRatio;
         double bLPower = (drive - strafe + turn) / motorPowerRatio;
         double bRPower = (drive + strafe - turn) / motorPowerRatio;
+
+        fL.setPower(fLPower);
+        fR.setPower(fRPower);
+        bL.setPower(bLPower);
+        bR.setPower(bRPower);
+    }
+    public static void driveManualFF(double drive, double strafe, double turn) {
+        drive  = deadZone(drive) ;
+        strafe = deadZone(strafe) * STRAFE_OFFSET;
+        turn   = deadZone(turn);
+
+        double driveFriction= 0.08;
+        double turnFriction= 0.1;
+        double strafeFriction= 0.15;
+        double driveFF, turnFF, strafeFF;
+        if (localizer.getPoseVelocity().component1()==0 && localizer.getPoseVelocity().component2()==0){
+            driveFF= drive + Math.copySign(driveFriction,drive);//0=l 1=r 2=f
+            turnFF= turn+ Math.copySign(turnFriction,turn);
+            strafeFF= strafe;
+        }else{
+            driveFF= drive + Math.copySign(driveFriction,(localizer.getWheelVelocities().get(0)+localizer.getWheelVelocities().get(1)));//0=l 1=r 2=f
+            turnFF= turn+ Math.copySign(turnFriction,(localizer.getWheelVelocities().get(0)-localizer.getWheelVelocities().get(1)));
+            strafeFF= strafe;
+        }
+
+
+
+        double motorPowerRatio = Math.max(Math.abs(driveFF) + Math.abs(strafeFF) + Math.abs(turnFF), 1);
+
+        double fLPower = (driveFF + strafeFF + turnFF) / motorPowerRatio;
+        double fRPower = (driveFF - strafeFF - turnFF) / motorPowerRatio;
+        double bLPower = (driveFF - strafeFF + turnFF) / motorPowerRatio;
+        double bRPower = (driveFF + strafeFF - turnFF) / motorPowerRatio;
 
         fL.setPower(fLPower);
         fR.setPower(fRPower);
