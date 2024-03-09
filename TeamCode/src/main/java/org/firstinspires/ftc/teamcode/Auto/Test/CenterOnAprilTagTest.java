@@ -7,6 +7,7 @@ import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Test - Center On April Tag", group = "Testing")
-public class CenterOnAprilTagTest extends LinearOpMode {
+public class CenterOnAprilTagTest extends OpMode {
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
@@ -52,21 +53,16 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     MecanumDriveBase driveBase;
 
-    @Override
-    public void runOpMode() {
+    @Override public void init() {
         driveBase = new MecanumDriveBase(hardwareMap);
 
         driveBase.init();
 
         initVisionProcessing();
+    }
 
-        waitForStart();
-
-        while (opModeIsActive()) {
-            if (isStopRequested()) return;
-
-            centerOnAprilTag();
-        }
+    @Override public void loop() {
+        centerOnAprilTag();
     }
 
     /**
@@ -119,56 +115,12 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     }
 
     /**
-     * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
-     */
-    @SuppressLint("DefaultLocale")
-    public void centerOnAprilTag() {
-        boolean targetReached = false;
-
-        String errValues, driveValues;
-
-        while (!targetReached) { // Wait for the robot to center on the April Tag
-            detectAprilTags(); // Get all of the April Tags; Blocking
-
-            if (isStopRequested() || !opModeIsActive()) return;
-
-            telemetry.addLine("Attempting To Center On April Tag");
-            telemetry.update();
-
-            rangeErr  = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-            bearingErr = desiredTag.ftcPose.bearing;
-            yawErr     = desiredTag.ftcPose.yaw;
-
-            drive  = Range.clip(rangeErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
-            strafe = Range.clip(-yawErr * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-            turn   = Range.clip(-bearingErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
-
-            driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-            errValues   = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
-
-            telemetry.addLine(driveValues);
-            telemetry.addLine(errValues);
-
-            MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
-
-            if (isWithinTargetTolerance()) {
-                MecanumDriveBase.driveManualFF(0,0,0, 0.0);
-
-                targetReached = true;
-            }
-
-            telemetry.update();
-        }
-    }
-
-    /**
      * Note, this function is blocking
      */
     private void detectAprilTags() {
         int checkCount = 0;
 
         while (!targetFound) { // Wait until we detect the desired April Tag
-            if (isStopRequested() || !opModeIsActive()) return;
 
             // Make sure that we don't waste to much time checking
             if (checkCount > 1000) MecanumDriveBase.driveManualFF(0.0,0.0,0.0, 0.0);
@@ -202,11 +154,42 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     }
 
     /**
-     * Checks whether we are within the tolerances defined by rangeErrTolerance, bearingErrTolerance,
-     * and yawErrTolerance
-     * @return True if we are within tolerance, false if we are not
+     * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
      */
-    private boolean isWithinTargetTolerance() {
-       return rangeErr < rangeErrTolerance && bearingErr < bearingErrTolerance && yawErr < yawErrTolerance;
+    @SuppressLint("DefaultLocale")
+    public void centerOnAprilTag() {
+        boolean targetReached = false;
+
+        String errValues, driveValues;
+
+        while (!targetReached) { // Wait for the robot to center on the April Tag
+            detectAprilTags(); // Get all of the April Tags; Blocking
+
+            telemetry.addLine("Attempting To Center On April Tag");
+
+            rangeErr  = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+            bearingErr = desiredTag.ftcPose.bearing;
+            yawErr     = desiredTag.ftcPose.yaw;
+
+            drive  = Range.clip(rangeErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
+            strafe = Range.clip(-yawErr * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+            turn   = Range.clip(-bearingErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
+            driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
+            errValues   = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
+
+            telemetry.addLine(driveValues);
+            telemetry.addLine(errValues);
+
+            MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
+
+            if (rangeErr < rangeErrTolerance && bearingErr < bearingErrTolerance && yawErr < yawErrTolerance) {
+                MecanumDriveBase.driveManualFF(0,0,0, 0.0);
+
+                targetReached = true;
+            }
+
+            telemetry.update();
+        }
     }
 }
