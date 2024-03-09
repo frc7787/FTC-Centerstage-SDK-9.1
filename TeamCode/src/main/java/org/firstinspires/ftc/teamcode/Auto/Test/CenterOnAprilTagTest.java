@@ -12,7 +12,6 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
-import org.firstinspires.ftc.teamcode.Subsytems.DriveBase;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -63,9 +62,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         waitForStart();
 
-        if (isStopRequested() || !opModeIsActive()) return;
-
         while (opModeIsActive()) {
+            if (isStopRequested()) return;
+
             centerOnAprilTag();
         }
     }
@@ -171,9 +170,8 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         while (!targetFound) { // Wait until we detect the desired April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
-            if (checkCount > 1000) {
-                MecanumDriveBase.driveManualFF(0,0,0,0.0);
-            }
+            // Make sure that we don't waste to much time checking
+            if (checkCount > 1000) MecanumDriveBase.driveManualFF(0.0,0.0,0.0, 0.0);
 
             telemetry.addLine("Searching For Target");
 
@@ -192,7 +190,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
                     targetFound = true;
 
-                    return; // Stop looking, if we find the tag
+                    return;
                 }
                 telemetry.update();
             }
@@ -211,7 +209,4 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     private boolean isWithinTargetTolerance() {
        return rangeErr < rangeErrTolerance && bearingErr < bearingErrTolerance && yawErr < yawErrTolerance;
     }
-}
-class DriveFeedForward{
-
 }
