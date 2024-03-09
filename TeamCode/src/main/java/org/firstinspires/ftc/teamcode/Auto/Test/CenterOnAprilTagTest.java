@@ -207,3 +207,6 @@ public class CenterOnAprilTagTest extends LinearOpMode {
        return rangeErr < rangeErrTolerance && bearingErr < bearingErrTolerance && yawErr < yawErrTolerance;
     }
 }
+class DriveFeedForward{
+
+}
