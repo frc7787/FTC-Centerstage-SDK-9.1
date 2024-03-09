@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
+import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.Subsytems.DriveBase;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -37,9 +38,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     final double DESIRED_DISTANCE = 24.0;
 
-    final double SPEED_GAIN  =  0.05;
+    final double SPEED_GAIN  =  0.025;
     final double STRAFE_GAIN =  0.02;
-    final double TURN_GAIN   =  0.06;
+    final double TURN_GAIN   =  0.006;
 
     final double MAX_AUTO_SPEED  = 1.0;
     final double MAX_AUTO_STRAFE = 1.0;
@@ -50,9 +51,13 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     boolean targetFound;
 
+    MecanumDriveBase driveBase;
+
     @Override
     public void runOpMode() {
-        DriveBase.init(hardwareMap);
+        driveBase = new MecanumDriveBase(hardwareMap);
+
+        driveBase.init();
 
         initVisionProcessing();
 
@@ -77,7 +82,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
                 .build();
 
-        aprilTagProcessor.setDecimation(1);
+        aprilTagProcessor.setDecimation(4);
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
@@ -145,10 +150,10 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             telemetry.addLine(driveValues);
             telemetry.addLine(errValues);
 
-            DriveBase.driveManualRobotCentric(drive, strafe, turn);
+            MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
 
             if (isWithinTargetTolerance()) {
-                DriveBase.driveManualRobotCentric(0,0,0);
+                MecanumDriveBase.driveManualFF(0,0,0, 0.0);
 
                 targetReached = true;
             }
@@ -167,7 +172,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             if (isStopRequested() || !opModeIsActive()) return;
 
             if (checkCount > 1000) {
-                DriveBase.driveManualRobotCentric(0,0,0);
+                MecanumDriveBase.driveManualFF(0,0,0,0.0);
             }
 
             telemetry.addLine("Searching For Target");
