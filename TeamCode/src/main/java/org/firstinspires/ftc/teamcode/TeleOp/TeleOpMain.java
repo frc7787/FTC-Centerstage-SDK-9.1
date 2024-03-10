@@ -93,7 +93,7 @@ public class TeleOpMain extends OpMode {
     private void endgameLoop() {
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
-        if (Arm.getWormTargetPos() == ENDGAME_POSITION) {
+        if (Arm.wormTargetPos() == ENDGAME_POSITION) {
             Auxiliaries.releaseHanger(); // Automatically release hanging hook when we go to hang
 
             if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
@@ -115,7 +115,7 @@ public class TeleOpMain extends OpMode {
             Auxiliaries.retractPixelPlacerRight();
         }
 
-        if (Arm.getWormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
+        if (Arm.wormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
             if (gamepad2.left_trigger > 0.9) {
                 Intake.intake();
                 Arm.setDoorPos(TRAY_DOOR_OPEN_POS);
