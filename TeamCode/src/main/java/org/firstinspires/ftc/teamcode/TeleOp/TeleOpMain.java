@@ -65,7 +65,7 @@ public class TeleOpMain extends OpMode {
 
                normalPeriodLoop();
 
-               if (gamepad1.share) {
+               if (gamepad2.share) {
                    gamePeriod = ENDGAME;
                    gamepad1.rumble(1, 1, 1000);
                    gamepad2.rumble(1, 1, 1000);
