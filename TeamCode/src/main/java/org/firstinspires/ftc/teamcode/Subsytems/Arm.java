@@ -165,20 +165,21 @@ public class Arm {
     private static void home() {
        switch (homingState) {
             case START:
-                setDoorPos(TRAY_DOOR_CLOSED_POS);
+                setDoorPos(TRAY_DOOR_CLOSED_POS); // Make sure the tray is closed so we don't break it
 
-                wormMotor.setMotorEnable();
                 wormMotor.setMode(RUN_USING_ENCODER);
-                elevatorMotor.setMotorEnable();
                 elevatorMotor.setMode(RUN_USING_ENCODER);
 
-                if (wormPotentiometer.getVoltage() >= SAFETY_VOLTAGE){
+                // If the worm power is greater than the safety voltage, start homing the elevator
+                if (wormPotentiometer.getVoltage() >= SAFETY_VOLTAGE) {
                     wormMotor.setPower(0.0);
                     homingState = HOMING_ELEVATOR;
-                } else {
+                } else { // If the voltage is less than the safety limit, drive the worm up,
                     wormMotor.setPower(1.0);
                     elevatorMotor.setPower(-0.05);
-                    if(elevatorLimitSwitchIsPressed()) {
+
+                    // If the limit switch is pressed, we start homing the elevator
+                    if (elevatorLimitSwitchPressed()) {
                         wormMotor.setPower(0.0);
                         homingState = HOMING_ELEVATOR;
                     }
@@ -189,6 +190,7 @@ public class Arm {
             case HOMING_ELEVATOR:
                 elevatorMotor.setPower(ELEVATOR_HOMING_POWER);
 
+                // Stop homing once the limit switch is pressed
                 if (elevatorLimitSwitch.isPressed()) {
                     homingState = HOMING_WORM;
                     elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
@@ -198,6 +200,7 @@ public class Arm {
            case HOMING_WORM:
                wormMotor.setPower(WORM_HOMING_POWER);
 
+               // If the worm limit switch is pressed, start removing backlash
                if (wormLimitSwitch.isPressed()) {
                    homingState = REMOVING_WORM_BACKLASH;
                    wormMotor.setPower(0);
@@ -206,6 +209,7 @@ public class Arm {
            case REMOVING_WORM_BACKLASH:
                wormMotor.setPower(WORM_BACKLASH_REMOVING_POWER);
 
+               // Remove the backlash of the worm.
                if (!wormLimitSwitch.isPressed()) {
                    homingState = COMPLETE;
                    wormMotor.setMode(STOP_AND_RESET_ENCODER);
@@ -311,6 +315,10 @@ public class Arm {
         telemetry.addData("Elevator Motor Run Mode", elevatorMotor.getMode());
     }
 
+    /**
+     * Displays debug information about the delivery tray.
+     * @param telemetry The telemetry to display the information on
+     */
     public static void debugDeliveryTray(@NonNull Telemetry telemetry) {
         telemetry.addLine("Delivery Tray Debug");
 
@@ -322,6 +330,10 @@ public class Arm {
         telemetry.addData("Right Door Servo Commanded Position", rightDoor.getPosition());
     }
 
+    /**
+     * Displays debug information about the arm
+     * @param telemetry The telemetry to display the information on
+     */
     public static void debugArm(@NonNull Telemetry telemetry) {
         telemetry.addLine("Arm Debug");
 
@@ -344,50 +356,36 @@ public class Arm {
     /**
      * @return The current position of the elevator
      */
-    public static int getElevatorPos() {
+    public static int elevatorPos() {
         return elevatorMotor.getCurrentPosition();
     }
 
     /**
      * @return The current position of the worm drive
      */
-    public static int getWormPos() {
+    public static int wormPos() {
         return wormMotor.getCurrentPosition();
     }
 
     /**
      * @return The target position of the worm drive
      */
-    public static int getWormTargetPos() {
+    public static int wormTargetPos() {
         return wormMotor.getTargetPosition();
     }
 
-    /**
-     * @return The target position of the elevator
-     */
-    public static int getElevatorTargetPos() {
-        return elevatorMotor.getTargetPosition();
-    }
 
     /**
      * @return The state of the arm in the normal period
      */
-    public static NormalPeriodArmState getNormalPeriodArmState() {
+    public static NormalPeriodArmState armState() {
         return normalPeriodArmState;
     }
 
     /**
-     * @return The homing state of the elevator
+     * @return If the elevator limit switch is pressed
      */
-    public static HomingState getHomingState() {
-        return homingState;
-    }
-
-    public static boolean wormLimitSwitchIsPressed() {
-        return wormLimitSwitch.isPressed();
-    }
-
-    public static boolean elevatorLimitSwitchIsPressed() {
+    public static boolean elevatorLimitSwitchPressed() {
         return elevatorLimitSwitch.isPressed();
     }
 }
