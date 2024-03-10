@@ -13,7 +13,7 @@ import static com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode.AUTO;
 import static org.firstinspires.ftc.teamcode.Properties.*;
 import static org.firstinspires.ftc.teamcode.TeleOp.TeleOpMain.GamePeriod.*;
 
-@TeleOp(name = "TeleOp - Provincials - Use This One", group = "Production")
+@TeleOp(name = "TeleOp - Use This One", group = "Production")
 public class TeleOpMain extends OpMode {
     GamePeriod gamePeriod;
 

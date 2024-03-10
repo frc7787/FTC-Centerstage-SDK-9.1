@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.TeleOp;
+package org.firstinspires.ftc.teamcode.TeleOp.Test;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -20,5 +20,10 @@ public class DriveBaseTest extends OpMode {
         double turn   = gamepad1.right_stick_x;
 
         DriveBase.driveManualRobotCentric(drive, strafe, turn);
+
+        telemetry.addData("Drive", drive);
+        telemetry.addData("Strafe", strafe);
+        telemetry.addData("Turn", turn);
+        telemetry.update();
     }
 }

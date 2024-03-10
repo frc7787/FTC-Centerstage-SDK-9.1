@@ -1,15 +1,14 @@
-package org.firstinspires.ftc.teamcode.TeleOp;
+package org.firstinspires.ftc.teamcode.TeleOp.Utility;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@TeleOp(name = "Utility - Arm Measurement")
-public class ArmMeasurementTeleOp extends OpMode {
-    DcMotorImplEx wormMotor, elevatorMotor;
+@TeleOp(name = "Utility - Arm Measurement", group = "Utility")
+public class ArmMeasurement extends OpMode {
+    private DcMotorImplEx wormMotor, elevatorMotor;
 
     @Override public void init() {
         wormMotor     = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
