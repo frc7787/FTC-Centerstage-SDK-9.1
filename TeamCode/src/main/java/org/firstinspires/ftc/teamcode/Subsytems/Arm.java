@@ -89,6 +89,10 @@ public class Arm {
                 if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0 && !intaking) {
                     elevatorMotor.setPower(0.0);
                     wormMotor.setPower(0.0);
+
+                } else if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0) {
+                    elevatorMotor.setPower(0.1);
+                    wormMotor.setPower(0.0);
                 }
             case TO_POS:
                 // Make sure we follow a safe sequence back
