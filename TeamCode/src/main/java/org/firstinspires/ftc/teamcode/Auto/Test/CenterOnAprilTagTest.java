@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.apache.commons.math3.geometry.euclidean.twod.Line;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Test - Center On April Tag", group = "Testing")
-public class CenterOnAprilTagTest extends OpMode {
+public class CenterOnAprilTagTest extends LinearOpMode {
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
@@ -53,16 +54,18 @@ public class CenterOnAprilTagTest extends OpMode {
 
     MecanumDriveBase driveBase;
 
-    @Override public void init() {
+    @Override public void runOpMode() {
         driveBase = new MecanumDriveBase(hardwareMap);
 
         driveBase.init();
 
         initVisionProcessing();
-    }
 
-    @Override public void loop() {
-        centerOnAprilTag();
+        while (opModeIsActive()) {
+            if (isStopRequested()) return;
+
+            centerOnAprilTag();
+        }
     }
 
     /**
@@ -118,13 +121,8 @@ public class CenterOnAprilTagTest extends OpMode {
      * Note, this function is blocking
      */
     private void detectAprilTags() {
-        int checkCount = 0;
 
         while (!targetFound) { // Wait until we detect the desired April Tag
-
-            // Make sure that we don't waste to much time checking
-            if (checkCount > 1000) MecanumDriveBase.driveManualFF(0.0,0.0,0.0, 0.0);
-
             telemetry.addLine("Searching For Target");
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
@@ -146,8 +144,6 @@ public class CenterOnAprilTagTest extends OpMode {
                 }
                 telemetry.update();
             }
-
-            checkCount += 1;
         }
 
         targetFound = false;
@@ -171,7 +167,7 @@ public class CenterOnAprilTagTest extends OpMode {
             bearingErr = desiredTag.ftcPose.bearing;
             yawErr     = desiredTag.ftcPose.yaw;
 
-            drive  = Range.clip(rangeErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
+            drive  = Range.clip(rangeErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             strafe = Range.clip(-yawErr * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
             turn   = Range.clip(-bearingErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
