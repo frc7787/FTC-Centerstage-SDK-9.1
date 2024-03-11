@@ -42,12 +42,12 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         TrajectorySequence toSpikeCenter = drive.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(10, 34, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(12, 34, Math.toRadians(0)))
                 .build();
 
         TrajectorySequence toSpikeRight = drive.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(12, 39, Math.toRadians(25)))
-                .lineToConstantHeading(new Vector2d(0, 36))
+                .lineToLinearHeading(new Pose2d(12, 39, Math.toRadians(22)))
+                .lineToConstantHeading(new Vector2d(-2, 36))
                 .build();
 
         TrajectorySequence toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
@@ -61,7 +61,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         TrajectorySequence toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .lineToLinearHeading(new Pose2d(2, 38, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(0, 38, Math.toRadians(0)))
                 .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
@@ -176,9 +176,9 @@ public class AutoBlueBackdrop extends LinearOpMode {
             case RIGHT:
                 drive.followTrajectorySequence(toSpikeRight);
 
-              //  Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.placePixelOnSpikeStripRight();
 
-                //drive.followTrajectorySequence(toBackdropRight);
+                drive.followTrajectorySequence(toBackdropRight);
 
                 break;
             case NONE: // This case should copy center
