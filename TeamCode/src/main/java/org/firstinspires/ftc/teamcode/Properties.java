@@ -23,7 +23,7 @@ public class Properties {
     public static volatile int ENDGAME_POSITION = 2525;
 
     public static volatile double DEFAULT_WORM_POWER     = 1.0;
-    public static volatile double DEFAULT_ELEVATOR_POWER = 1.0; // 1.0;
+    public static volatile double DEFAULT_ELEVATOR_POWER = 0.5; // 1.0;
     public static volatile double ELEVATOR_HOMING_POWER  = 0.5; // Absolute value
     public static volatile double WORM_HOMING_POWER      = 0.5; // Absolute value
 
