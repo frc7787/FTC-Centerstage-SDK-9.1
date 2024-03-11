@@ -73,7 +73,7 @@ public class TeleOpMain extends OpMode {
 
                break;
            case ENDGAME:
-               if (gamepad1.options) {
+               if (gamepad2.options) {
                    gamePeriod = NORMAL;
                    gamepad1.rumble(1,1, 1000);
                    gamepad2.rumble(1,1,1000);
