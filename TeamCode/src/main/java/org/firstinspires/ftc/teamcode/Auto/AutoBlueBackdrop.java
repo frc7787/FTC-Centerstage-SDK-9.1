@@ -46,7 +46,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         TrajectorySequence toSpikeRight = drive.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(12, 36, Math.toRadians(45)))
+                .lineToLinearHeading(new Pose2d(12, 39, Math.toRadians(25)))
+                .lineToConstantHeading(new Vector2d(0, 36))
                 .build();
 
         TrajectorySequence toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
@@ -60,7 +61,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         TrajectorySequence toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .strafeTo(new Vector2d(-4, 38))
+                .lineToLinearHeading(new Pose2d(2, 38, Math.toRadians(0)))
                 .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
@@ -86,7 +87,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         camera = OpenCvCameraFactory
                 .getInstance()
-                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId);
 
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override public void onOpened() {
