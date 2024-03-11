@@ -94,6 +94,9 @@ public class Arm {
                     elevatorMotor.setPower(0.1);
                     wormMotor.setPower(0.0);
                 }
+                else {
+                    elevatorMotor.setPower(0.2);
+                }
             case TO_POS:
                 // Make sure we follow a safe sequence back
                 if (elevatorTargetPos == 0 && wormTargetPos == 0){
