@@ -68,6 +68,7 @@ public class AutoRedAudience extends LinearOpMode {
                 .strafeTo(new Vector2d(-40, -12))
                 .lineTo(new Vector2d(38, -12))
                 .strafeTo(new Vector2d(38, -36))
+                .turn(Math.toRadians(180))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
