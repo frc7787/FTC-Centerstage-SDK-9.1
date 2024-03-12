@@ -8,11 +8,13 @@ import android.util.Size;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.apache.commons.math3.geometry.euclidean.twod.Line;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
+import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -29,9 +31,11 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     final int DESIRED_TAG_ID = 5;
 
+    final Size resolution = new Size(640, 480);
+
     final double yawErrTolerance     = 0.1;
-    final double bearingErrTolerance = 0.4;
-    final double rangeErrTolerance   = 1.0;
+    final double bearingErrTolerance = 0.1;
+    final double rangeErrTolerance   = 0.1;
 
     int myExposure     = 3;
     int myGain         = 255;
@@ -39,30 +43,30 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     final double DESIRED_DISTANCE = 24.0;
 
-    final double SPEED_GAIN  =  0.025;
-    final double STRAFE_GAIN =  0.02;
-    final double TURN_GAIN   =  0.006;
-
-    final double MAX_AUTO_SPEED  = 1.0;
-    final double MAX_AUTO_STRAFE = 1.0;
-    final double MAX_AUTO_TURN   = 1.0;
+    final double MAX_AUTO_SPEED  = 0.7;
+    final double MAX_AUTO_STRAFE = 0.7;
+    final double MAX_AUTO_TURN   = 0.7;
 
     double drive, strafe, turn;
-    double rangeErr, yawErr, bearingErr;
-
-    boolean targetFound;
+    double rangeErr, yawErr, bearingErr, prevRangeErr, prevYawErr, prevBearingErr;
 
     MecanumDriveBase driveBase;
 
+    PIDController turnPID   = new PIDController(0.006, 0.0, 0.0006);
+    PIDController strafePID = new PIDController(0.03, 0.0, 0.003);
+    PIDController drivePID  = new PIDController(0.025, 0.0, 0.0025);
+
     @Override public void runOpMode() {
-        driveBase = new MecanumDriveBase(hardwareMap);
+        driveBase = new MecanumDriveBase(hardwareMap);;
 
         driveBase.init();
 
         initVisionProcessing();
 
+        waitForStart();
+
         while (opModeIsActive()) {
-            if (isStopRequested()) return;
+            if (isStopRequested() || !opModeIsActive()) return;
 
             centerOnAprilTag();
         }
@@ -80,16 +84,18 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
                 .build();
 
-        aprilTagProcessor.setDecimation(4);
+        //aprilTagProcessor.setDecimation(decimation);
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .setCameraResolution(new Size(640, 480))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
+                .setCameraResolution(resolution)
                 .setAutoStopLiveView(true)
                 .build();
 
         while (visionPortal.getCameraState() != STREAMING) {
+            if (isStopRequested() || !opModeIsActive()) return;
+
             telemetry.addLine("Camera Waiting.");
             telemetry.addData("Current Camera State", visionPortal.getCameraState().toString());
             telemetry.update();
@@ -120,33 +126,41 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     /**
      * Note, this function is blocking
      */
-    private void detectAprilTags() {
+    private boolean detectAprilTags() {
+        int count = 0;
 
-        while (!targetFound) { // Wait until we detect the desired April Tag
-            telemetry.addLine("Searching For Target");
+        boolean targetDetected = false;
+
+        while (!targetDetected) { // Wait until we detect the desired April Tag
+            if (isStopRequested() || !opModeIsActive()) return false;
+
+            count ++;
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
-            if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
+            if (count > 100) {
+                if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
+                break;
+            }
 
             for (AprilTagDetection detection : currentDetections) {
+                if (isStopRequested() || !opModeIsActive()) return false;
+
                 if (detection.metadata == null) continue;
 
                 if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
                     telemetry.addLine("Detected Desired Tag");
-                    telemetry.update();
 
                     desiredTag = detection;
 
-                    targetFound = true;
+                    targetDetected = true;
 
-                    return;
+                    break;
                 }
-                telemetry.update();
             }
         }
 
-        targetFound = false;
+        return targetDetected;
     }
 
     /**
@@ -154,38 +168,46 @@ public class CenterOnAprilTagTest extends LinearOpMode {
      */
     @SuppressLint("DefaultLocale")
     public void centerOnAprilTag() {
-        boolean targetReached = false;
+        boolean isAtTarget = false;
 
         String errValues, driveValues;
 
-        while (!targetReached) { // Wait for the robot to center on the April Tag
-            detectAprilTags(); // Get all of the April Tags; Blocking
+        while (!isAtTarget) { // Wait for the robot to center on the April Tag
+            if (isStopRequested() || !opModeIsActive()) return;
 
-            telemetry.addLine("Attempting To Center On April Tag");
+            if (detectAprilTags()) {
+                rangeErr   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
 
-            rangeErr  = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-            bearingErr = desiredTag.ftcPose.bearing;
-            yawErr     = desiredTag.ftcPose.yaw;
+                //Forward Offset / Lateral Distance / 2 * Difference In Right-Left Deadwheel Velocities + Front Deadwheel Velocity
+                yawErr     = desiredTag.ftcPose.yaw;
+                bearingErr = desiredTag.ftcPose.bearing;
 
-            drive  = Range.clip(rangeErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            strafe = Range.clip(-yawErr * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-            turn   = Range.clip(-bearingErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
+                strafe = Range.clip(strafePID.calculate(yawErr, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+                turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-            driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-            errValues   = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
+                driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
+                errValues   = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
 
-            telemetry.addLine(driveValues);
-            telemetry.addLine(errValues);
+                telemetry.addLine(driveValues);
+                telemetry.addLine(errValues);
 
-            MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
+                MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
 
-            if (rangeErr < rangeErrTolerance && bearingErr < bearingErrTolerance && yawErr < yawErrTolerance) {
-                MecanumDriveBase.driveManualFF(0,0,0, 0.0);
-
-                targetReached = true;
+                if (isWithinTolerance()) {
+                    isAtTarget = true;
+                } else {
+                    MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+                }
             }
 
             telemetry.update();
         }
+    }
+
+    public boolean isWithinTolerance() {
+        return (Math.abs(rangeErr)      < rangeErrTolerance
+                && Math.abs(yawErr)     < yawErrTolerance
+                && Math.abs(bearingErr) < bearingErrTolerance);
     }
 }
