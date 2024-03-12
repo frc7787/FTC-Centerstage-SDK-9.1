@@ -55,7 +55,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     MecanumDriveBase driveBase;
 
     PIDController turnPID   = new PIDController(0.006, 0.0, 0.0006);
-    PIDController strafePID = new PIDController(0.03, 0.0, 0.0006);
+    PIDController strafePID = new PIDController(0.03, 0.0, 0.00002);
     PIDController drivePID  = new PIDController(0.025, 0.0, 0.0025);
 
     @Override public void runOpMode() {
