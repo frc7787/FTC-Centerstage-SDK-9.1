@@ -27,7 +27,7 @@ public class Arm {
     private static final double ELEVATOR_HOMING_POWER = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
     private static final double WORM_HOMING_POWER     = -Math.abs(Properties.WORM_HOMING_POWER);
 
-    private static final double SAFETY_VOLTAGE = 0.8;
+    private static final double SAFETY_VOLTAGE = 0.76;
 
     private static DcMotorImplEx wormMotor, elevatorMotor;
     private static ServoImplEx leftDoor, rightDoor;
