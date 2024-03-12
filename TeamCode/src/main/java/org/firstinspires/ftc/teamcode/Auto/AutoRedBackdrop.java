@@ -42,7 +42,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         TrajectorySequence toSpikeLeft = drive.trajectorySequenceBuilder(startPose)
                 .lineToConstantHeading(new Vector2d(12, -36))
-                .lineToLinearHeading(new Pose2d(-4, -32, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(-4, -32, Math.toRadians(-180)))
                 .build();
 
         TrajectorySequence toSpikeCenter = drive.trajectorySequenceBuilder(startPose)
@@ -56,6 +56,7 @@ public class AutoRedBackdrop extends LinearOpMode {
         TrajectorySequence toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(-4, -38))
                 .lineToConstantHeading(new Vector2d(38, -36))
+                .turn(Math.toRadians(180))
                 .build();
 
         TrajectorySequence toBackdropCenter = drive.trajectorySequenceBuilder(toSpikeCenter.end())
