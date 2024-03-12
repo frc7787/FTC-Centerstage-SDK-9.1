@@ -38,35 +38,36 @@ public class AutoRedAudience extends LinearOpMode {
         drive.setPoseEstimate(startPose);
 
         TrajectorySequence toSpikeRight = drive.trajectorySequenceBuilder(startPose)
-                .lineTo(new Vector2d(-35, -34))
-
+                .lineToLinearHeading(new Pose2d(-36, -39, Math.toRadians(-158)))
+                .lineToConstantHeading(new Vector2d(-22, -36))
                 .build();
 
         TrajectorySequence toSpikeCenter = drive.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(-12, -20, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(-36, -20, Math.toRadians(0)))
                 .build();
 
         TrajectorySequence toSpikeLeft = drive.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(-24, -20, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(-42, -21, Math.toRadians(0)))
                 .build();
 
         TrajectorySequence toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
-                .strafeTo(new Vector2d(-24, -12))
+                .strafeTo(new Vector2d(-42, -12))
                 .lineTo(new Vector2d(38, -12))
                 .strafeTo(new Vector2d(38, -36))
                 .build();
 
         TrajectorySequence toBackdropCenter = drive.trajectorySequenceBuilder(toSpikeCenter.end())
-                .strafeTo(new Vector2d(-12, -12))
+                .strafeTo(new Vector2d(-36, -12))
                 .lineTo(new Vector2d(38, -12))
                 .strafeTo(new Vector2d(38, -36))
                 .build();
 
         TrajectorySequence toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .turn(Math.toRadians(90))
-                .lineTo(new Vector2d(45, -12))
-                .strafeTo(new Vector2d(45, -49))
-                .lineTo(new Vector2d(53.5, -49))
+                .lineToLinearHeading(new Pose2d(-24, -38, Math.toRadians(180)))
+                .lineToConstantHeading(new Vector2d(-40, -36))
+                .strafeTo(new Vector2d(-40, -12))
+                .lineTo(new Vector2d(38, -12))
+                .strafeTo(new Vector2d(38, -36))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
@@ -77,7 +78,7 @@ public class AutoRedAudience extends LinearOpMode {
         camera = OpenCvCameraFactory
                 .getInstance()
                 .createWebcam(
-                        hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId
+                        hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId
                 );
 
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
