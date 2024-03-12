@@ -47,7 +47,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 .build();
 
         toSpikeRight = drive.trajectorySequenceBuilder(startPos)
-                .lineToLinearHeading(new Pose2d(-52, 20, Math.toRadians(180)))
+                .lineToLinearHeading(new Pose2d(-49, 20, Math.toRadians(180)))
                 .build();
 
         toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
@@ -67,7 +67,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 .build();
 
         toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .strafeTo(new Vector2d(-52, 12))
+                .strafeTo(new Vector2d(-49, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
                 .strafeTo(new Vector2d(38, 36))
                 .turn(Math.toRadians(180))
