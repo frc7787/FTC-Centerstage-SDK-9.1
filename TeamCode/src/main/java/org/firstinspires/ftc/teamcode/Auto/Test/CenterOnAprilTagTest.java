@@ -48,7 +48,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     final double MAX_AUTO_TURN   = 0.7;
 
     double drive, strafe, turn;
-    double rangeErr, yawErr, bearingErr, prevRangeErr, prevYawErr, prevBearingErr;
+    double rangeErr, yawErr, bearingErr;
+
+    double prevRangeErr, prevYawErr, prevBearingErr;
 
     MecanumDriveBase driveBase;
 
@@ -134,8 +136,6 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         while (!targetDetected) { // Wait until we detect the desired April Tag
             if (isStopRequested() || !opModeIsActive()) return false;
 
-            count ++;
-
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
             if (count > 100) {
@@ -158,6 +158,8 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                     break;
                 }
             }
+
+            count ++;
         }
 
         return targetDetected;
@@ -176,14 +178,23 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             if (isStopRequested() || !opModeIsActive()) return;
 
             if (detectAprilTags()) {
-                rangeErr   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+                prevRangeErr = rangeErr;
+                rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
 
-                //Forward Offset / Lateral Distance / 2 * Difference In Right-Left Deadwheel Velocities + Front Deadwheel Velocity
+                prevYawErr = yawErr;
                 yawErr     = desiredTag.ftcPose.yaw;
-                bearingErr = desiredTag.ftcPose.bearing;
+
+                prevBearingErr = bearingErr;
+                bearingErr     = desiredTag.ftcPose.bearing;
+
+                rangeErr   = 0.9 * rangeErr + 0.1 * prevRangeErr;
+                yawErr     = 0.9 * yawErr + 0.1 * prevYawErr;
+                bearingErr = 0.9 * bearingErr + 0.1 * prevBearingErr;
+
+
 
                 drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
-                strafe = Range.clip(strafePID.calculate(yawErr, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+                strafe = Range.clip(strafePID.calculate(desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
                 driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
@@ -192,13 +203,14 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 telemetry.addLine(driveValues);
                 telemetry.addLine(errValues);
 
-                MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
-
                 if (isWithinTolerance()) {
                     isAtTarget = true;
-                } else {
                     MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+                } else {
+                    MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
                 }
+            } else {
+                MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
             }
 
             telemetry.update();
