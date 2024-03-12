@@ -33,9 +33,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     final Size resolution = new Size(640, 480);
 
-    final double yawErrTolerance     = 0.1;
-    final double bearingErrTolerance = 0.1;
-    final double rangeErrTolerance   = 0.1;
+    final double yawErrTolerance     = 1;
+    final double bearingErrTolerance = 1;
+    final double rangeErrTolerance   = 0.5;
 
     int myExposure     = 3;
     int myGain         = 255;
@@ -55,7 +55,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     MecanumDriveBase driveBase;
 
     PIDController turnPID   = new PIDController(0.006, 0.0, 0.0006);
-    PIDController strafePID = new PIDController(0.03, 0.0, 0.003);
+    PIDController strafePID = new PIDController(0.03, 0.0, 0.0006);
     PIDController drivePID  = new PIDController(0.025, 0.0, 0.0025);
 
     @Override public void runOpMode() {
@@ -187,13 +187,15 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 prevBearingErr = bearingErr;
                 bearingErr     = desiredTag.ftcPose.bearing;
 
-                rangeErr   = 0.9 * rangeErr + 0.1 * prevRangeErr;
-                yawErr     = 0.9 * yawErr + 0.1 * prevYawErr;
+                rangeErr   = 0.9 * rangeErr   + 0.1 * prevRangeErr;
+                yawErr     = 0.9 * yawErr     + 0.1 * prevYawErr;
                 bearingErr = 0.9 * bearingErr + 0.1 * prevBearingErr;
 
+                if (Math.abs(rangeErr) < rangeErrTolerance)     rangeErr   = 0.0;
+                if (Math.abs(yawErr) < yawErrTolerance)         yawErr     = 0.0;
+                if (Math.abs(bearingErr) < bearingErrTolerance) bearingErr = 0.0;
 
-
-                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED) * -1.0;
+                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
                 strafe = Range.clip(strafePID.calculate(desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
@@ -205,12 +207,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
                 if (isWithinTolerance()) {
                     isAtTarget = true;
-                    MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 } else {
                     MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
                 }
-            } else {
-                MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
             }
 
             telemetry.update();
