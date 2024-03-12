@@ -62,4 +62,10 @@ public class Properties {
 
     public static volatile double LEFT_X  = 0.25 * (double) CAMERA_WIDTH;
     public static volatile double RIGHT_X = 0.75 * (double) CAMERA_WIDTH;
+
+    // ----------- AUTO WAIT TIMES in ms------------ //
+
+    public static volatile int INITIAL_SLEEP = 4000;
+    public static volatile int STEP_1_SLEEP = 1000;
+    public static volatile int STEP_2_SLEEP = 800;
 }

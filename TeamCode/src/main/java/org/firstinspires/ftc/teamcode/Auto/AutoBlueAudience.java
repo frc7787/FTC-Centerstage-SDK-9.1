@@ -8,8 +8,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
+import org.firstinspires.ftc.teamcode.Properties;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.RobotPropertyParser;
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -29,6 +31,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        RobotPropertyParser.loadProperties();
         propDetector = new PropDetector(PropColor.BLUE);
         drive        = new MecanumDriveBase(hardwareMap);
 
@@ -157,73 +160,92 @@ public class AutoBlueAudience extends LinearOpMode {
 
         Arm.rotateWorm(25);
 
-        sleep(4000);
+        doInitialSleep();
+
 
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropLeft);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
             case CENTER:
                 drive.followTrajectorySequence(toSpikeCenter);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropCenter);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                doStep2Sleep();
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
             case RIGHT:
                 drive.followTrajectorySequence(toSpikeRight);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropRight);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                doStep2Sleep();
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
             case NONE: // This case should copy center
                 drive.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnBackdropRight();
 
                 Auxiliaries.retractPixelPlacerRight();
                 drive.followTrajectorySequence(toBackdropCenter);
 
-                sleep(1000);
+                doStep1Sleep();
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                doStep2Sleep();
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
         }
 
         sleep(20000);
     }
+    private void doInitialSleep(){
+        int sl = Properties.INITIAL_SLEEP;
+        // default / min sleep
+        sleep(Math.max(sl, 1000));
+    }
+    private void doStep1Sleep() {
+        int sl = Properties.STEP_1_SLEEP;
+        // default / min sleep
+        sleep(Math.max(sl, 100));
+    }
+
+    private void doStep2Sleep() {
+        int sl = Properties.STEP_2_SLEEP;
+        // default / min sleep
+        sleep(Math.max(sl, 100));
+    }
+
+
 }
