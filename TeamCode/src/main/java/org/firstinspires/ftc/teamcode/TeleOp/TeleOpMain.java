@@ -51,9 +51,9 @@ public class TeleOpMain extends OpMode {
         Arm.update(Intake.isActive());
         Arm.debug(telemetry);
 
-        double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
-        double strafe = gamepad1.left_stick_x;
-        double turn   = gamepad1.right_stick_x;
+        double drive  = gamepad2.left_stick_y * -1.0; // Left stick y is inverted
+        double strafe = gamepad2.left_stick_x;
+        double turn   = gamepad2.right_stick_x;
 
         DriveBase.driveManualRobotCentric(drive, strafe, turn);
 
