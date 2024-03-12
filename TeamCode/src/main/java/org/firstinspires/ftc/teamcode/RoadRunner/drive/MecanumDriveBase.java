@@ -142,7 +142,7 @@ public class MecanumDriveBase extends MecanumDrive {
         return value;
     }
     private static double deadZoneFF(double stickValue, double FFvalue, double deadZoneValue) {
-        if (Math.abs(stickValue) < deadZoneValue  ) { return 0.0; }
+        if (Math.abs(stickValue) < deadZoneValue) { return 0.0; }
         return FFvalue;
     }
 
@@ -164,25 +164,28 @@ public class MecanumDriveBase extends MecanumDrive {
         bR.setPower(bRPower);
     }
     public static void driveManualFF(double drive, double strafe, double turn, double deadzone) {
-
-        drive  = deadZone(drive) ;
-        strafe = deadZone(strafe) * STRAFE_OFFSET;
-        turn   = deadZone(turn);
-
-        double driveFriction   = 0.08;
-        double turnFriction    = 0.07;
+        double driveFriction   = 0.04;
+        double turnFriction    = 0.035;
         double strafeFriction  = 0.15;
+
         double driveFF, turnFF, strafeFF;
 
-        if (localizer.getWheelVelocities().get(0) == 0 && localizer.getWheelVelocities().get(1) == 0){
+        double leftEncoderVelocity  = localizer.getWheelVelocities().get(0);
+        double rightEncoderVelocity = localizer.getWheelVelocities().get(1);
+        double frontEncoderVelocity = localizer.getWheelVelocities().get(2);
+
+        if (leftEncoderVelocity == 0 && rightEncoderVelocity == 0) {
             driveFF  = deadZoneFF(drive,(drive + Math.copySign(driveFriction,drive)), deadzone); // 0=l 1=r 2=f
-            turnFF   = deadZoneFF(turn,(turn + Math.copySign(turnFriction,turn)), deadzone);
-            strafeFF = strafe;
+            turnFF   = deadZoneFF(turn, (turn + Math.copySign(turnFriction,turn)), deadzone);
         } else {
-            driveFF  = deadZoneFF(drive,(drive + Math.copySign(driveFriction,(localizer.getWheelVelocities().get(0)+localizer.getWheelVelocities().get(1)))), deadzone);//0=l 1=r 2=f
-            turnFF   = deadZoneFF(turn,(turn + Math.copySign(turnFriction,(localizer.getWheelVelocities().get(0)-localizer.getWheelVelocities().get(1)))), deadzone);
-            strafeFF = strafe;
+            driveFF = drive + Math.copySign(driveFriction, (leftEncoderVelocity + rightEncoderVelocity));
+            turnFF  = turn  + Math.copySign(turnFriction, (leftEncoderVelocity - rightEncoderVelocity));
+
+            driveFF = deadZoneFF(drive, driveFF, deadzone);
+            turnFF  = deadZoneFF(turn, turnFF, deadzone);
         }
+
+        strafeFF = strafe;
 
         double motorPowerRatio = Math.max(Math.abs(driveFF) + Math.abs(strafeFF) + Math.abs(turnFF), 1);
 
