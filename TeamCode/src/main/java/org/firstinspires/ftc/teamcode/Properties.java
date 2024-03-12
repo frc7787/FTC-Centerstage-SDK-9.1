@@ -68,4 +68,7 @@ public class Properties {
     public static volatile int INITIAL_SLEEP = 4000;
     public static volatile int STEP_1_SLEEP = 1000;
     public static volatile int STEP_2_SLEEP = 800;
+    public static volatile int STEP_3_SLEEP = 2000;
+
+    public static volatile int AUTO_INITIAL_ARM_POS = 1400;
 }

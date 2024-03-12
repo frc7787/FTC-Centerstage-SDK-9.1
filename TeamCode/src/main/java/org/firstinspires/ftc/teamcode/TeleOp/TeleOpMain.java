@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.LED;
 
+import org.firstinspires.ftc.teamcode.RobotPropertyParser;
 import org.firstinspires.ftc.teamcode.Subsytems.*;
 
 import static com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode.AUTO;
@@ -25,6 +26,7 @@ public class TeleOpMain extends OpMode {
     LED LEDOne, LEDTwo;
     
     @Override public void init() {
+        RobotPropertyParser.populateConstantsClass();
         Intake.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
         DriveBase.init(hardwareMap);

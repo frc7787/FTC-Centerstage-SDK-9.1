@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_ARM_POS;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -9,8 +11,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
+import org.firstinspires.ftc.teamcode.Auto.Utility.AutoSleepCalc;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.RobotPropertyParser;
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -29,6 +33,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        RobotPropertyParser.populateConstantsClass();
         propDetector = new PropDetector(PropColor.RED);
         drive = new MecanumDriveBase(hardwareMap);
 
@@ -129,7 +134,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         Arm.update(false);
 
-        Arm.rotateWorm(1400);
+        Arm.rotateWorm(AUTO_INITIAL_ARM_POS);
 
         waitForStart();
 
@@ -176,18 +181,20 @@ public class AutoRedBackdrop extends LinearOpMode {
         telemetry.addData("PROP LOCATION: ", location);
         telemetry.update();
 
+        sleep(AutoSleepCalc.getInitialSleep());
+
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
 
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropLeft);
 
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                sleep(AutoSleepCalc.getStep2Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
 
                 drive.followTrajectorySequence(toParkLeft);
@@ -196,13 +203,13 @@ public class AutoRedBackdrop extends LinearOpMode {
                 drive.followTrajectorySequence(toSpikeCenter);
 
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropCenter);
 
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                sleep(AutoSleepCalc.getStep2Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
 
                 drive.followTrajectorySequence(toParkCenter);
@@ -211,13 +218,13 @@ public class AutoRedBackdrop extends LinearOpMode {
                 drive.followTrajectorySequence(toSpikeRight);
 
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropRight);
 
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                sleep(AutoSleepCalc.getStep2Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
 
                 drive.followTrajectorySequence(toParkRight);
@@ -226,13 +233,13 @@ public class AutoRedBackdrop extends LinearOpMode {
                 drive.followTrajectorySequence(toSpikeCenter);
 
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(1000);
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropCenter);
 
                 Auxiliaries.placePixelOnBackdropLeft();
-                sleep(800);
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
 
                 drive.followTrajectorySequence(toSpikeCenter);

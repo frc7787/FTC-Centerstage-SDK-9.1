@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.TeleOp.Test;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.RobotPropertyParser;
 import org.firstinspires.ftc.teamcode.Subsytems.*;
 
 import static org.firstinspires.ftc.teamcode.Properties.*;
@@ -11,6 +12,7 @@ import static org.firstinspires.ftc.teamcode.Properties.*;
 public class DroneLaunchTest extends OpMode {
 
     @Override public void init() {
+        RobotPropertyParser.populateConstantsClass();
         Arm.init(hardwareMap);
 
         telemetry.addLine("Arm will move to launch position, on start.");

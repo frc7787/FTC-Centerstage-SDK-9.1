@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_ARM_POS;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -8,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
-import org.firstinspires.ftc.teamcode.Properties;
+import org.firstinspires.ftc.teamcode.Auto.Utility.AutoSleepCalc;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.RobotPropertyParser;
@@ -31,7 +33,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        RobotPropertyParser.loadProperties();
+        RobotPropertyParser.populateConstantsClass();
         propDetector = new PropDetector(PropColor.BLUE);
         drive        = new MecanumDriveBase(hardwareMap);
 
@@ -113,7 +115,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
         Arm.update(false);
 
-        Arm.rotateWorm(1400);
+        Arm.rotateWorm(AUTO_INITIAL_ARM_POS);
 
         waitForStart();
 
@@ -160,92 +162,73 @@ public class AutoBlueAudience extends LinearOpMode {
 
         Arm.rotateWorm(25);
 
-        doInitialSleep();
-
+        sleep(AutoSleepCalc.getInitialSleep());
 
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropLeft);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnBackdropLeft();
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
             case CENTER:
                 drive.followTrajectorySequence(toSpikeCenter);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropCenter);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnBackdropLeft();
-                doStep2Sleep();
+                sleep(AutoSleepCalc.getStep2Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
             case RIGHT:
                 drive.followTrajectorySequence(toSpikeRight);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.retractPixelPlacerRight();
 
                 drive.followTrajectorySequence(toBackdropRight);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnBackdropLeft();
-                doStep2Sleep();
+                sleep(AutoSleepCalc.getStep2Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
             case NONE: // This case should copy center
                 drive.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnBackdropRight();
 
                 Auxiliaries.retractPixelPlacerRight();
                 drive.followTrajectorySequence(toBackdropCenter);
 
-                doStep1Sleep();
+                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnBackdropLeft();
-                doStep2Sleep();
+                sleep(AutoSleepCalc.getStep2Sleep());
                 Auxiliaries.retractPixelPlacerLeft();
                 break;
         }
 
         sleep(20000);
     }
-    private void doInitialSleep(){
-        int sl = Properties.INITIAL_SLEEP;
-        // default / min sleep
-        sleep(Math.max(sl, 1000));
-    }
-    private void doStep1Sleep() {
-        int sl = Properties.STEP_1_SLEEP;
-        // default / min sleep
-        sleep(Math.max(sl, 100));
-    }
-
-    private void doStep2Sleep() {
-        int sl = Properties.STEP_2_SLEEP;
-        // default / min sleep
-        sleep(Math.max(sl, 100));
-    }
-
-
 }
