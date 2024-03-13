@@ -14,8 +14,11 @@ import com.qualcomm.robotcore.util.Range;
 import org.apache.commons.math3.geometry.euclidean.twod.Line;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
+import org.firstinspires.ftc.teamcode.Auto.Expiremental.TestYellowPixelWithArm;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
+import org.firstinspires.ftc.teamcode.Subsytems.Arm;
+import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -34,7 +37,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     final Size resolution = new Size(640, 480);
 
     final double yawErrTolerance     = 0.5;
-    final double bearingErrTolerance = 0.5;
+    final double bearingErrTolerance = 0.8;
     final double rangeErrTolerance   = 0.5;
 
     int maxAprilTagDetections = 100;
@@ -43,11 +46,33 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     int myGain         = 255;
     int myWhiteBalance = 4800;
 
-    final double DESIRED_DISTANCE = 24.0;
+    final double DESIRED_DISTANCE = 17.5;
 
-    final double MAX_AUTO_SPEED  = 0.7;
-    final double MAX_AUTO_STRAFE = 0.7;
-    final double MAX_AUTO_TURN   = 0.7;
+    final double MAX_AUTO_SPEED  = 0.5;
+    final double MAX_AUTO_STRAFE = 0.5;
+    final double MAX_AUTO_TURN   = 0.5;
+
+    final double DRIVE_GAIN  = 0.045;
+    final double STRAFE_GAIN = 0.055;
+    final double TURN_GAIN   = 0.015;
+
+    enum PlacingState {
+        START,
+        MOVING_TO_POS,
+        PLACING,
+        PLACED
+    }
+
+    int wormTargetPos     = 830;
+    int elevatorTargetPos = 2430;
+
+    enum POSITION {
+        LEFT,
+        RIGHT
+    }
+
+    PlacingState placingState = PlacingState.START;
+    POSITION position = POSITION.LEFT;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -56,24 +81,26 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     MecanumDriveBase driveBase;
 
-    PIDController turnPID   = new PIDController(0.07, 0.0, 0.0006);
-    PIDController strafePID = new PIDController(0.05, 0.0, 0.00002);
-    PIDController drivePID  = new PIDController(0.025, 0.0, 0.0025);
+    PIDController turnPID   = new PIDController(TURN_GAIN, 0.0, 0.0006);
+    PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, 0.00002);
+    PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, 0.0025);
 
     @Override public void runOpMode() {
-        driveBase = new MecanumDriveBase(hardwareMap);;
+        driveBase = new MecanumDriveBase(hardwareMap);
 
         driveBase.init();
+
+        Arm.init(hardwareMap);
 
         initVisionProcessing();
 
         waitForStart();
 
-        while (opModeIsActive()) {
-            if (isStopRequested() || !opModeIsActive()) return;
+        if (isStopRequested()) return;
 
-            centerOnAprilTag();
-        }
+        centerOnAprilTag();
+
+        placePixelOnBackdrop();
     }
 
     /**
@@ -90,7 +117,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .setCameraResolution(resolution)
                 .setAutoStopLiveView(true)
                 .build();
@@ -174,8 +201,16 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         String errValues, driveValues;
 
+        long start = System.currentTimeMillis();
+
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
+
+            // Quit loop if it takes more than 5 seconds to center
+            if (System.currentTimeMillis() - start > 5000) {
+                MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+                break;
+            }
 
             if (detectAprilTags()) {
                 telemetry.addLine("Centering on April Tag");
@@ -198,8 +233,10 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 if (Math.abs(bearingErr) < bearingErrTolerance) bearingErr = 0.0;
 
                 drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                strafe = Range.clip(strafePID.calculate(desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+                strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
+                drive = -drive;
 
                 errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
                 driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
@@ -226,5 +263,50 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         return (Math.abs(rangeErr)      < rangeErrTolerance
                 && Math.abs(yawErr)     < yawErrTolerance
                 && Math.abs(bearingErr) < bearingErrTolerance);
+    }
+
+    private void placePixelOnBackdrop() {
+        while (placingState != PlacingState.PLACED) {
+            if (isStopRequested() || !opModeIsActive()) return;
+
+            Arm.update(false);
+
+            telemetry.addData("Placing State", placingState);
+            telemetry.update();
+
+            switch (placingState) {
+                case START:
+                    Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
+
+                    placingState = PlacingState.MOVING_TO_POS;
+                    break;
+                case MOVING_TO_POS:
+                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
+                        placingState = PlacingState.PLACING;
+                    }
+                    break;
+                case PLACING:
+                    switch (position) {
+                        case LEFT:
+                            Arm.openDeliveryTrayDoorLeft(0.2);
+                        case RIGHT:
+                            Arm.openDeliveryTrayDoorLeft(0.2);
+                    }
+
+                    sleep(1000);
+
+                    switch (position) {
+                        case LEFT:
+                            Arm.openDeliveryTrayDoorRight(0.0);
+                        case RIGHT:
+                            Arm.openDeliveryTrayDoorRight(0.0);
+                    }
+
+                    placingState = PlacingState.PLACED;
+                    break;
+                case PLACED:
+                    break;
+            }
+        }
     }
 }

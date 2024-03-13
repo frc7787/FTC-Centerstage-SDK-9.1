@@ -44,8 +44,6 @@ public class TestYellowPixelWithArm extends LinearOpMode {
             }
 
             telemetry.update();
-
-            sleep(100);
         }
 
         waitForStart();
