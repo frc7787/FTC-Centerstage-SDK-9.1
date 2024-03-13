@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_ARM_POS;
-
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -10,10 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
-import org.firstinspires.ftc.teamcode.Auto.Utility.AutoSleepCalc;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
-import org.firstinspires.ftc.teamcode.RobotPropertyParser;
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -33,7 +29,6 @@ public class AutoBlueAudience extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        RobotPropertyParser.populateConstantsClass();
         propDetector = new PropDetector(PropColor.BLUE);
         drive        = new MecanumDriveBase(hardwareMap);
 
@@ -44,48 +39,40 @@ public class AutoBlueAudience extends LinearOpMode {
         drive.setPoseEstimate(startPos);
 
         toSpikeLeft = drive.trajectorySequenceBuilder(startPos)
-                .lineTo(new Vector2d(-35, 34))
-                .strafeTo(new Vector2d(-31, 34))
-                .strafeTo(new Vector2d(-35, 34))
-                .lineTo(new Vector2d(-35, 12))
-                .strafeTo(new Vector2d(-30, 12))
+                .lineToConstantHeading(new Vector2d(-36, 36))
+                .lineToLinearHeading(new Pose2d(-20, 32, Math.toRadians(0)))
+
                 .build();
 
         toSpikeCenter = drive.trajectorySequenceBuilder(startPos)
-                .lineTo(new Vector2d(-35, 40))
-                .strafeTo(new Vector2d(-54, 40))
-                .lineTo(new Vector2d(-54, 23))
-                .strafeTo(new Vector2d(-39, 23))
-                .strafeTo(new Vector2d(-45, 23))
-                .lineTo(new Vector2d(-45, 11))
+                .lineToLinearHeading(new Pose2d(-35, 20, Math.toRadians(180)))
                 .build();
 
         toSpikeRight = drive.trajectorySequenceBuilder(startPos)
-                .lineTo(new Vector2d(-35, 40))
-                .strafeTo(new Vector2d(-42, 40))
-                .lineTo(new Vector2d(-42, 11))
-                .strafeTo(new Vector2d(-52, 11))
+                .lineToLinearHeading(new Pose2d(-49, 20, Math.toRadians(180)))
                 .build();
 
         toBackdropLeft = drive.trajectorySequenceBuilder(toSpikeLeft.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 11))
-                .strafeTo(new Vector2d(45, 36))
-                .lineTo(new Vector2d(53, 36))
+                .strafeTo(new Vector2d(-20, 38))
+                .lineToConstantHeading(new Vector2d(-36, 36))
+                .strafeTo(new Vector2d(-36, 12))
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
+
                 .build();
 
         toBackdropCenter = drive.trajectorySequenceBuilder(toSpikeCenter.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 11))
-                .strafeTo(new Vector2d(45, 27))
-                .lineTo(new Vector2d(50, 27))
+                .strafeTo(new Vector2d(-35, 12))
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
+                .turn(Math.toRadians(180))
                 .build();
 
         toBackdropRight = drive.trajectorySequenceBuilder(toSpikeRight.end())
-                .turn(Math.toRadians(-90))
-                .lineTo(new Vector2d(45, 11))
-                .strafeTo(new Vector2d(45, 21))
-                .lineTo(new Vector2d(52, 21))
+                .strafeTo(new Vector2d(-49, 12))
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
+                .turn(Math.toRadians(180))
                 .build();
 
 
@@ -96,7 +83,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
         camera = OpenCvCameraFactory
                 .getInstance()
-                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId);
 
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override public void onOpened() {
@@ -115,7 +102,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
         Arm.update(false);
 
-        Arm.rotateWorm(AUTO_INITIAL_ARM_POS);
+        Arm.rotateWorm(1400);
 
         waitForStart();
 
@@ -162,70 +149,28 @@ public class AutoBlueAudience extends LinearOpMode {
 
         Arm.rotateWorm(25);
 
-        sleep(AutoSleepCalc.getInitialSleep());
-
         switch (location) {
             case LEFT:
                 drive.followTrajectorySequence(toSpikeLeft);
-
-                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.retractPixelPlacerRight();
-
                 drive.followTrajectorySequence(toBackdropLeft);
-
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
             case CENTER:
                 drive.followTrajectorySequence(toSpikeCenter);
-
-                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.retractPixelPlacerRight();
-
                 drive.followTrajectorySequence(toBackdropCenter);
 
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(AutoSleepCalc.getStep2Sleep());
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
             case RIGHT:
                 drive.followTrajectorySequence(toSpikeRight);
-
-                sleep(AutoSleepCalc.getStep1Sleep());
                 Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.retractPixelPlacerRight();
-
                 drive.followTrajectorySequence(toBackdropRight);
-
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(AutoSleepCalc.getStep2Sleep());
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
             case NONE: // This case should copy center
                 drive.followTrajectorySequence(toSpikeCenter);
+                sleep(9);
                 Auxiliaries.placePixelOnSpikeStripRight();
-
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.placePixelOnSpikeStripRight();
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.placePixelOnBackdropRight();
-
-                Auxiliaries.retractPixelPlacerRight();
                 drive.followTrajectorySequence(toBackdropCenter);
-
-                sleep(AutoSleepCalc.getStep1Sleep());
-                Auxiliaries.placePixelOnBackdropLeft();
-                sleep(AutoSleepCalc.getStep2Sleep());
-                Auxiliaries.retractPixelPlacerLeft();
                 break;
         }
 
