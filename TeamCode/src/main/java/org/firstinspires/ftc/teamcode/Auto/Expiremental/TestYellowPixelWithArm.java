@@ -16,8 +16,8 @@ public class TestYellowPixelWithArm extends LinearOpMode {
         PLACED
     }
 
-    int wormTargetPos     = 725;
-    int elevatorTargetPos = 2562;
+    int wormTargetPos     = 810;
+    int elevatorTargetPos = 2400;
 
     enum POSITION {
         LEFT,
@@ -31,6 +31,7 @@ public class TestYellowPixelWithArm extends LinearOpMode {
         Arm.init(hardwareMap);
 
         while (opModeInInit()) {
+
             telemetry.addLine("Press left bumper for left placement, and right for right.");
             telemetry.addData("Current Placement", position);
 
@@ -49,9 +50,13 @@ public class TestYellowPixelWithArm extends LinearOpMode {
 
         waitForStart();
 
-        if (isStopRequested()) { return; }
+        placePixelOnBackdrop();
+    }
 
+    private void placePixelOnBackdrop() {
         while (placingState != PlacingState.PLACED) {
+            if (isStopRequested() || !opModeIsActive()) return;
+
             Arm.update(false);
 
             telemetry.addData("Placing State", placingState);
@@ -71,19 +76,25 @@ public class TestYellowPixelWithArm extends LinearOpMode {
                 case PLACING:
                     switch (position) {
                         case LEFT:
-                            Arm.openDeliveryTrayDoorLeft(1.0);
+                            Arm.openDeliveryTrayDoorLeft(0.4);
                         case RIGHT:
-                            Arm.openDeliveryTrayDoorLeft(1.0);
+                            Arm.openDeliveryTrayDoorLeft(0.4);
                     }
 
                     sleep(1000);
+
+                    switch (position) {
+                        case LEFT:
+                            Arm.openDeliveryTrayDoorRight(0.0);
+                        case RIGHT:
+                            Arm.openDeliveryTrayDoorRight(0.0);
+                    }
+
                     placingState = PlacingState.PLACED;
                     break;
                 case PLACED:
                     break;
             }
         }
-
-
     }
 }

@@ -33,9 +33,11 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     final Size resolution = new Size(640, 480);
 
-    final double yawErrTolerance     = 1;
-    final double bearingErrTolerance = 1;
+    final double yawErrTolerance     = 0.5;
+    final double bearingErrTolerance = 0.5;
     final double rangeErrTolerance   = 0.5;
+
+    int maxAprilTagDetections = 100;
 
     int myExposure     = 3;
     int myGain         = 255;
@@ -54,8 +56,8 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     MecanumDriveBase driveBase;
 
-    PIDController turnPID   = new PIDController(0.006, 0.0, 0.0006);
-    PIDController strafePID = new PIDController(0.03, 0.0, 0.00002);
+    PIDController turnPID   = new PIDController(0.07, 0.0, 0.0006);
+    PIDController strafePID = new PIDController(0.05, 0.0, 0.00002);
     PIDController drivePID  = new PIDController(0.025, 0.0, 0.0025);
 
     @Override public void runOpMode() {
@@ -86,11 +88,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
                 .build();
 
-        //aprilTagProcessor.setDecimation(decimation);
-
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(resolution)
                 .setAutoStopLiveView(true)
                 .build();
@@ -138,7 +138,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
-            if (count > 100) {
+            if (count > maxAprilTagDetections) {
                 if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
                 break;
             }
@@ -178,6 +178,8 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             if (isStopRequested() || !opModeIsActive()) return;
 
             if (detectAprilTags()) {
+                telemetry.addLine("Centering on April Tag");
+
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
 
@@ -199,17 +201,21 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 strafe = Range.clip(strafePID.calculate(desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-                driveValues = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-                errValues   = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
+                errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
+                driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
 
                 telemetry.addLine(driveValues);
                 telemetry.addLine(errValues);
 
                 if (isWithinTolerance()) {
                     isAtTarget = true;
+                    MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 } else {
-                    MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.01);
+                    MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.03);
                 }
+            } else {
+                MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+                telemetry.addLine("No tags detected.");
             }
 
             telemetry.update();

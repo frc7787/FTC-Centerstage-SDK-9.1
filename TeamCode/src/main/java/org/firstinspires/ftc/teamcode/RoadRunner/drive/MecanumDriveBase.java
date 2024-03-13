@@ -166,34 +166,28 @@ public class MecanumDriveBase extends MecanumDrive {
     public static void driveManualFF(double drive, double strafe, double turn, double deadzone) {
         double driveFriction   = 0.04;
         double turnFriction    = 0.035;
-        double strafeFriction  = 0.15;
 
-        double forwardOffset   = 7.32;
-        double lateralDistance = 9.147;
-
-        double driveVel, strafeVel, turnVel;
+        double driveVel, turnVel;
         double driveFF, strafeFF, turnFF;
 
         double leftEncoderVelocity  = localizer.getWheelVelocities().get(0);
         double rightEncoderVelocity = localizer.getWheelVelocities().get(1);
-        double frontEncoderVelocity = localizer.getWheelVelocities().get(2);
 
         if (leftEncoderVelocity == 0 && rightEncoderVelocity == 0) {
             driveFF  = deadZoneFF(drive,(drive + Math.copySign(driveFriction,drive)), deadzone);
             turnFF   = deadZoneFF(turn, (turn + Math.copySign(turnFriction,turn)), deadzone);
-            strafeFF = deadZoneFF(strafe, (strafe + Math.copySign(strafeFriction, strafe)), deadzone);
         } else {
             driveVel  = leftEncoderVelocity + rightEncoderVelocity;
-            strafeVel = forwardOffset / lateralDistance / 2 * (leftEncoderVelocity - rightEncoderVelocity) + frontEncoderVelocity;
             turnVel   = leftEncoderVelocity - rightEncoderVelocity;
 
             driveFF  = drive + Math.copySign(driveFriction, driveVel);
             turnFF   = turn  + Math.copySign(turnFriction, turnVel);
-            strafeFF = strafe + Math.copySign(strafeFriction, strafeVel);
 
             driveFF = deadZoneFF(drive, driveFF, deadzone);
             turnFF  = deadZoneFF(turn, turnFF, deadzone);
         }
+
+        strafeFF = strafe;
 
         double motorPowerRatio = Math.max(Math.abs(driveFF) + Math.abs(strafeFF) + Math.abs(turnFF), 1);
 
