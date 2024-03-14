@@ -32,7 +32,7 @@ public class TeleOpMain extends OpMode {
         RobotPropertyParser.populateConstantsClass();
         Intake.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
-        driveBase= new MecanumDriveBase(hardwareMap);
+        driveBase = new MecanumDriveBase(hardwareMap);
         driveBase.init();
         Arm.init(hardwareMap);
 
