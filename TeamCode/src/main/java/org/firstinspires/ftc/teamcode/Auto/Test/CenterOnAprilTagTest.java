@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
-import org.firstinspires.ftc.teamcode.Auto.Expiremental.TestYellowPixelWithArm;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
@@ -83,11 +82,9 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
     MecanumDriveBase driveBase;
 
-
     PIDController turnPID   = new PIDController(TURN_GAIN, 0.0, TURN_D);
     PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
     PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
-
 
     @Override public void runOpMode() {
         driveBase = new MecanumDriveBase(hardwareMap);
@@ -118,7 +115,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(resolution)
                 .setAutoStopLiveView(true)
                 .build();
@@ -237,7 +234,6 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-
                 drive *= -1.0;
 
                 errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
@@ -287,21 +283,11 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                     }
                     break;
                 case PLACING:
-                    switch (position) {
-                        case LEFT:
-                            Arm.openDeliveryTrayDoorLeft(0.2);
-                        case RIGHT:
-                            Arm.openDeliveryTrayDoorLeft(0.2);
-                    }
+                    Arm.openDeliveryTrayDoor(0.3);
 
-                    sleep(1000);
+                    sleep(700);
 
-                    switch (position) {
-                        case LEFT:
-                            Arm.openDeliveryTrayDoorRight(0.0);
-                        case RIGHT:
-                            Arm.openDeliveryTrayDoorRight(0.0);
-                    }
+                    Arm.openDeliveryTrayDoor(0.0);
 
                     placingState = PlacingState.PLACED;
                     break;

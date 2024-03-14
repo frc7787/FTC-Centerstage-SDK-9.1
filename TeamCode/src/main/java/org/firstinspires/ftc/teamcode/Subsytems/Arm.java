@@ -162,7 +162,7 @@ public class Arm {
      * function will be overwritten
      * @param doorPos The position for the door to go to
      */
-    public static void setDoorPos(double doorPos) {
+    public static void openDeliveryTrayDoor(double doorPos) {
         moveDeliveryTrayDoor(doorPos);
     }
 
@@ -172,7 +172,7 @@ public class Arm {
     private static void home() {
        switch (homingState) {
             case START:
-                setDoorPos(TRAY_DOOR_CLOSED_POS); // Make sure the tray is closed so we don't break it
+                openDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS); // Make sure the tray is closed so we don't break it
 
                 wormMotor.setMode(RUN_USING_ENCODER);
                 elevatorMotor.setMode(RUN_USING_ENCODER);

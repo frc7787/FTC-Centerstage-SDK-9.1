@@ -129,15 +129,15 @@ public class TeleOpMain extends OpMode {
         if (Arm.wormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
             if (gamepad2.left_trigger > 0.9) {
                 Intake.intake();
-                Arm.setDoorPos(TRAY_DOOR_OPEN_POS);
+                Arm.openDeliveryTrayDoor(TRAY_DOOR_OPEN_POS);
             } else if (gamepad2.left_trigger < 0.9 && gamepad2.left_trigger > 0.5) {
                 Intake.intake();
-                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
+                Arm.openDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
             } else if (gamepad2.right_trigger > 0.9) {
                 Intake.outtake();
             } else {
                 Intake.stop();
-                Arm.setDoorPos(TRAY_DOOR_CLOSED_POS);
+                Arm.openDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
             }
         } else {
             if (gamepad2.right_trigger > 0.5) {
