@@ -41,7 +41,6 @@ public class AutoBlueAudience extends LinearOpMode {
         toSpikeLeft = drive.trajectorySequenceBuilder(startPos)
                 .lineToConstantHeading(new Vector2d(-36, 36))
                 .lineToLinearHeading(new Pose2d(-20, 32, Math.toRadians(0)))
-
                 .build();
 
         toSpikeCenter = drive.trajectorySequenceBuilder(startPos)
