@@ -88,6 +88,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
     PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
+
     @Override public void runOpMode() {
         driveBase = new MecanumDriveBase(hardwareMap);
 
@@ -166,7 +167,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
             if (count > maxAprilTagDetections) {
-                if (currentDetections.isEmpty()) telemetry.addLine("No Tags Detected");
+                telemetry.addLine("No Tags Detected");
                 break;
             }
 
@@ -235,6 +236,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
                 strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
 
                 drive *= -1.0;
 
