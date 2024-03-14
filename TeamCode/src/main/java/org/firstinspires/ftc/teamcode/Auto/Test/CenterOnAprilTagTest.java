@@ -7,11 +7,8 @@ import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.apache.commons.math3.geometry.euclidean.twod.Line;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
@@ -37,11 +34,11 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     final double bearingErrTolerance = 0.5;
     final double rangeErrTolerance   = 0.5;
 
-    int maxAprilTagDetections = 100;
+    int maxAprilTagDetections = 25;
 
-    int myExposure     = 3;
-    int myGain         = 255;
-    int myWhiteBalance = 4800;
+    int myExposureMS   = 2;
+    int myGain         = 0;
+    int myWhiteBalance = 4000;
 
     final double DESIRED_DISTANCE = 24.0;
 
@@ -49,16 +46,25 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     final double MAX_AUTO_STRAFE = 0.7;
     final double MAX_AUTO_TURN   = 0.7;
 
+    // "P" Value for drive, strafe, and turn
+    final double DRIVE_GAIN  = 0.025;
+    final double STRAFE_GAIN = 0.07;
+    final double TURN_GAIN   = 0.05;
+
+    // "D" Value for drive, strafe, turn
+    final double DRIVE_D  = 0.0025;
+    final double STRAFE_D = 0.00002;
+    final double TURN_D   = 0.0008;
+
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
-
     double prevRangeErr, prevYawErr, prevBearingErr;
 
     MecanumDriveBase driveBase;
 
-    PIDController turnPID   = new PIDController(0.07, 0.0, 0.0006);
-    PIDController strafePID = new PIDController(0.05, 0.0, 0.00002);
-    PIDController drivePID  = new PIDController(0.025, 0.0, 0.0025);
+    PIDController turnPID   = new PIDController(TURN_GAIN, 0.0, TURN_D);
+    PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
+    PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
     @Override public void runOpMode() {
         driveBase = new MecanumDriveBase(hardwareMap);;
@@ -81,16 +87,13 @@ public class CenterOnAprilTagTest extends LinearOpMode {
      */
     public void initVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setDrawTagID(true)
                 .setDrawTagOutline(true)
-                .setDrawAxes(true)
-                .setDrawCubeProjection(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
                 .build();
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .setCameraResolution(resolution)
                 .setAutoStopLiveView(true)
                 .build();
@@ -103,7 +106,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
             telemetry.update();
         }
 
-        setManualCameraSettings(myExposure, myGain, myWhiteBalance);
+        setManualCameraSettings(myExposureMS, myGain, myWhiteBalance);
     }
 
     /**
@@ -198,8 +201,10 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 if (Math.abs(bearingErr) < bearingErrTolerance) bearingErr = 0.0;
 
                 drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                strafe = Range.clip(strafePID.calculate(desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+                strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
                 turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
+                drive *= -1.0;
 
                 errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
                 driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
@@ -215,7 +220,6 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
-                telemetry.addLine("No tags detected.");
             }
 
             telemetry.update();

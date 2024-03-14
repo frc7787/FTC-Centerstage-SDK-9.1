@@ -4,6 +4,7 @@ import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -38,32 +39,37 @@ public class AprilTagTuning extends OpMode {
                 myWhiteBalance,
                 maxWhiteBalance;
 
+    private Gamepad currentGamepad, prevGamepad;
+
     @Override public void init() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setDrawTagID(true)
                 .setDrawTagOutline(true)
-                .setDrawAxes(true)
-                .setDrawCubeProjection(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
                 .build();
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .setCameraResolution(new Size(640, 480))
                 .setAutoStopLiveView(true)
                 .build();
 
         getDefaultCameraSettings();
 
-        myExposure     = Math.min(5, minExposure + 1);
-        myGain         = maxGain;
-        myWhiteBalance = (minWhiteBalance + maxWhiteBalance) / 2;
+        myExposure     = 2;
+        myGain         = 0;
+        myWhiteBalance = 4000;
 
         setCameraProperties(myExposure, myGain, myWhiteBalance);
+
+        prevGamepad    = new Gamepad();
+        currentGamepad = new Gamepad();
     }
 
     @Override public void loop() {
+        prevGamepad.copy(currentGamepad);
+        currentGamepad.copy(gamepad1);
+
         telemetry.addData("Exposure", myExposure);
         telemetry.addData("Gain", myGain);
         telemetry.addData("White Balance", myWhiteBalance);
@@ -79,10 +85,7 @@ public class AprilTagTuning extends OpMode {
         }
 
         for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata == null) {
-                telemetry.addData("Size info not available on tag Id", detection.id);
-                continue;
-            }
+            if (detection.metadata == null) continue;
 
             if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
                 telemetry.addData("Detected Tag", detection.id);
@@ -93,14 +96,7 @@ public class AprilTagTuning extends OpMode {
             }
         }
 
-        if (gamepad1.left_bumper)        myExposure += 1;
-        if (gamepad1.left_trigger > 0.5) myExposure -= 1;
-
-        if (gamepad1.right_bumper)        myGain += 1;
-        if (gamepad1.right_trigger > 0.5) myGain -= 1;
-
-        if (gamepad1.dpad_up)   myWhiteBalance += 1;
-        if (gamepad1.dpad_down) myWhiteBalance -= 1;
+        listenForCameraAdjust();
 
         myExposure     = Range.clip(myExposure, minExposure, maxExposure);
         myGain         = Range.clip(myGain, minGain, maxGain);
@@ -132,6 +128,40 @@ public class AprilTagTuning extends OpMode {
         minWhiteBalance = whiteBalanceControl.getMinWhiteBalanceTemperature();
         maxWhiteBalance = whiteBalanceControl.getMaxWhiteBalanceTemperature();
         myWhiteBalance  = whiteBalanceControl.getWhiteBalanceTemperature();
+    }
+
+    private void listenForCameraAdjust() {
+        if (currentGamepad.left_bumper && !prevGamepad.left_bumper) {
+            myExposure ++;
+        }
+
+        if (currentGamepad.left_trigger > 0.5 && !(prevGamepad.left_trigger > 0.5)) {
+            myExposure --;
+        }
+
+        if (currentGamepad.right_bumper && !prevGamepad.right_bumper) {
+            myGain ++;
+        }
+
+        if (currentGamepad.right_trigger > 0.5 && !(prevGamepad.right_trigger > 0.5)) {
+            myGain --;
+        }
+
+        if (currentGamepad.dpad_up && !prevGamepad.dpad_up) {
+            myWhiteBalance ++;
+        }
+
+        if (currentGamepad.dpad_down && !prevGamepad.dpad_down) {
+            myWhiteBalance --;
+        }
+
+        if (currentGamepad.dpad_left && !prevGamepad.dpad_left) {
+            myWhiteBalance += 10;
+        }
+
+        if (currentGamepad.dpad_right && !prevGamepad.dpad_right) {
+            myWhiteBalance -= 10;
+        }
     }
 
     private void setCameraProperties(int exposureMS, int gain, int white) {
