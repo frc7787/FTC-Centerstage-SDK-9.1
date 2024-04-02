@@ -36,6 +36,9 @@ public class TeleOpMain extends OpMode {
         driveBase.init();
         Arm.init(hardwareMap);
 
+        Auxiliaries.retractPixelPlacerLeft();
+        Auxiliaries.retractPixelPlacerRight();
+
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(AUTO);
         }

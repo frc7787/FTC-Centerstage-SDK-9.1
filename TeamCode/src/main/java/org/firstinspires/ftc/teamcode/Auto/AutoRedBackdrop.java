@@ -83,7 +83,7 @@ public class AutoRedBackdrop extends LinearOpMode {
     // "D" Value for drive, strafe, turn
     final double DRIVE_D  = 0.0025;
     final double STRAFE_D = 0.00002;
-    final double TURN_D   = 0.0008;
+    final double TURN_D   = 0.0012;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -97,7 +97,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        propDetector = new PropDetector(PropColor.RED);
+        propDetector     = new PropDetector(PropColor.RED);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 
         mecanumDriveBase.init();
@@ -138,22 +138,7 @@ public class AutoRedBackdrop extends LinearOpMode {
         TrajectorySequence toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .strafeTo(new Vector2d(25, -12))
                 .lineTo(new Vector2d(38, -12))
-                .strafeTo(new Vector2d(38, -36))
-                .build();
-
-        TrajectorySequence toParkLeft = mecanumDriveBase.trajectorySequenceBuilder(toBackdropLeft.end())
-                .lineTo(new Vector2d(45, -35))
-                .strafeTo(new Vector2d(45, -64))
-                .build();
-
-        TrajectorySequence toParkCenter = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
-                .lineTo(new Vector2d(45, -42))
-                .strafeTo(new Vector2d(45, -63))
-                .build();
-
-        TrajectorySequence toParkRight = mecanumDriveBase.trajectorySequenceBuilder(toBackdropRight.end())
-                .lineTo(new Vector2d(45, -50))
-                .strafeTo(new Vector2d(45, -63))
+                .strafeTo(new Vector2d(38, -45))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
@@ -194,6 +179,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         location = propDetector.getPropLocation();
 
+
         int leftCount = 0;
         int rightCount = 0;
         int centerCount = 0;
@@ -226,12 +212,12 @@ public class AutoRedBackdrop extends LinearOpMode {
             location = PropLocation.NONE;
         }
 
+        telemetry.addData("PROP LOCATION: ", location);
+        telemetry.update();
+
         Arm.rotateWorm(0);
 
         sleep(0);
-
-        telemetry.addData("PROP LOCATION: ", location);
-        telemetry.update();
 
         switch (location) {
             case LEFT:
@@ -240,15 +226,6 @@ public class AutoRedBackdrop extends LinearOpMode {
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
 
                 centerOnAprilTag(4);
-
-                placePixelOnBackdrop();
-                break;
-            case CENTER:
-                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
-
-                centerOnAprilTag(5);
 
                 placePixelOnBackdrop();
                 break;
@@ -261,7 +238,8 @@ public class AutoRedBackdrop extends LinearOpMode {
 
                 placePixelOnBackdrop();
                 break;
-            case NONE: // This case should copy center
+            case CENTER:
+            case NONE:
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
@@ -271,6 +249,15 @@ public class AutoRedBackdrop extends LinearOpMode {
                 placePixelOnBackdrop();
                 break;
         }
+
+        TrajectorySequence toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                .strafeTo(new Vector2d(45, -64))
+                .lineTo(new Vector2d(60, -64))
+                .build();
+
+        mecanumDriveBase.followTrajectorySequence(toPark);
+
+
         sleep(20000);
     }
 
@@ -362,23 +349,19 @@ public class AutoRedBackdrop extends LinearOpMode {
     public void centerOnAprilTag(int desiredTagId) {
         boolean isAtTarget = false;
 
-        String errValues, driveValues;
-
-        long start = System.currentTimeMillis();
-
         mecanumDriveBase.updatePoseEstimate();
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
-            // Quit loop if it takes more than 5 seconds to center
-            if (System.currentTimeMillis() - start > 5000) {
-                MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
-                break;
-            }
-
-
             if (detectAprilTags(desiredTagId)) {
+                long start = System.currentTimeMillis();
+
+                // Quit loop if it takes more than 5 seconds to center
+                if (System.currentTimeMillis() - start > 5000) {
+                    MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+                    break;
+                }
 
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
@@ -429,11 +412,10 @@ public class AutoRedBackdrop extends LinearOpMode {
 
             Arm.update(false);
 
-            telemetry.addData("Placing State", placingState);
-            telemetry.update();
-
             switch (placingState) {
                 case START:
+                    Arm.setElevatorPower(0.75);
+
                     Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
 
                     placingState = PlacingState.MOVING_TO_POS;
@@ -453,12 +435,14 @@ public class AutoRedBackdrop extends LinearOpMode {
                     placingState = PlacingState.CLEARING_PIXELS;
                     break;
                 case CLEARING_PIXELS:
-                    Arm.rotateWorm(1100);
+                    Arm.rotateWorm(1200);
 
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
                         placingState = PlacingState.RETRACTING;
                     }
                 case RETRACTING:
+                    Arm.setElevatorPower(1.0);
+
                     Arm.setTargetPos(0, 0);
                     Arm.update(false);
 

@@ -77,17 +77,17 @@ public class AutoBlueBackdrop extends LinearOpMode {
     int wormTargetPos     = 890;
     int elevatorTargetPos = 2430;
 
-    AutoBlueAudience.PlacingState placingState = AutoBlueAudience.PlacingState.START;
+    PlacingState placingState = PlacingState.START;
 
     // "P" Value for drive, strafe, and turn
     final double DRIVE_GAIN  = 0.025;
     final double STRAFE_GAIN = 0.07;
-    final double TURN_GAIN   = 0.05;
+    final double TURN_GAIN   = 0.04;
 
     // "D" Value for drive, strafe, turn
     final double DRIVE_D  = 0.0025;
     final double STRAFE_D = 0.00002;
-    final double TURN_D   = 0.0008;
+    final double TURN_D   = 0.0012;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -123,7 +123,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         TrajectorySequence toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(23, 38))
-                .lineToLinearHeading(new Pose2d(38, 36, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(38, 43, Math.toRadians(0)))
                 .build();
 
         TrajectorySequence toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -133,22 +133,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         TrajectorySequence toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .lineToLinearHeading(new Pose2d(0, 38, Math.toRadians(0)))
-                .lineToConstantHeading(new Vector2d(38, 36))
-                .build();
-
-        TrajectorySequence toParkCenter = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
-                .lineTo(new Vector2d(49, 28))
-                .strafeTo(new Vector2d(49, 63))
-                .build();
-
-        TrajectorySequence toParkLeft = mecanumDriveBase.trajectorySequenceBuilder(toBackdropLeft.end())
-                .lineTo(new Vector2d(47, 35))
-                .strafeTo(new Vector2d(47, 63))
-                .build();
-
-        TrajectorySequence toParkRight = mecanumDriveBase.trajectorySequenceBuilder(toBackdropRight.end())
-                .lineTo(new Vector2d(47, 21))
-                .strafeTo(new Vector2d(47, 63))
+                .lineToConstantHeading(new Vector2d(38, 32))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
@@ -158,7 +143,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         camera = OpenCvCameraFactory
                 .getInstance()
-                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId);
+                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override public void onOpened() {
@@ -185,6 +170,9 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         // Pls do not delete this
         location = propDetector.getPropLocation();
+
+        telemetry.addData("PROP LOCATION: ", location);
+        telemetry.update();
 
         if (isStopRequested()) { return; }
 
@@ -222,7 +210,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
         telemetry.addData("PROP LOCATION: ", location);
         telemetry.update();
 
-        Arm.rotateWorm(25);
+        Arm.rotateWorm(0);
 
         switch (location) {
             case LEFT:
@@ -236,6 +224,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 break;
             case CENTER:
+            case NONE: // This case should copy center
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
@@ -254,16 +243,15 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 placePixelOnBackdrop();
                 break;
-            case NONE: // This case should copy center
-                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
-                centerOnAprilTag(2);
-
-                placePixelOnBackdrop();
-                break;
         }
+
+        TrajectorySequence toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                        .strafeTo(new Vector2d(45, 64))
+                        .lineTo(new Vector2d(60, 64))
+                        .build();
+
+        mecanumDriveBase.followTrajectorySequence(toPark);
 
         sleep(6000);
     }
@@ -362,9 +350,11 @@ public class AutoBlueBackdrop extends LinearOpMode {
     public void centerOnAprilTag(int desiredTagId) {
         boolean isAtTarget = false;
 
-        String errValues, driveValues;
-
         long start = System.currentTimeMillis();
+
+        mecanumDriveBase.updatePoseEstimate();
+
+        if (isWithinTolerance()) return;
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
@@ -376,7 +366,6 @@ public class AutoBlueBackdrop extends LinearOpMode {
             }
 
             if (detectAprilTags(desiredTagId)) {
-                telemetry.addLine("Centering on April Tag");
 
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
@@ -401,12 +390,6 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 drive *= -1.0;
 
-                errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-                driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
-
-                telemetry.addLine(driveValues);
-                telemetry.addLine(errValues);
-
                 if (isWithinTolerance()) {
                     isAtTarget = true;
                     MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
@@ -415,10 +398,14 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
-            }
 
-            telemetry.update();
+                if (isWithinTolerance()) {
+                    break;
+                }
+            }
         }
+
+        mecanumDriveBase.updatePoseEstimate();
     }
 
     public boolean isWithinTolerance() {
@@ -428,7 +415,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
     }
 
     private void placePixelOnBackdrop() {
-        while (placingState != AutoBlueAudience.PlacingState.PLACED) {
+        while (placingState != PlacingState.PLACED) {
             if (isStopRequested() || !opModeIsActive()) return;
 
             Arm.update(false);
@@ -438,13 +425,15 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
             switch (placingState) {
                 case START:
+                    Arm.setElevatorPower(0.6);
+
                     Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
 
-                    placingState = AutoBlueAudience.PlacingState.MOVING_TO_POS;
+                    placingState = PlacingState.MOVING_TO_POS;
                     break;
                 case MOVING_TO_POS:
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = AutoBlueAudience.PlacingState.PLACING;
+                        placingState = PlacingState.PLACING;
                     }
                     break;
                 case PLACING:
@@ -454,20 +443,25 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                     Arm.openDeliveryTrayDoor(0.0);
 
-                    placingState = AutoBlueAudience.PlacingState.CLEARING_PIXELS;
+                    placingState = PlacingState.CLEARING_PIXELS;
                     break;
                 case CLEARING_PIXELS:
-                    Arm.rotateWorm(1100);
+                    Arm.setTargetPos(Arm.elevatorPos(), 1100);
+
+                    Arm.update(false);
 
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = AutoBlueAudience.PlacingState.RETRACTING;
+                        placingState = PlacingState.RETRACTING;
                     }
+                    break;
                 case RETRACTING:
+                    Arm.setElevatorPower(1.0);
+
                     Arm.setTargetPos(0, 0);
                     Arm.update(false);
 
                     if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
-                        placingState = AutoBlueAudience.PlacingState.PLACED;
+                        placingState = PlacingState.PLACED;
                     }
                     break;
                 case PLACED:

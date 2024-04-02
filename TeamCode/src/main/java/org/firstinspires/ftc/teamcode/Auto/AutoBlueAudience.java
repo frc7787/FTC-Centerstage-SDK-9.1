@@ -234,6 +234,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 placePixelOnBackdrop();
                 break;
             case CENTER:
+            case NONE:
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
@@ -251,15 +252,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
                 placePixelOnBackdrop();
                 break;
-            case NONE: // This case should copy center
-                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
-                centerOnAprilTag(2);
-
-                placePixelOnBackdrop();
-                break;
         }
 
         sleep(20000);

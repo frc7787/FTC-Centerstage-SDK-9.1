@@ -45,11 +45,11 @@ public class AutoRedAudience extends LinearOpMode {
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
 
-    final Size resolution = new Size(640, 480);
+    final Size RESOLUTION = new Size(640, 480);
 
-    final double yawErrTolerance     = 0.5;
-    final double bearingErrTolerance = 0.8;
-    final double rangeErrTolerance   = 0.5;
+    final double YAW_ERR_TOLERANCE     = 0.5;
+    final double BEARING_ERR_TOLERANCE = 0.8;
+    final double RANGE_ERR_TOLERANCE   = 0.5;
 
     int maxAprilTagDetections = 25;
 
@@ -75,7 +75,7 @@ public class AutoRedAudience extends LinearOpMode {
     int wormTargetPos     = 890;
     int elevatorTargetPos = 2430;
 
-    AutoRedBackdrop.PlacingState placingState = AutoRedBackdrop.PlacingState.START;
+    PlacingState placingState = PlacingState.START;
 
     // "P" Value for drive, strafe, and turn
     final double DRIVE_GAIN  = 0.025;
@@ -85,7 +85,7 @@ public class AutoRedAudience extends LinearOpMode {
     // "D" Value for drive, strafe, turn
     final double DRIVE_D  = 0.0025;
     final double STRAFE_D = 0.00002;
-    final double TURN_D   = 0.0008;
+    final double TURN_D   = 0.0012;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -97,7 +97,7 @@ public class AutoRedAudience extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        propDetector = new PropDetector(PropColor.RED);
+        propDetector     = new PropDetector(PropColor.RED);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 
         mecanumDriveBase.init();
@@ -147,17 +147,17 @@ public class AutoRedAudience extends LinearOpMode {
 
         camera = OpenCvCameraFactory
                 .getInstance()
-                .createWebcam(
-                        hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId
-                );
+                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-            @Override public void onOpened() {
+            @Override
+            public void onOpened() {
                 camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
                 camera.setPipeline(propDetector);
             }
 
-            @Override public void onError(int errorCode) {
+            @Override
+            public void onError(int errorCode) {
                 telemetry.addData("Failed to open camera due to error code", errorCode);
                 telemetry.update();
             }
@@ -178,8 +178,6 @@ public class AutoRedAudience extends LinearOpMode {
 
         location = propDetector.getPropLocation();
 
-        telemetry.addData("PROP LOCATION: ", location);
-        telemetry.update();
 
         int leftCount   = 0;
         int rightCount  = 0;
@@ -213,6 +211,8 @@ public class AutoRedAudience extends LinearOpMode {
             location = PropLocation.NONE;
         }
 
+
+
         Arm.rotateWorm(0);
 
         sleep(0);
@@ -238,6 +238,7 @@ public class AutoRedAudience extends LinearOpMode {
                 centerOnAprilTag(5);
 
                 placePixelOnBackdrop();
+                break;
 
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -259,6 +260,13 @@ public class AutoRedAudience extends LinearOpMode {
                 break;
         }
 
+        TrajectorySequence toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                        .strafeTo(new Vector2d(45, -64))
+                        .lineTo(new Vector2d(60, -64))
+                        .build();
+
+        mecanumDriveBase.followTrajectorySequence(toPark);
+
         sleep(20000);
     }
 
@@ -275,7 +283,7 @@ public class AutoRedAudience extends LinearOpMode {
                 .addProcessor(aprilTagProcessor)
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .enableLiveView(false)
-                .setCameraResolution(resolution)
+                .setCameraResolution(RESOLUTION)
                 .setAutoStopLiveView(true)
                 .build();
 
@@ -323,7 +331,6 @@ public class AutoRedAudience extends LinearOpMode {
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
             if (count > maxAprilTagDetections) {
-                telemetry.addLine("No Tags Detected");
                 break;
             }
 
@@ -333,7 +340,6 @@ public class AutoRedAudience extends LinearOpMode {
                 if (detection.metadata == null) continue;
 
                 if (detection.id == desiredTagId) { // If the tag is the one we want, stop looking
-                    telemetry.addLine("Detected Desired Tag");
 
                     desiredTag = detection;
 
@@ -356,22 +362,20 @@ public class AutoRedAudience extends LinearOpMode {
     public void centerOnAprilTag(int desiredTagId) {
         boolean isAtTarget = false;
 
-        String errValues, driveValues;
-
         long start = System.currentTimeMillis();
+
+        mecanumDriveBase.updatePoseEstimate();
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
             // Quit loop if it takes more than 5 seconds to center
-            if (System.currentTimeMillis() - start > 5000) {
+            if (System.currentTimeMillis() - start > 4000) {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 break;
             }
 
             if (detectAprilTags(desiredTagId)) {
-                telemetry.addLine("Centering on April Tag");
-
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
 
@@ -385,9 +389,9 @@ public class AutoRedAudience extends LinearOpMode {
                 yawErr     = 0.9 * yawErr     + 0.1 * prevYawErr;
                 bearingErr = 0.9 * bearingErr + 0.1 * prevBearingErr;
 
-                if (Math.abs(rangeErr) < rangeErrTolerance)     rangeErr   = 0.0;
-                if (Math.abs(yawErr) < yawErrTolerance)         yawErr     = 0.0;
-                if (Math.abs(bearingErr) < bearingErrTolerance) bearingErr = 0.0;
+                if (Math.abs(rangeErr) < RANGE_ERR_TOLERANCE)     rangeErr   = 0.0;
+                if (Math.abs(yawErr) < YAW_ERR_TOLERANCE)         yawErr     = 0.0;
+                if (Math.abs(bearingErr) < BEARING_ERR_TOLERANCE) bearingErr = 0.0;
 
                 drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
                 strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
@@ -395,50 +399,42 @@ public class AutoRedAudience extends LinearOpMode {
 
                 drive *= -1.0;
 
-                errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-                driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
-
-                telemetry.addLine(driveValues);
-                telemetry.addLine(errValues);
-
                 if (isWithinTolerance()) {
                     isAtTarget = true;
                     MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+                    break;
                 } else {
                     MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.03);
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
             }
-
-            telemetry.update();
         }
+
+        mecanumDriveBase.updatePoseEstimate();
     }
 
     public boolean isWithinTolerance() {
-        return (Math.abs(rangeErr)      < rangeErrTolerance
-                && Math.abs(yawErr)     < yawErrTolerance
-                && Math.abs(bearingErr) < bearingErrTolerance);
+        return (Math.abs(rangeErr)      < RANGE_ERR_TOLERANCE
+                && Math.abs(yawErr)     < YAW_ERR_TOLERANCE
+                && Math.abs(bearingErr) < BEARING_ERR_TOLERANCE);
     }
 
     private void placePixelOnBackdrop() {
-        while (placingState != AutoRedBackdrop.PlacingState.PLACED) {
+        while (placingState != PlacingState.PLACED) {
             if (isStopRequested() || !opModeIsActive()) return;
 
             Arm.update(false);
-
-            telemetry.addData("Placing State", placingState);
-            telemetry.update();
 
             switch (placingState) {
                 case START:
                     Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
 
-                    placingState = AutoRedBackdrop.PlacingState.MOVING_TO_POS;
+                    placingState = PlacingState.MOVING_TO_POS;
                     break;
                 case MOVING_TO_POS:
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = AutoRedBackdrop.PlacingState.PLACING;
+                        placingState = PlacingState.PLACING;
                     }
                     break;
                 case PLACING:
@@ -448,20 +444,20 @@ public class AutoRedAudience extends LinearOpMode {
 
                     Arm.openDeliveryTrayDoor(0.0);
 
-                    placingState = AutoRedBackdrop.PlacingState.CLEARING_PIXELS;
+                    placingState = PlacingState.CLEARING_PIXELS;
                     break;
                 case CLEARING_PIXELS:
                     Arm.rotateWorm(1100);
 
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = AutoRedBackdrop.PlacingState.RETRACTING;
+                        placingState = PlacingState.RETRACTING;
                     }
                 case RETRACTING:
                     Arm.setTargetPos(0, 0);
                     Arm.update(false);
 
                     if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
-                        placingState = AutoRedBackdrop.PlacingState.PLACED;
+                        placingState = PlacingState.PLACED;
                     }
                     break;
                 case PLACED:

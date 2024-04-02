@@ -36,6 +36,7 @@ public class Arm {
     private static AnalogInput wormPotentiometer;
 
     private static int elevatorTargetPos, wormTargetPos;
+    private static double elevatorPower, wormPower;
 
     private static NormalPeriodArmState normalPeriodArmState;
     private static HomingState homingState;
@@ -70,6 +71,9 @@ public class Arm {
         elevatorTargetPos = 0;
         wormTargetPos     = 0;
 
+        elevatorPower = DEFAULT_ELEVATOR_POWER;
+        wormPower     = DEFAULT_WORM_POWER;
+
         moveDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
 
         normalPeriodArmState = UNKNOWN;
@@ -102,26 +106,26 @@ public class Arm {
                 // Make sure we follow a safe sequence back
                 if (elevatorTargetPos == 0 && wormTargetPos == 0){
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 10) {
-                        extendElevator(0);
+                        extendElevator(0, elevatorPower);
                     } else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900){
-                        rotateWorm(WORM_SAFETY_LIMIT + 20);
+                        rotateWorm(WORM_SAFETY_LIMIT + 20, wormPower);
                         extendElevator(1000);
                     } else if (10 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
-                        extendElevator(0);
+                        extendElevator(0, elevatorPower);
                     } else {
                         if (elevatorMotor.getCurrentPosition() < 10) {
-                            extendElevator(0);
-                            rotateWorm(0);
+                            extendElevator(0, elevatorPower);
+                            rotateWorm(0, wormPower);
                         }
                     }
                 } else if (elevatorTargetPos > 0 && wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT) {
                     // If the target worm pos is greater than the safety limit we go there, if not we go to the safety limit.
                     wormTargetPos = Math.max(wormTargetPos, (WORM_SAFETY_LIMIT + 20)); // We want to overshoot a little bit to improve consistency
-                    rotateWorm(wormTargetPos);
+                    rotateWorm(wormTargetPos, wormPower);
                 } else {
-                    rotateWorm(wormTargetPos);
+                    rotateWorm(wormTargetPos, wormPower);
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT){
-                        extendElevator(elevatorTargetPos);
+                        extendElevator(elevatorTargetPos, elevatorPower);
                     }
                     if (!elevatorMotor.isBusy() && !wormMotor.isBusy()) {
                         normalPeriodArmState = AT_POS;
@@ -155,6 +159,14 @@ public class Arm {
 
         Arm.elevatorTargetPos = elevatorTargetPos;
         Arm.wormTargetPos     = wormTargetPos;
+    }
+
+    public static void setElevatorPower(double power) {
+        Arm.elevatorPower = power;
+    }
+
+    public static void setWormPower(double power) {
+        Arm.wormPower = power;
     }
 
     /**
