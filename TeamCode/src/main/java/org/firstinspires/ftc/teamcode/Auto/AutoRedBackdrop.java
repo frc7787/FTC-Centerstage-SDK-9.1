@@ -17,7 +17,6 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainCon
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.WhiteBalanceControl;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
 import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
-import org.firstinspires.ftc.teamcode.Auto.Test.CenterOnAprilTagTest;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
@@ -43,8 +42,6 @@ public class AutoRedBackdrop extends LinearOpMode {
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
-
-    final int DESIRED_TAG_ID = 5;
 
     final Size resolution = new Size(640, 480);
 
@@ -76,13 +73,7 @@ public class AutoRedBackdrop extends LinearOpMode {
     int wormTargetPos     = 890;
     int elevatorTargetPos = 2430;
 
-    enum POSITION {
-        LEFT,
-        RIGHT
-    }
-
     PlacingState placingState = PlacingState.START;
-    POSITION position = POSITION.LEFT;
 
     // "P" Value for drive, strafe, and turn
     final double DRIVE_GAIN  = 0.025;
@@ -117,7 +108,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         mecanumDriveBase.setPoseEstimate(startPose);
 
-        initVisionProcessing();
+        initAprilTagVisionProcessing();
 
         TrajectorySequence toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToConstantHeading(new Vector2d(12, -36))
@@ -235,7 +226,9 @@ public class AutoRedBackdrop extends LinearOpMode {
             location = PropLocation.NONE;
         }
 
-        Arm.rotateWorm(25);
+        Arm.rotateWorm(0);
+
+        sleep(0);
 
         telemetry.addData("PROP LOCATION: ", location);
         telemetry.update();
@@ -245,33 +238,37 @@ public class AutoRedBackdrop extends LinearOpMode {
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
+
+                centerOnAprilTag(4);
+
+                placePixelOnBackdrop();
                 break;
             case CENTER:
-                camera.closeCameraDevice();
-
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
-                centerOnAprilTag();
+                centerOnAprilTag(5);
 
                 placePixelOnBackdrop();
-
-                sleep(100);
-
-                Arm.setTargetPos(0, 0);
-                Arm.update(false);
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropRight);
+
+                centerOnAprilTag(6);
+
+                placePixelOnBackdrop();
                 break;
             case NONE: // This case should copy center
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                sleep(9);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
+
+                centerOnAprilTag(5);
+
+                placePixelOnBackdrop();
                 break;
         }
         sleep(20000);
@@ -280,7 +277,7 @@ public class AutoRedBackdrop extends LinearOpMode {
     /**
      * Initializes the April Tag Processing Pipeline
      */
-    public void initVisionProcessing() {
+    public void initAprilTagVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
@@ -323,7 +320,7 @@ public class AutoRedBackdrop extends LinearOpMode {
     /**
      * Note, this function is blocking
      */
-    private boolean detectAprilTags() {
+    private boolean detectAprilTags(int desiredTagId) {
         int count = 0;
 
         boolean targetDetected = false;
@@ -342,7 +339,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
                 if (detection.metadata == null) continue;
 
-                if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
+                if (detection.id == desiredTagId) { // If the tag is the one we want, stop looking
 
                     desiredTag = detection;
 
@@ -362,7 +359,7 @@ public class AutoRedBackdrop extends LinearOpMode {
      * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
      */
     @SuppressLint("DefaultLocale")
-    public void centerOnAprilTag() {
+    public void centerOnAprilTag(int desiredTagId) {
         boolean isAtTarget = false;
 
         String errValues, driveValues;
@@ -380,7 +377,8 @@ public class AutoRedBackdrop extends LinearOpMode {
                 break;
             }
 
-            if (detectAprilTags()) {
+
+            if (detectAprilTags(desiredTagId)) {
 
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
