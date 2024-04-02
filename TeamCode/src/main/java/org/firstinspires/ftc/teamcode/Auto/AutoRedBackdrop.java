@@ -296,10 +296,6 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         while (visionPortal.getCameraState() != STREAMING) {
             if (isStopRequested() || !opModeIsActive()) return;
-
-            telemetry.addLine("Camera Waiting.");
-            telemetry.addData("Current Camera State", visionPortal.getCameraState().toString());
-            telemetry.update();
         }
 
         setManualCameraSettings(myExposureMS, myGain, myWhiteBalance);
@@ -338,7 +334,6 @@ public class AutoRedBackdrop extends LinearOpMode {
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
             if (count > maxAprilTagDetections) {
-                telemetry.addLine("No Tags Detected");
                 break;
             }
 
@@ -348,7 +343,6 @@ public class AutoRedBackdrop extends LinearOpMode {
                 if (detection.metadata == null) continue;
 
                 if (detection.id == DESIRED_TAG_ID) { // If the tag is the one we want, stop looking
-                    telemetry.addLine("Detected Desired Tag");
 
                     desiredTag = detection;
 
@@ -375,6 +369,8 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         long start = System.currentTimeMillis();
 
+        mecanumDriveBase.updatePoseEstimate();
+
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
@@ -385,7 +381,6 @@ public class AutoRedBackdrop extends LinearOpMode {
             }
 
             if (detectAprilTags()) {
-                telemetry.addLine("Centering on April Tag");
 
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
@@ -410,12 +405,6 @@ public class AutoRedBackdrop extends LinearOpMode {
 
                 drive *= -1.0;
 
-                errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-                driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
-
-                telemetry.addLine(driveValues);
-                telemetry.addLine(errValues);
-
                 if (isWithinTolerance()) {
                     isAtTarget = true;
                     MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
@@ -425,9 +414,9 @@ public class AutoRedBackdrop extends LinearOpMode {
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
             }
-
-            telemetry.update();
         }
+
+        mecanumDriveBase.updatePoseEstimate();
     }
 
     public boolean isWithinTolerance() {
