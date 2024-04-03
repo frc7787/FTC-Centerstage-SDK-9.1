@@ -31,10 +31,10 @@ public class Properties {
 
     // AUTO
 
-    public static volatile int AUTO_INITIAL_WORM_POSITION = 1400;
+    public static volatile int AUTO_INITIAL_WORM_POSITION          = 1400;
     public static volatile int YELLOW_PIXEL_WORM_POSITION          = 890;
-    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 2430;
-    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1100;
+    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 2400;
+    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1000;
 
     public static volatile double ELEVATOR_EXTENSION_SPEED_AUTO = 0.75;
     public static volatile double ELEVATOR_RETRACTION_SPEED_AUTO = 1.0;
@@ -51,8 +51,6 @@ public class Properties {
 
     public static volatile double DEFAULT_INTAKE_POWER       = 1.0;
     public static volatile double DEFAULT_OUTTAKE_POWER      = 0.4;
-    public static volatile double DEFAULT_INTAKE_BELT_POWER  = 1.0;
-    public static volatile double DEFAULT_OUTTAKE_BELT_POWER = 1.0;
 
     // --------- DELIVERY TRAY PROPERTIES ---------- //
 
