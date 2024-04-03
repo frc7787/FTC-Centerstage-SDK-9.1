@@ -405,6 +405,8 @@ public class AutoBlueAudience extends LinearOpMode {
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+
+                if (isWithinTolerance()) isAtTarget = true;
             }
 
             telemetry.update();
@@ -450,6 +452,8 @@ public class AutoBlueAudience extends LinearOpMode {
                     break;
                 case CLEARING_PIXELS:
                     Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
+
+                    Arm.update(false);
 
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
                         placingState = PlacingState.RETRACTING;
