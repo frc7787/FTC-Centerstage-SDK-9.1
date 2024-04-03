@@ -1,9 +1,30 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
+import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
+import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
+import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
+import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
+import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
+import static org.firstinspires.ftc.teamcode.Properties.GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
+import static org.firstinspires.ftc.teamcode.Properties.MAX_STRAFE_SPEED;
+import static org.firstinspires.ftc.teamcode.Properties.MAX_TURN_SPEED;
+import static org.firstinspires.ftc.teamcode.Properties.RANGE_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.STRAFE_D;
+import static org.firstinspires.ftc.teamcode.Properties.STRAFE_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
+import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
+import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
-import android.util.Size;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -45,23 +66,7 @@ public class AutoRedAudience extends LinearOpMode {
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
 
-    final Size RESOLUTION = new Size(640, 480);
-
-    final double YAW_ERR_TOLERANCE     = 0.5;
-    final double BEARING_ERR_TOLERANCE = 0.8;
-    final double RANGE_ERR_TOLERANCE   = 0.5;
-
     int maxAprilTagDetections = 25;
-
-    int myExposureMS   = 2;
-    int myGain         = 0;
-    int myWhiteBalance = 4000;
-
-    final double DESIRED_DISTANCE = 17.5;
-
-    final double MAX_AUTO_SPEED  = 0.5;
-    final double MAX_AUTO_STRAFE = 0.5;
-    final double MAX_AUTO_TURN   = 0.5;
 
     enum PlacingState {
         START,
@@ -72,20 +77,15 @@ public class AutoRedAudience extends LinearOpMode {
         PLACED
     }
 
-    int wormTargetPos     = 890;
-    int elevatorTargetPos = 2430;
-
     PlacingState placingState = PlacingState.START;
 
-    // "P" Value for drive, strafe, and turn
-    final double DRIVE_GAIN  = 0.025;
-    final double STRAFE_GAIN = 0.07;
-    final double TURN_GAIN   = 0.05;
-
-    // "D" Value for drive, strafe, turn
-    final double DRIVE_D  = 0.0025;
-    final double STRAFE_D = 0.00002;
-    final double TURN_D   = 0.0012;
+    TrajectorySequence toSpikeLeft,
+                       toSpikeCenter,
+                       toSpikeRight,
+                       toBackdropLeft,
+                       toBackdropCenter,
+                       toBackdropRight,
+                       toPark;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -106,32 +106,32 @@ public class AutoRedAudience extends LinearOpMode {
 
         mecanumDriveBase.setPoseEstimate(startPose);
 
-        TrajectorySequence toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+        toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(-36, -39, Math.toRadians(-158)))
                 .lineToConstantHeading(new Vector2d(-22, -36))
                 .build();
 
-        TrajectorySequence toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+        toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(-36, -20, Math.toRadians(0)))
                 .build();
 
-        TrajectorySequence toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+        toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(-42, -21, Math.toRadians(0)))
                 .build();
 
-        TrajectorySequence toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
+        toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(-42, -12))
                 .lineTo(new Vector2d(38, -12))
                 .strafeTo(new Vector2d(38, -36))
                 .build();
 
-        TrajectorySequence toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
+        toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-36, -12))
                 .lineTo(new Vector2d(38, -12))
                 .strafeTo(new Vector2d(38, -36))
                 .build();
 
-        TrajectorySequence toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
+        toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .lineToLinearHeading(new Pose2d(-24, -38, Math.toRadians(180)))
                 .lineToConstantHeading(new Vector2d(-40, -36))
                 .strafeTo(new Vector2d(-40, -12))
@@ -178,7 +178,6 @@ public class AutoRedAudience extends LinearOpMode {
 
         location = propDetector.getPropLocation();
 
-
         int leftCount   = 0;
         int rightCount  = 0;
         int centerCount = 0;
@@ -211,8 +210,6 @@ public class AutoRedAudience extends LinearOpMode {
             location = PropLocation.NONE;
         }
 
-
-
         Arm.rotateWorm(0);
 
         sleep(0);
@@ -231,24 +228,6 @@ public class AutoRedAudience extends LinearOpMode {
                 placePixelOnBackdrop();
                 break;
             case CENTER:
-                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
-
-                centerOnAprilTag(5);
-
-                placePixelOnBackdrop();
-                break;
-
-            case RIGHT:
-                mecanumDriveBase.followTrajectorySequence(toSpikeRight);
-                Auxiliaries.placePixelOnSpikeStripRight();
-                mecanumDriveBase.followTrajectorySequence(toBackdropRight);
-
-                centerOnAprilTag(6);
-
-                placePixelOnBackdrop();
-                break;
             case NONE: // This case should copy center
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
@@ -258,9 +237,18 @@ public class AutoRedAudience extends LinearOpMode {
 
                 placePixelOnBackdrop();
                 break;
+            case RIGHT:
+                mecanumDriveBase.followTrajectorySequence(toSpikeRight);
+                Auxiliaries.placePixelOnSpikeStripRight();
+                mecanumDriveBase.followTrajectorySequence(toBackdropRight);
+
+                centerOnAprilTag(6);
+
+                placePixelOnBackdrop();
+                break;
         }
 
-        TrajectorySequence toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+        toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
                         .strafeTo(new Vector2d(45, -64))
                         .lineTo(new Vector2d(60, -64))
                         .build();
@@ -283,19 +271,15 @@ public class AutoRedAudience extends LinearOpMode {
                 .addProcessor(aprilTagProcessor)
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .enableLiveView(false)
-                .setCameraResolution(RESOLUTION)
+                .setCameraResolution(CAMERA_RESOLUTION)
                 .setAutoStopLiveView(true)
                 .build();
 
         while (visionPortal.getCameraState() != STREAMING) {
             if (isStopRequested() || !opModeIsActive()) return;
-
-            telemetry.addLine("Camera Waiting.");
-            telemetry.addData("Current Camera State", visionPortal.getCameraState().toString());
-            telemetry.update();
         }
 
-        setManualCameraSettings(myExposureMS, myGain, myWhiteBalance);
+        setManualCameraSettings(EXPOSURE_MS, GAIN, WHITE_BALANCE);
     }
 
     /**
@@ -369,7 +353,7 @@ public class AutoRedAudience extends LinearOpMode {
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
-            // Quit loop if it takes more than 5 seconds to center
+            // Quit loop if it takes more than 4 seconds to center
             if (System.currentTimeMillis() - start > 4000) {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 break;
@@ -377,7 +361,7 @@ public class AutoRedAudience extends LinearOpMode {
 
             if (detectAprilTags(desiredTagId)) {
                 prevRangeErr = rangeErr;
-                rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+                rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE_FROM_APRIL_TAG_IN);
 
                 prevYawErr = yawErr;
                 yawErr     = desiredTag.ftcPose.yaw;
@@ -389,25 +373,26 @@ public class AutoRedAudience extends LinearOpMode {
                 yawErr     = 0.9 * yawErr     + 0.1 * prevYawErr;
                 bearingErr = 0.9 * bearingErr + 0.1 * prevBearingErr;
 
-                if (Math.abs(rangeErr) < RANGE_ERR_TOLERANCE)     rangeErr   = 0.0;
-                if (Math.abs(yawErr) < YAW_ERR_TOLERANCE)         yawErr     = 0.0;
-                if (Math.abs(bearingErr) < BEARING_ERR_TOLERANCE) bearingErr = 0.0;
+                if (Math.abs(rangeErr) < RANGE_ERROR_TOLERANCE)     rangeErr   = 0.0;
+                if (Math.abs(yawErr) < YAW_ERROR_TOLERANCE)         yawErr     = 0.0;
+                if (Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE) bearingErr = 0.0;
 
-                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-                turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
+                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE_FROM_APRIL_TAG_IN), -MAX_DRIVE_SPEED, MAX_DRIVE_SPEED);
+                strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_STRAFE_SPEED, MAX_STRAFE_SPEED);
+                turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_TURN_SPEED, MAX_TURN_SPEED);
 
                 drive *= -1.0;
 
                 if (isWithinTolerance()) {
                     isAtTarget = true;
                     MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
-                    break;
                 } else {
                     MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.03);
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
+
+                if (isWithinTolerance()) isAtTarget = true;
             }
         }
 
@@ -415,9 +400,9 @@ public class AutoRedAudience extends LinearOpMode {
     }
 
     public boolean isWithinTolerance() {
-        return (Math.abs(rangeErr)      < RANGE_ERR_TOLERANCE
-                && Math.abs(yawErr)     < YAW_ERR_TOLERANCE
-                && Math.abs(bearingErr) < BEARING_ERR_TOLERANCE);
+        return (Math.abs(rangeErr)      < RANGE_ERROR_TOLERANCE
+                && Math.abs(yawErr)     < YAW_ERROR_TOLERANCE
+                && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);
     }
 
     private void placePixelOnBackdrop() {
@@ -428,7 +413,9 @@ public class AutoRedAudience extends LinearOpMode {
 
             switch (placingState) {
                 case START:
-                    Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
+                    Arm.setElevatorPower(ELEVATOR_EXTENSION_SPEED_AUTO);
+
+                    Arm.setTargetPos(YELLOW_PIXEL_ELEVATOR_POSITION, YELLOW_PIXEL_WORM_POSITION);
 
                     placingState = PlacingState.MOVING_TO_POS;
                     break;
@@ -447,12 +434,14 @@ public class AutoRedAudience extends LinearOpMode {
                     placingState = PlacingState.CLEARING_PIXELS;
                     break;
                 case CLEARING_PIXELS:
-                    Arm.rotateWorm(1100);
+                    Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
 
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
                         placingState = PlacingState.RETRACTING;
                     }
                 case RETRACTING:
+                    Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
+
                     Arm.setTargetPos(0, 0);
                     Arm.update(false);
 

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Size;
+
 import com.acmerobotics.dashboard.config.Config;
 
 @Config
@@ -26,6 +28,16 @@ public class Properties {
     public static volatile double DEFAULT_ELEVATOR_POWER = 1.0; // 1.0;
     public static volatile double ELEVATOR_HOMING_POWER  = 0.5; // Absolute value
     public static volatile double WORM_HOMING_POWER      = 0.5; // Absolute value
+
+    // AUTO
+
+    public static volatile int AUTO_INITIAL_WORM_POSITION = 1400;
+    public static volatile int YELLOW_PIXEL_WORM_POSITION          = 890;
+    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 2430;
+    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1100;
+
+    public static volatile double ELEVATOR_EXTENSION_SPEED_AUTO = 0.75;
+    public static volatile double ELEVATOR_RETRACTION_SPEED_AUTO = 1.0;
 
 
     // ----------- DRIVE PROPERTIES ---------- //
@@ -60,15 +72,39 @@ public class Properties {
 
     public static volatile int CAMERA_WIDTH = 320;
 
+    public static volatile Size CAMERA_RESOLUTION = new Size(640, 480);
+
     public static volatile double LEFT_X  = 0.25 * (double) CAMERA_WIDTH;
     public static volatile double RIGHT_X = 0.75 * (double) CAMERA_WIDTH;
 
-    // ----------- AUTO WAIT TIMES in ms------------ //
+    public static volatile int EXPOSURE_MS   = 2;
+    public static volatile int GAIN          = 0;
+    public static volatile int WHITE_BALANCE = 4000;
 
-    public static volatile int INITIAL_SLEEP = 4000;
-    public static volatile int STEP_1_SLEEP = 1000;
-    public static volatile int STEP_2_SLEEP = 800;
-    public static volatile int STEP_3_SLEEP = 2000;
+    // ----------- AUTO PID / TOLERANCE PROPERTIES ---------- //
 
-    public static volatile int AUTO_INITIAL_ARM_POS = 1400;
+    public static volatile double DRIVE_GAIN  = 0.025;
+    public static volatile double STRAFE_GAIN = 0.07;
+    public static volatile double TURN_GAIN   = 0.04;
+
+    public static volatile double DRIVE_D  = 0.0025;
+    public static volatile double STRAFE_D = 0.00002;
+    public static volatile double TURN_D   = 0.0012;
+
+    public static volatile double YAW_ERROR_TOLERANCE     = 0.5;
+    public static volatile double BEARING_ERROR_TOLERANCE = 0.8;
+    public static volatile double RANGE_ERROR_TOLERANCE   = 0.5;
+
+    public static volatile double DESIRED_DISTANCE_FROM_APRIL_TAG_IN = 17.5;
+
+    public static volatile double MAX_DRIVE_SPEED  = 0.5;
+    public static volatile double MAX_TURN_SPEED   = 0.5;
+    public static volatile double MAX_STRAFE_SPEED = 0.5;
+
+    // ----------- AUTO WAIT TIMES------------ //
+
+    public static volatile int INITIAL_SLEEP_MS = 4000;
+    public static volatile int STEP_1_SLEEP_MS  = 1000;
+    public static volatile int STEP_2_SLEEP_MS  = 800;
+    public static volatile int STEP_3_SLEEP_MS  = 2000;
 }

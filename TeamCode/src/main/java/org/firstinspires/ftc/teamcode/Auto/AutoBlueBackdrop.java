@@ -1,9 +1,31 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
+import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
+import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
+import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
+import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
+import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
+import static org.firstinspires.ftc.teamcode.Properties.GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
+import static org.firstinspires.ftc.teamcode.Properties.MAX_STRAFE_SPEED;
+import static org.firstinspires.ftc.teamcode.Properties.MAX_TURN_SPEED;
+import static org.firstinspires.ftc.teamcode.Properties.RANGE_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.STRAFE_D;
+import static org.firstinspires.ftc.teamcode.Properties.STRAFE_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
+import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
+import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
-import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
@@ -47,23 +69,15 @@ public class AutoBlueBackdrop extends LinearOpMode {
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
 
-    final Size resolution = new Size(640, 480);
-
-    final double yawErrTolerance     = 0.5;
-    final double bearingErrTolerance = 0.8;
-    final double rangeErrTolerance   = 0.5;
+    TrajectorySequence toSpikeLeft,
+                       toSpikeCenter,
+                       toSpikeRight,
+                       toBackdropLeft,
+                       toBackdropCenter,
+                       toBackdropRight,
+                       toPark;
 
     int maxAprilTagDetections = 25;
-
-    int myExposureMS   = 2;
-    int myGain         = 0;
-    int myWhiteBalance = 4000;
-
-    final double DESIRED_DISTANCE = 17.5;
-
-    final double MAX_AUTO_SPEED  = 0.5;
-    final double MAX_AUTO_STRAFE = 0.5;
-    final double MAX_AUTO_TURN   = 0.5;
 
     enum PlacingState {
         START,
@@ -74,20 +88,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
         PLACED
     }
 
-    int wormTargetPos     = 890;
-    int elevatorTargetPos = 2430;
-
     PlacingState placingState = PlacingState.START;
-
-    // "P" Value for drive, strafe, and turn
-    final double DRIVE_GAIN  = 0.025;
-    final double STRAFE_GAIN = 0.07;
-    final double TURN_GAIN   = 0.04;
-
-    // "D" Value for drive, strafe, turn
-    final double DRIVE_D  = 0.0025;
-    final double STRAFE_D = 0.00002;
-    final double TURN_D   = 0.0012;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -99,7 +100,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        propDetector = new PropDetector(PropColor.BLUE);
+        propDetector     = new PropDetector(PropColor.BLUE);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 
         mecanumDriveBase.init();
@@ -108,30 +109,30 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         mecanumDriveBase.setPoseEstimate(startPose);
 
-        TrajectorySequence toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+        toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(23, 34, Math.toRadians(0)))
                 .build();
 
-        TrajectorySequence toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+        toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(12, 34, Math.toRadians(0)))
                 .build();
 
-        TrajectorySequence toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+        toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(12, 39, Math.toRadians(22)))
                 .lineToConstantHeading(new Vector2d(-2, 36))
                 .build();
 
-        TrajectorySequence toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
+        toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(23, 38))
                 .lineToLinearHeading(new Pose2d(38, 43, Math.toRadians(0)))
                 .build();
 
-        TrajectorySequence toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
+        toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(10, 38))
                 .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
-        TrajectorySequence toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
+        toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .lineToLinearHeading(new Pose2d(0, 38, Math.toRadians(0)))
                 .lineToConstantHeading(new Vector2d(38, 32))
                 .build();
@@ -164,17 +165,13 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         Arm.update(false);
 
-        Arm.rotateWorm(1400);
+        Arm.rotateWorm(AUTO_INITIAL_WORM_POSITION);
 
         waitForStart();
 
-        // Pls do not delete this
-        location = propDetector.getPropLocation();
-
-        telemetry.addData("PROP LOCATION: ", location);
-        telemetry.update();
-
         if (isStopRequested()) { return; }
+
+        location = propDetector.getPropLocation();
 
         int leftCount   = 0;
         int rightCount  = 0;
@@ -212,6 +209,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         Arm.rotateWorm(0);
 
+        sleep(0);
+
         switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
@@ -221,10 +220,9 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 centerOnAprilTag(1);
 
                 placePixelOnBackdrop();
-
                 break;
             case CENTER:
-            case NONE: // This case should copy center
+            case NONE:
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStripRight();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
@@ -232,7 +230,6 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 centerOnAprilTag(2);
 
                 placePixelOnBackdrop();
-
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -243,23 +240,22 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 placePixelOnBackdrop();
                 break;
-
         }
 
-        TrajectorySequence toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+        toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
                         .strafeTo(new Vector2d(45, 64))
                         .lineTo(new Vector2d(60, 64))
                         .build();
 
         mecanumDriveBase.followTrajectorySequence(toPark);
 
-        sleep(6000);
+        sleep(2000);
     }
 
     /**
      * Initializes the April Tag Processing Pipeline
      */
-    public void initAprilTagVisionProcessing() {
+    void initAprilTagVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
@@ -269,19 +265,15 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .addProcessor(aprilTagProcessor)
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .enableLiveView(false)
-                .setCameraResolution(resolution)
+                .setCameraResolution(CAMERA_RESOLUTION)
                 .setAutoStopLiveView(true)
                 .build();
 
         while (visionPortal.getCameraState() != STREAMING) {
             if (isStopRequested() || !opModeIsActive()) return;
-
-            telemetry.addLine("Camera Waiting.");
-            telemetry.addData("Current Camera State", visionPortal.getCameraState().toString());
-            telemetry.update();
         }
 
-        setManualCameraSettings(myExposureMS, myGain, myWhiteBalance);
+        setManualCameraSettings(EXPOSURE_MS, GAIN, WHITE_BALANCE);
     }
 
     /**
@@ -290,7 +282,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
      * @param gain The gain to set
      * @param whiteBalance The color temperature to set
      */
-    private void setManualCameraSettings(int exposureMS, int gain, int whiteBalance) {
+    void setManualCameraSettings(int exposureMS, int gain, int whiteBalance) {
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
         exposureControl.setMode(ExposureControl.Mode.Manual);
         exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
@@ -306,7 +298,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
     /**
      * Note, this function is blocking
      */
-    private boolean detectAprilTags(int desiredTagId) {
+    boolean detectAprilTags(int desiredTagId) {
         int count = 0;
 
         boolean targetDetected = false;
@@ -316,10 +308,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
-            if (count > maxAprilTagDetections) {
-                telemetry.addLine("No Tags Detected");
-                break;
-            }
+            if (count > maxAprilTagDetections) break;
 
             for (AprilTagDetection detection : currentDetections) {
                 if (isStopRequested() || !opModeIsActive()) return false;
@@ -327,8 +316,6 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 if (detection.metadata == null) continue;
 
                 if (detection.id == desiredTagId) { // If the tag is the one we want, stop looking
-                    telemetry.addLine("Detected Desired Tag");
-
                     desiredTag = detection;
 
                     targetDetected = true;
@@ -343,11 +330,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
         return targetDetected;
     }
 
-    /**
-     * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
-     */
     @SuppressLint("DefaultLocale")
-    public void centerOnAprilTag(int desiredTagId) {
+    void centerOnAprilTag(int desiredTagId) {
         boolean isAtTarget = false;
 
         long start = System.currentTimeMillis();
@@ -359,16 +343,15 @@ public class AutoBlueBackdrop extends LinearOpMode {
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
-            // Quit loop if it takes more than 5 seconds to center
-            if (System.currentTimeMillis() - start > 5000) {
+            // Quit loop if it takes more than 4 seconds to center
+            if (System.currentTimeMillis() - start > 4000) {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 break;
             }
 
             if (detectAprilTags(desiredTagId)) {
-
                 prevRangeErr = rangeErr;
-                rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+                rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE_FROM_APRIL_TAG_IN);
 
                 prevYawErr = yawErr;
                 yawErr     = desiredTag.ftcPose.yaw;
@@ -380,13 +363,13 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 yawErr     = 0.9 * yawErr     + 0.1 * prevYawErr;
                 bearingErr = 0.9 * bearingErr + 0.1 * prevBearingErr;
 
-                if (Math.abs(rangeErr) < rangeErrTolerance)     rangeErr   = 0.0;
-                if (Math.abs(yawErr) < yawErrTolerance)         yawErr     = 0.0;
-                if (Math.abs(bearingErr) < bearingErrTolerance) bearingErr = 0.0;
+                if (Math.abs(rangeErr) < RANGE_ERROR_TOLERANCE)     rangeErr   = 0.0;
+                if (Math.abs(yawErr) < YAW_ERROR_TOLERANCE)         yawErr     = 0.0;
+                if (Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE) bearingErr = 0.0;
 
-                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE), -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-                turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_AUTO_TURN, MAX_AUTO_TURN);
+                drive  = Range.clip(drivePID.calculate(desiredTag.ftcPose.range, DESIRED_DISTANCE_FROM_APRIL_TAG_IN), -MAX_DRIVE_SPEED, MAX_DRIVE_SPEED);
+                strafe = Range.clip(strafePID.calculate(-desiredTag.ftcPose.yaw, 0.0), -MAX_STRAFE_SPEED, MAX_STRAFE_SPEED);
+                turn   = Range.clip(turnPID.calculate(bearingErr, 0.0), -MAX_TURN_SPEED, MAX_TURN_SPEED);
 
                 drive *= -1.0;
 
@@ -399,35 +382,30 @@ public class AutoBlueBackdrop extends LinearOpMode {
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
 
-                if (isWithinTolerance()) {
-                    break;
-                }
+                if (isWithinTolerance()) isAtTarget = true;
             }
         }
 
         mecanumDriveBase.updatePoseEstimate();
     }
 
-    public boolean isWithinTolerance() {
-        return (Math.abs(rangeErr)      < rangeErrTolerance
-                && Math.abs(yawErr)     < yawErrTolerance
-                && Math.abs(bearingErr) < bearingErrTolerance);
+    boolean isWithinTolerance() {
+        return (Math.abs(rangeErr)      < RANGE_ERROR_TOLERANCE
+                && Math.abs(yawErr)     < YAW_ERROR_TOLERANCE
+                && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);
     }
 
-    private void placePixelOnBackdrop() {
+    void placePixelOnBackdrop() {
         while (placingState != PlacingState.PLACED) {
             if (isStopRequested() || !opModeIsActive()) return;
 
             Arm.update(false);
 
-            telemetry.addData("Placing State", placingState);
-            telemetry.update();
-
             switch (placingState) {
                 case START:
-                    Arm.setElevatorPower(0.6);
+                    Arm.setElevatorPower(ELEVATOR_EXTENSION_SPEED_AUTO);
 
-                    Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
+                    Arm.setTargetPos(YELLOW_PIXEL_ELEVATOR_POSITION, YELLOW_PIXEL_WORM_POSITION);
 
                     placingState = PlacingState.MOVING_TO_POS;
                     break;
@@ -446,7 +424,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                     placingState = PlacingState.CLEARING_PIXELS;
                     break;
                 case CLEARING_PIXELS:
-                    Arm.setTargetPos(Arm.elevatorPos(), 1100);
+                    Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
 
                     Arm.update(false);
 
@@ -455,7 +433,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                     }
                     break;
                 case RETRACTING:
-                    Arm.setElevatorPower(1.0);
+                    Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
 
                     Arm.setTargetPos(0, 0);
                     Arm.update(false);
@@ -470,4 +448,3 @@ public class AutoBlueBackdrop extends LinearOpMode {
         }
     }
 }
-
