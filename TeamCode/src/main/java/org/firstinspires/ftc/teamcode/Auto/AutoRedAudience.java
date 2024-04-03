@@ -122,7 +122,7 @@ public class AutoRedAudience extends LinearOpMode {
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(-42, -12))
                 .lineTo(new Vector2d(38, -12))
-                .strafeTo(new Vector2d(38, -36))
+                .strafeTo(new Vector2d(38, -30))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -136,7 +136,7 @@ public class AutoRedAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(-40, -36))
                 .strafeTo(new Vector2d(-40, -12))
                 .lineTo(new Vector2d(38, -12))
-                .strafeTo(new Vector2d(38, -36))
+                .strafeTo(new Vector2d(38, -42))
                 .turn(Math.toRadians(180))
                 .build();
 

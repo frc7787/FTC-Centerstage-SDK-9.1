@@ -124,7 +124,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(23, 38))
-                .lineToLinearHeading(new Pose2d(38, 43, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(38, 42, Math.toRadians(0)))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -134,7 +134,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .lineToLinearHeading(new Pose2d(0, 38, Math.toRadians(0)))
-                .lineToConstantHeading(new Vector2d(38, 32))
+                .lineToConstantHeading(new Vector2d(38, 30))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
