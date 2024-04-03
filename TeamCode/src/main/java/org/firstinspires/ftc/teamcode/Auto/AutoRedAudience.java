@@ -261,7 +261,7 @@ public class AutoRedAudience extends LinearOpMode {
     /**
      * Initializes the April Tag Processing Pipeline
      */
-    public void initAprilTagVisionProcessing() {
+    void initAprilTagVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
@@ -288,7 +288,7 @@ public class AutoRedAudience extends LinearOpMode {
      * @param gain The gain to set
      * @param whiteBalance The color temperature to set
      */
-    private void setManualCameraSettings(int exposureMS, int gain, int whiteBalance) {
+    void setManualCameraSettings(int exposureMS, int gain, int whiteBalance) {
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
         exposureControl.setMode(ExposureControl.Mode.Manual);
         exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
@@ -304,7 +304,7 @@ public class AutoRedAudience extends LinearOpMode {
     /**
      * Note, this function is blocking
      */
-    private boolean detectAprilTags(int desiredTagId) {
+    boolean detectAprilTags(int desiredTagId) {
         int count = 0;
 
         boolean targetDetected = false;

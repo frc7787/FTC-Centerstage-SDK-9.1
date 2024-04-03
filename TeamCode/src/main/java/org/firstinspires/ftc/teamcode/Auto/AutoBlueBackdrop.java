@@ -169,7 +169,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         waitForStart();
 
-        if (isStopRequested()) { return; }
+        if (isStopRequested()) return;
 
         location = propDetector.getPropLocation();
 
