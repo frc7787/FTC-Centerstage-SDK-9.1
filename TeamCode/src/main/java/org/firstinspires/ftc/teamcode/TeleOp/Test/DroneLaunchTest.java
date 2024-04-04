@@ -14,13 +14,17 @@ public class DroneLaunchTest extends OpMode {
     @Override public void init() {
         RobotPropertyParser.populateConstantsClass();
         Arm.init(hardwareMap);
+        Auxiliaries.init(hardwareMap);
 
+        telemetry.addLine("Arm will home on init!");
         telemetry.addLine("Arm will move to launch position, on start.");
         telemetry.update();
     }
 
+
     @Override public void start() {
         Arm.setTargetPos(0, ENDGAME_POSITION);
+        Arm.update(false);
     }
 
     @Override public void loop() {
@@ -28,7 +32,6 @@ public class DroneLaunchTest extends OpMode {
         telemetry.addLine("Press right trigger to reset it.");
 
         Arm.update(false);
-
 
         if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
 

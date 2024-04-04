@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DigitalChannelImpl;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
@@ -33,6 +35,8 @@ public class Arm {
     private static DcMotorImplEx wormMotor, elevatorMotor;
     private static ServoImplEx leftDoor, rightDoor;
     private static RevTouchSensor wormLimitSwitch, elevatorLimitSwitch;
+    private static DigitalChannelImpl leftOuttakeLimitSwitch, rightOuttakeLimitSwitch;
+
     private static AnalogInput wormPotentiometer;
 
     private static int elevatorTargetPos, wormTargetPos;
@@ -51,6 +55,9 @@ public class Arm {
         // Expansion Hub Digital Port 0
         elevatorLimitSwitch = hardwareMap.get(RevTouchSensor.class, "ExtensionLimitSwitch");
 
+        leftOuttakeLimitSwitch  = hardwareMap.get(DigitalChannelImpl.class, "LeftOuttakeLimitSwitch");
+        rightOuttakeLimitSwitch = hardwareMap.get(DigitalChannelImpl.class, "RightOuttakeLimitSwitch");
+
         // Expansion Hub Motor Port 0
         wormMotor  = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
         // Control Hub Motor Port 3
@@ -67,6 +74,9 @@ public class Arm {
 
         elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
         wormMotor.setMode(STOP_AND_RESET_ENCODER);
+
+        leftOuttakeLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
+        rightOuttakeLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
 
         elevatorTargetPos = 0;
         wormTargetPos     = 0;
@@ -91,6 +101,10 @@ public class Arm {
 
         switch (normalPeriodArmState) {
             case AT_POS:
+                if (leftOuttakeLimitSwitch.getState() ^ rightOuttakeLimitSwitch.getState()) {
+                    normalPeriodArmState = CORRECTING_FOR_ANGLE;
+                }
+
                 if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0 && !intaking) {
                     elevatorMotor.setPower(0.0);
                     wormMotor.setPower(0.0);
@@ -132,6 +146,13 @@ public class Arm {
                     }
                 }
                 break;
+            case CORRECTING_FOR_ANGLE:
+                elevatorMotor.setPower(0.5);
+
+                if (leftOuttakeLimitSwitch.getState() && rightOuttakeLimitSwitch.getState()) {
+                    elevatorMotor.setPower(0.0);
+                    normalPeriodArmState = AT_POS;
+                }
             case UNKNOWN: // If we don't know what the current state of the robot is (For example when we start TeleOp) we want to starting homing
                 setHoming();
                 break;

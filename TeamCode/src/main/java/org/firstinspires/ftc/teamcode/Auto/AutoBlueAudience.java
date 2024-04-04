@@ -28,6 +28,7 @@ import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 import android.annotation.SuppressLint;
 import android.util.Size;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -57,12 +58,17 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Blue - Audience", group = "Blue")
+@Config
 public class AutoBlueAudience extends LinearOpMode {
     PropDetector propDetector;
     PropLocation location;
     OpenCvCamera camera;
 
     MecanumDriveBase mecanumDriveBase;
+
+    AprilTagProcessor aprilTagProcessor;
+    AprilTagDetection desiredTag;
+    VisionPortal visionPortal;
 
     TrajectorySequence toSpikeLeft,
                        toSpikeCenter,
@@ -71,10 +77,6 @@ public class AutoBlueAudience extends LinearOpMode {
                        toBackdropCenter,
                        toBackdropRight,
                        toPark;
-
-    AprilTagProcessor aprilTagProcessor;
-    AprilTagDetection desiredTag;
-    VisionPortal visionPortal;
 
     int maxAprilTagDetections = 25;
 
@@ -97,8 +99,7 @@ public class AutoBlueAudience extends LinearOpMode {
     PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
     PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
-    @Override
-    public void runOpMode() throws InterruptedException {
+    @Override public void runOpMode() throws InterruptedException {
         propDetector     = new PropDetector(PropColor.BLUE);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 
@@ -150,7 +151,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
         camera = OpenCvCameraFactory
                 .getInstance()
-                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId);
+                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override public void onOpened() {
@@ -258,10 +259,7 @@ public class AutoBlueAudience extends LinearOpMode {
         sleep(20000);
     }
 
-    /**
-     * Initializes the April Tag Processing Pipeline
-     */
-    public void initAprilTagVisionProcessing() {
+    void initAprilTagVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
@@ -277,10 +275,6 @@ public class AutoBlueAudience extends LinearOpMode {
 
         while (visionPortal.getCameraState() != STREAMING) {
             if (isStopRequested() || !opModeIsActive()) return;
-
-            telemetry.addLine("Camera Waiting.");
-            telemetry.addData("Current Camera State", visionPortal.getCameraState().toString());
-            telemetry.update();
         }
 
         setManualCameraSettings(EXPOSURE_MS, GAIN, WHITE_BALANCE);
@@ -318,10 +312,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
-            if (count > maxAprilTagDetections) {
-                telemetry.addLine("No Tags Detected");
-                break;
-            }
+            if (count > maxAprilTagDetections) break;
 
             for (AprilTagDetection detection : currentDetections) {
                 if (isStopRequested() || !opModeIsActive()) return false;
@@ -329,8 +320,6 @@ public class AutoBlueAudience extends LinearOpMode {
                 if (detection.metadata == null) continue;
 
                 if (detection.id == desiredTagId) { // If the tag is the one we want, stop looking
-                    telemetry.addLine("Detected Desired Tag");
-
                     desiredTag = detection;
 
                     targetDetected = true;
@@ -356,6 +345,8 @@ public class AutoBlueAudience extends LinearOpMode {
 
         long start = System.currentTimeMillis();
 
+        if (isWithinTolerance()) return;
+
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
@@ -366,8 +357,6 @@ public class AutoBlueAudience extends LinearOpMode {
             }
 
             if (detectAprilTags(desiredTagId)) {
-                telemetry.addLine("Centering on April Tag");
-
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE_FROM_APRIL_TAG_IN);
 

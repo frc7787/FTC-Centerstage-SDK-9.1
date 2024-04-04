@@ -98,8 +98,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
     PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
     PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
-    @Override
-    public void runOpMode() throws InterruptedException {
+    @Override public void runOpMode() throws InterruptedException {
         propDetector     = new PropDetector(PropColor.BLUE);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 

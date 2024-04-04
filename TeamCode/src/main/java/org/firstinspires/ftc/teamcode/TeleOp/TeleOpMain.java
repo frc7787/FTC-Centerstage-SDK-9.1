@@ -62,11 +62,6 @@ public class TeleOpMain extends OpMode {
         double strafe = gamepad1.left_stick_x;
         double turn   = gamepad1.right_stick_x;
 
-        telemetry.addData("Drive", drive);
-        telemetry.addData("Strafe", strafe);
-        telemetry.addData("Turn", turn);
-        telemetry.update();
-
         MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.02);
 
         switch (gamePeriod) {
