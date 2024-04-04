@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 
 import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -70,6 +71,7 @@ public class Arm {
         wormPotentiometer = hardwareMap.analogInput.get("WormPotentiometer");
 
         elevatorMotor.setDirection(REVERSE);
+        elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
         wormMotor.setMode(STOP_AND_RESET_ENCODER);
@@ -144,9 +146,12 @@ public class Arm {
                 }
                 break;
             case CORRECTING_FOR_ANGLE:
+                elevatorMotor.setMode(RUN_USING_ENCODER);
+
                 if (!leftOuttakeLimitSwitch.getState() && !rightOuttakeLimitSwitch.getState()) {
                     elevatorMotor.setPower(0.0);
-                    elevatorTargetPos = elevatorPos();
+
+                    extendElevator(elevatorPos());
 
                     normalPeriodArmState = AT_POS;
                 }
@@ -165,6 +170,10 @@ public class Arm {
                 home();
                 break;
         }
+    }
+
+    public static boolean bothOuttakeLimitSwitchesArePressed() {
+        return !leftOuttakeLimitSwitch.getState() && !rightOuttakeLimitSwitch.getState();
     }
 
     /**
