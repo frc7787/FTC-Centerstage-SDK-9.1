@@ -14,7 +14,6 @@ import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DigitalChannelImpl;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
@@ -35,7 +34,7 @@ public class Arm {
     private static DcMotorImplEx wormMotor, elevatorMotor;
     private static ServoImplEx leftDoor, rightDoor;
     private static RevTouchSensor wormLimitSwitch, elevatorLimitSwitch;
-    private static DigitalChannelImpl leftOuttakeLimitSwitch, rightOuttakeLimitSwitch;
+    private static DigitalChannel leftOuttakeLimitSwitch, rightOuttakeLimitSwitch;
 
     private static AnalogInput wormPotentiometer;
 
@@ -55,8 +54,8 @@ public class Arm {
         // Expansion Hub Digital Port 0
         elevatorLimitSwitch = hardwareMap.get(RevTouchSensor.class, "ExtensionLimitSwitch");
 
-        leftOuttakeLimitSwitch  = hardwareMap.get(DigitalChannelImpl.class, "LeftOuttakeLimitSwitch");
-        rightOuttakeLimitSwitch = hardwareMap.get(DigitalChannelImpl.class, "RightOuttakeLimitSwitch");
+        leftOuttakeLimitSwitch  = hardwareMap.get(DigitalChannel.class, "LeftOuttakeLimitSwitch");
+        rightOuttakeLimitSwitch = hardwareMap.get(DigitalChannel.class, "RightOuttakeLimitSwitch");
 
         // Expansion Hub Motor Port 0
         wormMotor  = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
@@ -101,24 +100,21 @@ public class Arm {
 
         switch (normalPeriodArmState) {
             case AT_POS:
-                if (leftOuttakeLimitSwitch.getState() ^ rightOuttakeLimitSwitch.getState()) {
-                    normalPeriodArmState = CORRECTING_FOR_ANGLE;
+                if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0) {
+                    if (!intaking) {
+                        elevatorMotor.setPower(0.0);
+                    } else {
+                        elevatorMotor.setPower(0.05);
+                    }
+                } else {
+                    if (!leftOuttakeLimitSwitch.getState() ^ !rightOuttakeLimitSwitch.getState()) {
+                        normalPeriodArmState = CORRECTING_FOR_ANGLE;
+                    }
                 }
-
-                if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0 && !intaking) {
-                    elevatorMotor.setPower(0.0);
-                    wormMotor.setPower(0.0);
-
-                } else if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0) {
-                    elevatorMotor.setPower(0.1);
-                    wormMotor.setPower(0.0);
-                }
-                else {
-                    elevatorMotor.setPower(0.2);
-                }
+                break;
             case TO_POS:
                 // Make sure we follow a safe sequence back
-                if (elevatorTargetPos == 0 && wormTargetPos == 0){
+                if (elevatorTargetPos == 0 && wormTargetPos == 0) {
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 10) {
                         extendElevator(0, elevatorPower);
                     } else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900){
@@ -138,6 +134,7 @@ public class Arm {
                     rotateWorm(wormTargetPos, wormPower);
                 } else {
                     rotateWorm(wormTargetPos, wormPower);
+
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT){
                         extendElevator(elevatorTargetPos, elevatorPower);
                     }
@@ -147,12 +144,20 @@ public class Arm {
                 }
                 break;
             case CORRECTING_FOR_ANGLE:
-                elevatorMotor.setPower(0.5);
-
-                if (leftOuttakeLimitSwitch.getState() && rightOuttakeLimitSwitch.getState()) {
+                if (!leftOuttakeLimitSwitch.getState() && !rightOuttakeLimitSwitch.getState()) {
                     elevatorMotor.setPower(0.0);
+                    elevatorTargetPos = elevatorPos();
+
                     normalPeriodArmState = AT_POS;
                 }
+
+                if (leftOuttakeLimitSwitch.getState() != rightOuttakeLimitSwitch.getState()) {
+                    elevatorMotor.setPower(0.5);
+                } else {
+                    elevatorMotor.setPower(0.0);
+                }
+
+                break;
             case UNKNOWN: // If we don't know what the current state of the robot is (For example when we start TeleOp) we want to starting homing
                 setHoming();
                 break;
@@ -263,6 +268,15 @@ public class Arm {
             case IDLE:
                 break;
        }
+    }
+
+    public static void relevantTelemetry(@NonNull Telemetry telemetry) {
+        telemetry.addData("Potentiometer Voltage: ", wormPotentiometer.getVoltage());
+        telemetry.addData("Arm State", normalPeriodArmState);
+        telemetry.addData("Left Limit Switch", leftOuttakeLimitSwitch.getState());
+        telemetry.addData("Right Limit Switch", rightOuttakeLimitSwitch.getState());
+        telemetry.addData("Left Limit Switch Connection", leftOuttakeLimitSwitch.getConnectionInfo());
+        telemetry.addData("Right Limit Switch Connection", rightOuttakeLimitSwitch.getConnectionInfo());
     }
 
     /**

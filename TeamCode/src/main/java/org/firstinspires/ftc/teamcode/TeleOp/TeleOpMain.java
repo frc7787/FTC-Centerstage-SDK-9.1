@@ -26,7 +26,7 @@ public class TeleOpMain extends OpMode {
     }
 
     LED LEDOne, LEDTwo;
-    MecanumDriveBase driveBase ;
+    MecanumDriveBase driveBase;
     
     @Override public void init() {
         RobotPropertyParser.populateConstantsClass();
@@ -56,7 +56,8 @@ public class TeleOpMain extends OpMode {
         Intake.update(); // This HAS to come before Arm.update()
 
         Arm.update(Intake.isActive());
-        //Arm.debug(telemetry);
+
+        Arm.relevantTelemetry(telemetry);
 
         double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
         double strafe = gamepad1.left_stick_x;
@@ -97,6 +98,8 @@ public class TeleOpMain extends OpMode {
                endgameLoop();
                break;
        }
+
+       telemetry.update();
     }
 
     private void endgameLoop() {

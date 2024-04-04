@@ -6,7 +6,9 @@ import com.acmerobotics.dashboard.config.Config;
 
 @Config
 public class Properties {
-    // ---------- ARM PROPERTIES -- //
+    // ---------- ARM PROPERTIES ---------- //
+
+    // TELEOP POSITIONS
 
     public static volatile int BOTTOM_EXT_POS = 1580;
     public static volatile int BOTTOM_ROT_POS = 1250;
@@ -26,8 +28,8 @@ public class Properties {
 
     public static volatile double DEFAULT_WORM_POWER     = 1.0;
     public static volatile double DEFAULT_ELEVATOR_POWER = 1.0; // 1.0;
-    public static volatile double ELEVATOR_HOMING_POWER  = 0.5; // Absolute value
-    public static volatile double WORM_HOMING_POWER      = 0.5; // Absolute value
+    public static volatile double ELEVATOR_HOMING_POWER  = 0.8; // Absolute value
+    public static volatile double WORM_HOMING_POWER      = 0.8; // Absolute value
 
     // AUTO
 
