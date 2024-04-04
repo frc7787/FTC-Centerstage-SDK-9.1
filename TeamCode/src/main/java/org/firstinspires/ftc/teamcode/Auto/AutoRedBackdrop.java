@@ -96,79 +96,11 @@ public class AutoRedBackdrop extends LinearOpMode {
     PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
     PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
-    @Override
-    public void runOpMode() throws InterruptedException {
-        propDetector     = new PropDetector(PropColor.RED);
-        mecanumDriveBase = new MecanumDriveBase(hardwareMap);
-
-        mecanumDriveBase.init();
-
-        Pose2d startPose = new Pose2d(11, -63, Math.toRadians(270));
-
-        mecanumDriveBase.setPoseEstimate(startPose);
-
-       toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
-                .lineToConstantHeading(new Vector2d(12, -36))
-                .lineToLinearHeading(new Pose2d(-4, -32, Math.toRadians(-180)))
-                .build();
-
-       toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(11, -20, Math.toRadians(0)))
-                .build();
-
-       toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(25, -20, Math.toRadians(0)))
-                .build();
-
-       toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
-                .strafeTo(new Vector2d(-4, -38))
-                .lineToConstantHeading(new Vector2d(38, -30))
-                .turn(Math.toRadians(180))
-                .build();
-
-       toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
-                .strafeTo(new Vector2d(11, -12))
-                .lineTo(new Vector2d(38, -12))
-                .strafeTo(new Vector2d(38, -36))
-                .build();
-
-       toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
-                .strafeTo(new Vector2d(25, -12))
-                .lineTo(new Vector2d(38, -12))
-                .strafeTo(new Vector2d(38, -42))
-                .build();
-
-       int cameraMonitorViewId = hardwareMap
-                .appContext
-                .getResources()
-                .getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-
-       camera = OpenCvCameraFactory
-                .getInstance()
-                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-
-       camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-            @Override
-            public void onOpened() {
-                camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
-                camera.setPipeline(propDetector);
-            }
-
-            @Override
-            public void onError(int errorCode) {
-                telemetry.addData("Failed to open camera due to error code", errorCode);
-                telemetry.update();
-            }
-       });
-
+    @Override public void runOpMode() throws InterruptedException {
+       initRoadRunner();
+       initPropDetection();
        initAprilTagVisionProcessing();
-
-       Arm.init(hardwareMap);
-       Auxiliaries.init(hardwareMap);
-
-       Arm.update(false);
-
-       Arm.rotateWorm(AUTO_INITIAL_WORM_POSITION);
+       initSubsystems();
 
        waitForStart();
 
@@ -256,10 +188,88 @@ public class AutoRedBackdrop extends LinearOpMode {
        sleep(20000);
     }
 
+    void initSubsystems() {
+        Arm.init(hardwareMap);
+        Auxiliaries.init(hardwareMap);
+
+        Arm.update(false);
+
+        Arm.rotateWorm(AUTO_INITIAL_WORM_POSITION);
+    }
+
+    void initPropDetection() {
+        propDetector     = new PropDetector(PropColor.RED);
+
+        int cameraMonitorViewId = hardwareMap
+                .appContext
+                .getResources()
+                .getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+
+        camera = OpenCvCameraFactory
+                .getInstance()
+                .createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            @Override
+            public void onOpened() {
+                camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                camera.setPipeline(propDetector);
+            }
+
+            @Override
+            public void onError(int errorCode) {
+                telemetry.addData("Failed to open camera due to error code", errorCode);
+                telemetry.update();
+            }
+        });
+
+    }
+
+    void initRoadRunner() {
+        mecanumDriveBase = new MecanumDriveBase(hardwareMap);
+
+        mecanumDriveBase.init();
+
+        Pose2d startPose = new Pose2d(11, -63, Math.toRadians(270));
+
+        mecanumDriveBase.setPoseEstimate(startPose);
+
+        toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+                .lineToConstantHeading(new Vector2d(12, -36))
+                .lineToLinearHeading(new Pose2d(-4, -32, Math.toRadians(-180)))
+                .build();
+
+        toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+                .lineToLinearHeading(new Pose2d(11, -20, Math.toRadians(0)))
+                .build();
+
+        toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+                .lineToLinearHeading(new Pose2d(25, -20, Math.toRadians(0)))
+                .build();
+
+        toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
+                .strafeTo(new Vector2d(-4, -38))
+                .lineToConstantHeading(new Vector2d(38, -30))
+                .turn(Math.toRadians(180))
+                .build();
+
+        toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
+                .strafeTo(new Vector2d(11, -12))
+                .lineTo(new Vector2d(38, -12))
+                .strafeTo(new Vector2d(38, -36))
+                .build();
+
+        toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
+                .strafeTo(new Vector2d(25, -12))
+                .lineTo(new Vector2d(38, -12))
+                .strafeTo(new Vector2d(38, -42))
+                .build();
+    }
+
     /**
      * Initializes the April Tag Processing Pipeline
      */
-    public void initAprilTagVisionProcessing() {
+    void initAprilTagVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
@@ -286,7 +296,7 @@ public class AutoRedBackdrop extends LinearOpMode {
      * @param gain The gain to set
      * @param whiteBalance The color temperature to set
      */
-    private void setManualCameraSettings(int exposureMS, int gain, int whiteBalance) {
+    void setManualCameraSettings(int exposureMS, int gain, int whiteBalance) {
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
         exposureControl.setMode(ExposureControl.Mode.Manual);
         exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
@@ -302,7 +312,7 @@ public class AutoRedBackdrop extends LinearOpMode {
     /**
      * Note, this function is blocking
      */
-    private boolean detectAprilTags(int desiredTagId) {
+    boolean detectAprilTags(int desiredTagId) {
         int count = 0;
 
         boolean targetDetected = false;
@@ -393,13 +403,13 @@ public class AutoRedBackdrop extends LinearOpMode {
         mecanumDriveBase.updatePoseEstimate();
     }
 
-    public boolean isWithinTolerance() {
+    boolean isWithinTolerance() {
         return (Math.abs(rangeErr)      < RANGE_ERROR_TOLERANCE
                 && Math.abs(yawErr)     < YAW_ERROR_TOLERANCE
                 && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);
     }
 
-    private void placePixelOnBackdrop() {
+    void placePixelOnBackdrop() {
         while (placingState != PlacingState.PLACED) {
             if (isStopRequested() || !opModeIsActive()) return;
 
