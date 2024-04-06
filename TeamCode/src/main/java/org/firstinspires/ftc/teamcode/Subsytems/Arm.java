@@ -106,78 +106,103 @@ public class Arm {
 
         switch (normalPeriodArmState) {
             case AT_POS:
-
+                // If the target position is less than 5 we know we are home and should control the
+                // elevator motor based on whether or not we are intaking
                 if (wormMotor.getTargetPosition() <= 5) {
+
+                    // If we are intaking we want to apply a slight negative power to the elevator
+                    // to make sure that we intake pixels properly
                     if (intaking) {
                         elevatorMotor.setPower(-0.05);
-                    } else {
+                    } else { // If not we want to make sure that the elevator power is set to 0.0
                         elevatorMotor.setPower(0.0);
-                    }
-                } else {
-                    if (!leftOuttakeLimitSwitch.getState() ^ !rightOuttakeLimitSwitch.getState()) {
-                        if (wormMotor.getTargetPosition() != 0) {
-                            normalPeriodArmState = CORRECTING_FOR_ANGLE;
-                        }
                     }
                 }
                 break;
             case TO_POS:
+
+                // If the worm limit switch is pressed and the worm target position is 0
+                // then we know we are trying to, and have reached home but somewhere along the way
+                // the encoder has drifted. This means that we should stop and reset the encoder,
+                // then set the target position to 0. That way drift doesn't accumulate over time.
                 if (wormLimitSwitch.isPressed() && wormTargetPos == 0) {
                     wormMotor.setMode(STOP_AND_RESET_ENCODER);
                     wormMotor.setMode(RUN_USING_ENCODER);
-                    normalPeriodArmState = AT_POS;
+                    rotateWorm(0);
                 }
 
+                // If the elevator limit switch is pressed and the elevator target position is 0
+                // then we know we are trying, and have, reached home but somewhere along the way
+                // the encoder drifted. This means that we should stop and reset the encoder, then
+                // set the target position to 0. That way drift doesn't accumulate over time.
                 if (elevatorLimitSwitch.isPressed() && elevatorTargetPos == 0) {
                     elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
                     elevatorMotor.setMode(RUN_USING_ENCODER);
-                    normalPeriodArmState = AT_POS;
+                    extendElevator(0);
                 }
 
-                // Make sure we follow a safe sequence back
+                // If the target position is 0 and the limit switches are not pressed then we know
+                // that we are trying to reach home but have not yet reached it. It also tells us
+                // that we have to determine a safe way to return home.
                 if (elevatorTargetPos == 0 && wormTargetPos == 0) {
+
+                    // If the worm motor is greater than or equal to  the safety limit and the
+                    // position of the elevator motor is greater than 30 we know that we can safely
+                    // retract the elevator, and that we should so that it retracts fully and we
+                    // can safely rotate the worm down.
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 30) {
                         extendElevator(0, elevatorPower);
+
+                    // If the position of the worm motor is less than the safety limit and the
+                    // position of the elevator motor is greater than 900 we need to
+                    // rotate the worm up to the safety limit so that we can retract the elevator.
                     } else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900) {
                         rotateWorm(WORM_SAFETY_LIMIT + 20, wormPower);
                         extendElevator(1000);
-                    } else if (30 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
+
+                    // I'm not really sure what this check is trying to accomplish. I am honestly
+                    // at a loss for what this really does.
+                    } else if (90 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
                         extendElevator(0, elevatorPower);
                     } else {
-                        if (elevatorMotor.getCurrentPosition() < 50) {
+                        // Confused about this. Maybe this is the problem. If we get to this state
+                        // we know that the worm is in a safe position, and we know that the
+                        // elevator motor is greater than 90 and less than 900. So why do we need to
+                        // do this check? This seems like it might cause problems
+                        if (elevatorMotor.getCurrentPosition() <= 90) {
                             rotateWorm(0, wormPower);
                         }
                     }
+                // If the elevator position is greater than 0 and the worm position is less than
+                // the safety limit we need to rotate up to the max of the current position and the
+                // safety limit so that we can extend our safely.
                 } else if (elevatorTargetPos > 0 && wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT) {
-                    // If the target worm pos is greater than the safety limit we go there, if not we go to the safety limit.
-                    wormTargetPos = Math.max(wormTargetPos, (WORM_SAFETY_LIMIT + 20)); // We want to overshoot a little bit to improve consistency
+                    wormTargetPos = Math.max(wormTargetPos, (WORM_SAFETY_LIMIT + 20));
                     rotateWorm(wormTargetPos, wormPower);
+                // If the elevator position is NOT 0 and the worm is greater than the safety limit
+                // we want to rotate the worm to whatever the target position is. Then if it is safe
+                // we want to extend the elevator to whatever the target position is.
                 } else {
                     rotateWorm(wormTargetPos, wormPower);
 
-                    if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT){
+                    // If the current position of the worm motor is greater than the safety
+                    // we extend the elevator to whatever the target position of the motor is
+                    if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT) {
                         extendElevator(elevatorTargetPos, elevatorPower);
                     }
-                    if (Math.abs(elevatorPos() - elevatorTargetPos) < 50 && !wormMotor.isBusy()) {
+
+                    // I think that the following check might be a problem. This check is only
+                    // trigger when the target position of the worm and elevator motors is not zero.
+                    // I think that this means the state will not move to AT_POS if the target
+                    // position of the elevator and the worm are both 0 (When we hit Dpad-Down) to
+                    // go to 0,0.
+
+                    // If neither the elevator motor or worm motor is busy we are at position and
+                    // should change into the appropriate state
+                    if (!elevatorMotor.isBusy() && !wormMotor.isBusy()) {
                         normalPeriodArmState = AT_POS;
                     }
                 }
-                break;
-            case CORRECTING_FOR_ANGLE:
-                elevatorMotor.setMode(RUN_USING_ENCODER);
-
-                if (!leftOuttakeLimitSwitch.getState() && !rightOuttakeLimitSwitch.getState()) {
-                    elevatorMotor.setPower(0.0);
-
-                    normalPeriodArmState = AT_POS;
-                }
-
-                if (leftOuttakeLimitSwitch.getState() != rightOuttakeLimitSwitch.getState()) {
-                    elevatorMotor.setPower(0.5);
-                } else {
-                    elevatorMotor.setPower(0.0);
-                }
-
                 break;
             case UNKNOWN: // If we don't know what the current state of the robot is (For example when we start TeleOp) we want to starting homing
                 setHoming();
