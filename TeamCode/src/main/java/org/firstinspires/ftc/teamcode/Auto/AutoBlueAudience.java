@@ -124,7 +124,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(-20, 38))
-                .lineToConstantHeading(new Vector2d(-36, 36))
+                .lineToConstantHeading(new Vector2d(-36, 42))
                 .strafeTo(new Vector2d(-36, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
                 .strafeTo(new Vector2d(38, 42))
@@ -250,8 +250,8 @@ public class AutoBlueAudience extends LinearOpMode {
         }
 
         toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(45, 64))
-                .lineTo(new Vector2d(60, 64))
+                .strafeTo(new Vector2d(45, 16))
+                .lineTo(new Vector2d(60, 16))
                 .build();
 
         mecanumDriveBase.followTrajectorySequence(toPark);
@@ -334,20 +334,21 @@ public class AutoBlueAudience extends LinearOpMode {
         return targetDetected;
     }
 
-    /**
-     * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
-     */
     @SuppressLint("DefaultLocale")
     void centerOnAprilTag(int desiredTagId) {
         boolean isAtTarget = false;
 
-        String errValues, driveValues;
-
         long start = System.currentTimeMillis();
+
+        mecanumDriveBase.updatePoseEstimate();
 
         if (isWithinTolerance()) return;
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
+            telemetry.addData("Range Error", rangeErr);
+            telemetry.addData("Yaw Error", yawErr);
+            telemetry.addData("Bearing Error", bearingErr);
+
             if (isStopRequested() || !opModeIsActive()) return;
 
             // Quit loop if it takes more than 5 seconds to center
@@ -380,12 +381,6 @@ public class AutoBlueAudience extends LinearOpMode {
 
                 drive *= -1.0;
 
-                errValues   = String.format("RangeErr %f, BearingErr %f, YawErr %f", rangeErr, bearingErr, yawErr);
-                driveValues = String.format("Drive %f, Strafe %f, Turn %f", drive, strafe, turn);
-
-                telemetry.addLine(driveValues);
-                telemetry.addLine(errValues);
-
                 if (isWithinTolerance()) {
                     isAtTarget = true;
                     MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
@@ -394,12 +389,12 @@ public class AutoBlueAudience extends LinearOpMode {
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
-
-                if (isWithinTolerance()) isAtTarget = true;
             }
 
             telemetry.update();
         }
+
+        mecanumDriveBase.updatePoseEstimate();
     }
 
     boolean isWithinTolerance() {

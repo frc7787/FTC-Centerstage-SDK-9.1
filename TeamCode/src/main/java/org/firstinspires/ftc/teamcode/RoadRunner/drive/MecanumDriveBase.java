@@ -163,6 +163,7 @@ public class MecanumDriveBase extends MecanumDrive {
         bL.setPower(bLPower);
         bR.setPower(bRPower);
     }
+
     public static void driveManualFF(double drive, double strafe, double turn, double deadzone) {
         double driveFriction   = 0.04;
         double turnFriction    = 0.035;

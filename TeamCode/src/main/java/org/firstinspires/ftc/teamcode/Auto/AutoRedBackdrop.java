@@ -430,9 +430,7 @@ public class AutoRedBackdrop extends LinearOpMode {
                 case CLEARING_PIXELS:
                     Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
 
-                    Arm.update(false);
-
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
+                    if (Arm.wormPos() > YELLOW_PIXEL_CLEARING_WORM_POSITION - 30) {
                         placingState = PlacingState.RETRACTING;
                     }
                     break;
@@ -440,7 +438,6 @@ public class AutoRedBackdrop extends LinearOpMode {
                     Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
 
                     Arm.setTargetPos(0, 0);
-                    Arm.update(false);
 
                     if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
                         placingState = PlacingState.PLACED;

@@ -25,10 +25,15 @@ public class TeleOpMain extends OpMode {
         ENDGAME
     }
 
-    LED LEDOne, LEDTwo;
+    LED leftLEDRedChannel, leftLEDGreenChannel, rightLEDRedChannel, rightLEDGreenChannel;
     MecanumDriveBase driveBase;
+
+    boolean outtakeTrayWasFull, outtakeTrayIsFull;
     
     @Override public void init() {
+        outtakeTrayIsFull  = false;
+        outtakeTrayWasFull = false;
+
         RobotPropertyParser.populateConstantsClass();
         Intake.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
@@ -43,11 +48,15 @@ public class TeleOpMain extends OpMode {
             module.setBulkCachingMode(AUTO);
         }
 
-        LEDOne = hardwareMap.get(LED.class, "LEDOne");
-        LEDTwo = hardwareMap.get(LED.class, "LEDTwo");
+        leftLEDRedChannel    = hardwareMap.get(LED.class, "LeftLEDRedChannel");
+        leftLEDGreenChannel  = hardwareMap.get(LED.class, "LeftLEDGreenChannel");
+        rightLEDRedChannel   = hardwareMap.get(LED.class, "RightLEDRedChannel");
+        rightLEDGreenChannel = hardwareMap.get(LED.class, "RightLEDGreenChannel");
 
-        LEDOne.enable(false);
-        LEDTwo.enable(false);
+        leftLEDRedChannel.enable(false);
+        leftLEDGreenChannel.enableLight(false);
+        rightLEDRedChannel.enable(false);
+        rightLEDGreenChannel.enable(false);
 
         gamePeriod = NORMAL;
     }
@@ -57,7 +66,7 @@ public class TeleOpMain extends OpMode {
 
         Arm.update(Intake.isActive());
 
-        Arm.relevantTelemetry(telemetry);
+        Arm.debug(telemetry);
 
         double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
         double strafe = gamepad1.left_stick_x;
@@ -70,8 +79,8 @@ public class TeleOpMain extends OpMode {
                gamepad1.setLedColor(0, 0, 255, Gamepad.LED_DURATION_CONTINUOUS);
                gamepad2.setLedColor(0,0,255, Gamepad.LED_DURATION_CONTINUOUS);
 
-               LEDOne.enable(false);
-               LEDTwo.enable(false);
+               leftLEDRedChannel.enable(false);
+               rightLEDRedChannel.enable(false);
 
                normalPeriodLoop();
 
@@ -89,11 +98,8 @@ public class TeleOpMain extends OpMode {
                    gamepad2.rumble(1,1,1000);
                }
 
-               gamepad1.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
-               gamepad2.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
-
-               LEDOne.enable(true);
-               LEDTwo.enable(true);
+               leftLEDRedChannel.enable(true);
+               rightLEDRedChannel.enable(true);
 
                endgameLoop();
                break;
@@ -102,7 +108,28 @@ public class TeleOpMain extends OpMode {
        telemetry.update();
     }
 
+    void normalPeriodLEDController() {
+        if (Auxiliaries.backBeamBreakIsBroken()) {
+            leftLEDGreenChannel.enable(true);
+            leftLEDRedChannel.enable(false);
+        } else {
+            leftLEDRedChannel.enable(false);
+            leftLEDGreenChannel.enable(false);
+        }
+
+        if (Auxiliaries.frontBeamBreakIsBroken()) {
+            rightLEDGreenChannel.enable(true);
+            rightLEDRedChannel.enable(false);
+        } else {
+            rightLEDGreenChannel.enable(false);
+            rightLEDRedChannel.enable(false);
+        }
+    }
+
+
     private void endgameLoop() {
+        normalPeriodLEDController();
+
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
         if (Arm.wormTargetPos() == ENDGAME_POSITION) {
@@ -162,12 +189,6 @@ public class TeleOpMain extends OpMode {
 
         if (gamepad2.dpad_down) { // Arm Logic
             Arm.setTargetPos(0,0);
-        } else if (gamepad2.dpad_left) {
-            Arm.setTargetPos(LOW_EXT_POS + ANGLE_OFFSET, LOW_ROT_POS);
-        } else if (gamepad2.dpad_right) {
-            Arm.setTargetPos(MED_EXT_POS + ANGLE_OFFSET, MED_ROT_POS);
-        } else if (gamepad2.dpad_up) {
-            Arm.setTargetPos(HIGH_EXT_POS + ANGLE_OFFSET, HIGH_ROT_POS);
         } else if (gamepad2.cross) {
             Arm.setTargetPos(BOTTOM_EXT_POS, BOTTOM_ROT_POS);
         } else if (gamepad2.square) {

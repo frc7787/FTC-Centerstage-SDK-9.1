@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.Properties.LAUNCHER_SERVO_ZERO_POS;
 
 import androidx.annotation.NonNull;
 
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
@@ -18,6 +19,8 @@ public class Auxiliaries {
 
     private static ServoImplEx hangerServo, launcherServo, pixelPlacerServoLeft, pixelPlacerServoRight;
 
+    private static DigitalChannel frontBeamBreak, backBeamBreak;
+
     /**
      * Initializes all of the Auxiliary systems including the plane launcher, hanger, and pixel placer
      * servos
@@ -29,6 +32,12 @@ public class Auxiliaries {
         pixelPlacerServoLeft  = hardwareMap.get(ServoImplEx.class, "PixelPlacerServoLeft");
         pixelPlacerServoRight = hardwareMap.get(ServoImplEx.class, "PixelPlacerServoRight");
 
+        frontBeamBreak = hardwareMap.get(DigitalChannel.class, "FrontBeamBreak");
+        backBeamBreak  = hardwareMap.get(DigitalChannel.class, "BackBeamBreak");
+
+        frontBeamBreak.setMode(DigitalChannel.Mode.INPUT);
+        backBeamBreak.setMode(DigitalChannel.Mode.INPUT);
+
         pixelPlacerServoLeft.setDirection(Servo.Direction.REVERSE);
 
         launcherServo.setDirection(Servo.Direction.REVERSE);
@@ -39,6 +48,18 @@ public class Auxiliaries {
 
         pixelPlacerServoLeft.setPosition(0.1);
         pixelPlacerServoRight.setPosition(0.1);
+    }
+
+    public static boolean frontBeamBreakIsBroken() {
+        return !frontBeamBreak.getState();
+    }
+
+    public static boolean backBeamBreakIsBroken() {
+        return !backBeamBreak.getState();
+    }
+
+    public static boolean noBeamsAreBroken() {
+        return frontBeamBreak.getState() && backBeamBreak.getState();
     }
 
     /**

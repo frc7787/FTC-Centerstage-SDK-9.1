@@ -32,6 +32,7 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -242,8 +243,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
         }
 
         toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                        .strafeTo(new Vector2d(45, 64))
-                        .lineTo(new Vector2d(60, 64))
+                        .strafeTo(new Vector2d(45, 60))
+                        .lineTo(new Vector2d(60, 60))
                         .build();
 
         mecanumDriveBase.followTrajectorySequence(toPark);
@@ -396,21 +397,35 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
     void placePixelOnBackdrop() {
         while (placingState != PlacingState.PLACED) {
-            if (isStopRequested() || !opModeIsActive()) return;
+            Arm.relevantTelemetry(telemetry);
 
-            Arm.update(false);
+            telemetry.addData("Placing State", placingState);
+            telemetry.addData("Worm Position", Arm.wormPos());
+
+            if (isStopRequested() || !opModeIsActive()) return;
 
             switch (placingState) {
                 case START:
                     Arm.setElevatorPower(ELEVATOR_EXTENSION_SPEED_AUTO);
 
-                    Arm.setTargetPos(YELLOW_PIXEL_ELEVATOR_POSITION, YELLOW_PIXEL_WORM_POSITION);
+                    Arm.setTargetPos(0, YELLOW_PIXEL_WORM_POSITION);
+
+                    Arm.update(false);
 
                     placingState = PlacingState.MOVING_TO_POS;
                     break;
                 case MOVING_TO_POS:
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = PlacingState.PLACING;
+                    Arm.setElevatorPower(0.8);
+
+                    Arm.elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                    if (Arm.wormPos() > Arm.WORM_SAFETY_LIMIT) {
+                        if (!Arm.bothOuttakeLimitSwitchesArePressed()) {
+                            Arm.powerElevator(0.8);
+                        } else {
+                            Arm.powerElevator(0.0);
+                            placingState = PlacingState.PLACING;
+                        }
                     }
                     break;
                 case PLACING:
@@ -427,15 +442,16 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                     Arm.update(false);
 
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
+                    if (Arm.wormPos() > YELLOW_PIXEL_CLEARING_WORM_POSITION - 30) {
                         placingState = PlacingState.RETRACTING;
                     }
                     break;
                 case RETRACTING:
                     Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
 
-                    Arm.setTargetPos(0, 0);
                     Arm.update(false);
+
+                    Arm.setTargetPos(0, 0);
 
                     if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
                         placingState = PlacingState.PLACED;
@@ -444,6 +460,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 case PLACED:
                     break;
             }
+            telemetry.update();
         }
     }
 }

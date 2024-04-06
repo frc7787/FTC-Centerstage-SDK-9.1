@@ -34,9 +34,9 @@ public class Properties {
     // AUTO
 
     public static volatile int AUTO_INITIAL_WORM_POSITION          = 1400;
-    public static volatile int YELLOW_PIXEL_WORM_POSITION          = 890;
-    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 2400;
-    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1000;
+    public static volatile int YELLOW_PIXEL_WORM_POSITION          = 800;
+    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 1980;
+    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1200;
 
     public static volatile double ELEVATOR_EXTENSION_SPEED_AUTO = 0.75;
     public static volatile double ELEVATOR_RETRACTION_SPEED_AUTO = 1.0;
@@ -92,7 +92,7 @@ public class Properties {
     public static volatile double TURN_D   = 0.0012;
 
     public static volatile double YAW_ERROR_TOLERANCE     = 0.5;
-    public static volatile double BEARING_ERROR_TOLERANCE = 0.8;
+    public static volatile double BEARING_ERROR_TOLERANCE = 0.5;
     public static volatile double RANGE_ERROR_TOLERANCE   = 0.5;
 
     public static volatile double DESIRED_DISTANCE_FROM_APRIL_TAG_IN = 17.5;

@@ -32,7 +32,7 @@ public class Arm {
 
     private static final double SAFETY_VOLTAGE = 0.8;
 
-    private static DcMotorImplEx wormMotor, elevatorMotor;
+    public static DcMotorImplEx wormMotor, elevatorMotor;
     private static ServoImplEx leftDoor, rightDoor;
     private static RevTouchSensor wormLimitSwitch, elevatorLimitSwitch;
     private static DigitalChannel leftOuttakeLimitSwitch, rightOuttakeLimitSwitch;
@@ -91,6 +91,10 @@ public class Arm {
         homingState          = START;
     }
 
+    public static void powerElevator(double power) {
+        elevatorMotor.setPower(power);
+    }
+
     /**
      * Function to update the state of the arm every loop, moves the arm to the target pos
      * and checks if the arm should be homing.
@@ -102,31 +106,45 @@ public class Arm {
 
         switch (normalPeriodArmState) {
             case AT_POS:
-                if (elevatorMotor.getTargetPosition() == 0 && wormMotor.getTargetPosition() == 0) {
-                    if (!intaking) {
-                        elevatorMotor.setPower(0.0);
+
+                if (wormMotor.getTargetPosition() <= 5) {
+                    if (intaking) {
+                        elevatorMotor.setPower(-0.05);
                     } else {
-                        elevatorMotor.setPower(0.05);
+                        elevatorMotor.setPower(0.0);
                     }
                 } else {
                     if (!leftOuttakeLimitSwitch.getState() ^ !rightOuttakeLimitSwitch.getState()) {
-                        normalPeriodArmState = CORRECTING_FOR_ANGLE;
+                        if (wormMotor.getTargetPosition() != 0) {
+                            normalPeriodArmState = CORRECTING_FOR_ANGLE;
+                        }
                     }
                 }
                 break;
             case TO_POS:
+                if (wormLimitSwitch.isPressed() && wormTargetPos == 0) {
+                    wormMotor.setMode(STOP_AND_RESET_ENCODER);
+                    wormMotor.setMode(RUN_USING_ENCODER);
+                    normalPeriodArmState = AT_POS;
+                }
+
+                if (elevatorLimitSwitch.isPressed() && elevatorTargetPos == 0) {
+                    elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
+                    elevatorMotor.setMode(RUN_USING_ENCODER);
+                    normalPeriodArmState = AT_POS;
+                }
+
                 // Make sure we follow a safe sequence back
                 if (elevatorTargetPos == 0 && wormTargetPos == 0) {
-                    if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 10) {
+                    if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 30) {
                         extendElevator(0, elevatorPower);
-                    } else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900){
+                    } else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900) {
                         rotateWorm(WORM_SAFETY_LIMIT + 20, wormPower);
                         extendElevator(1000);
-                    } else if (10 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
+                    } else if (30 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
                         extendElevator(0, elevatorPower);
                     } else {
-                        if (elevatorMotor.getCurrentPosition() < 10) {
-                            extendElevator(0, elevatorPower);
+                        if (elevatorMotor.getCurrentPosition() < 50) {
                             rotateWorm(0, wormPower);
                         }
                     }
@@ -140,7 +158,7 @@ public class Arm {
                     if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT){
                         extendElevator(elevatorTargetPos, elevatorPower);
                     }
-                    if (!elevatorMotor.isBusy() && !wormMotor.isBusy()) {
+                    if (Math.abs(elevatorPos() - elevatorTargetPos) < 50 && !wormMotor.isBusy()) {
                         normalPeriodArmState = AT_POS;
                     }
                 }
@@ -150,8 +168,6 @@ public class Arm {
 
                 if (!leftOuttakeLimitSwitch.getState() && !rightOuttakeLimitSwitch.getState()) {
                     elevatorMotor.setPower(0.0);
-
-                    extendElevator(elevatorPos());
 
                     normalPeriodArmState = AT_POS;
                 }
@@ -248,7 +264,7 @@ public class Arm {
                 if (elevatorLimitSwitch.isPressed()) {
                     homingState = HOMING_WORM;
                     elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
-                    extendElevator(0,0.0);
+                    wormMotor.setPower(0.0);
                 }
                 break;
            case HOMING_WORM:
@@ -271,8 +287,16 @@ public class Arm {
                }
                break;
             case COMPLETE:
+                wormMotor.setMode(STOP_AND_RESET_ENCODER);
+                elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
+                wormMotor.setMode(RUN_USING_ENCODER);
+                elevatorMotor.setMode(RUN_USING_ENCODER);
+
                 normalPeriodArmState = AT_POS;
                 homingState = IDLE;
+
+                elevatorTargetPos = 0;
+                wormTargetPos     = 0;
                 break;
             case IDLE:
                 break;
@@ -286,6 +310,8 @@ public class Arm {
         telemetry.addData("Right Limit Switch", rightOuttakeLimitSwitch.getState());
         telemetry.addData("Left Limit Switch Connection", leftOuttakeLimitSwitch.getConnectionInfo());
         telemetry.addData("Right Limit Switch Connection", rightOuttakeLimitSwitch.getConnectionInfo());
+        telemetry.addData("Extension Target Position", elevatorMotor.getTargetPosition());
+        telemetry.addData("Worm Target Position", wormMotor.getTargetPosition());
     }
 
     /**
