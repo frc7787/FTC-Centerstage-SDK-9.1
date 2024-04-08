@@ -56,7 +56,7 @@ public class Properties {
 
     // --------- DELIVERY TRAY PROPERTIES ---------- //
 
-    public static volatile double TRAY_DOOR_OPEN_POS   = 0.1;
+    public static volatile double TRAY_DOOR_OPEN_POS   = 0.25;
     public static volatile double TRAY_DOOR_CLOSED_POS = 0.0;
 
     // ---------- LAUNCHER PROPERTIES ---------- //

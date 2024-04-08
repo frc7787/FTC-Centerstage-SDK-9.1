@@ -410,6 +410,8 @@ public class AutoBlueAudience extends LinearOpMode {
             Arm.update(false);
 
             telemetry.addData("Placing State", placingState);
+            telemetry.addData("Worm Pos", Arm.wormPos());
+            telemetry.addData("Elevator Pos", Arm.elevatorPos());
             telemetry.update();
 
             switch (placingState) {
@@ -437,8 +439,6 @@ public class AutoBlueAudience extends LinearOpMode {
                 case CLEARING_PIXELS:
                     Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
 
-                    Arm.update(false);
-
                     if (Arm.armState() == NormalPeriodArmState.AT_POS) {
                         placingState = PlacingState.RETRACTING;
                     }
@@ -447,7 +447,6 @@ public class AutoBlueAudience extends LinearOpMode {
                     Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
 
                     Arm.setTargetPos(0, 0);
-                    Arm.update(false);
 
                     if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
                         placingState = PlacingState.PLACED;
