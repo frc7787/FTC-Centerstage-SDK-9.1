@@ -76,6 +76,8 @@ public class AutoBlueAudience extends LinearOpMode {
                        toBackdropLeft,
                        toBackdropCenter,
                        toBackdropRight,
+                       toPixelStackCenter,
+                       toBackdropCenterAgain,
                        toPark;
 
     int maxAprilTagDetections = 25;
@@ -142,6 +144,16 @@ public class AutoBlueAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(38, 12))
                 .strafeTo(new Vector2d(38, 27))
                 .turn(Math.toRadians(180))
+                .build();
+
+        toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                .strafeTo(new Vector2d(38, 12))
+                .lineToConstantHeading(new Vector2d(-54, 12))
+                .build();
+
+        toBackdropCenterAgain = mecanumDriveBase.trajectorySequenceBuilder(toPixelStackCenter.end())
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
