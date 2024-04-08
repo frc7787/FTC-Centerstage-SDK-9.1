@@ -397,7 +397,6 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
     void placePixelOnBackdrop() {
         while (placingState != PlacingState.PLACED) {
-            Arm.relevantTelemetry(telemetry);
 
             telemetry.addData("Placing State", placingState);
             telemetry.addData("Worm Position", Arm.wormPos());
