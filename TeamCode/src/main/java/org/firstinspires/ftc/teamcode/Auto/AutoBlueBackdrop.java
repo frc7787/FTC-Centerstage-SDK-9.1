@@ -128,7 +128,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
-                .strafeTo(new Vector2d(10, 38))
+                .strafeTo(new Vector2d(12, 38))
                 .lineToConstantHeading(new Vector2d(38, 36))
                 .build();
 
