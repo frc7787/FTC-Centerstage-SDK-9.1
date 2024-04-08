@@ -58,10 +58,6 @@ public class Auxiliaries {
         return !backBeamBreak.getState();
     }
 
-    public static boolean noBeamsAreBroken() {
-        return frontBeamBreak.getState() && backBeamBreak.getState();
-    }
-
     /**
      * Releases the plane launcher
      */
@@ -84,20 +80,6 @@ public class Auxiliaries {
     }
 
     /**
-     * Places the left pixel placer (From the back of the robot) on the spike strip
-     */
-    public static void placePixelOnSpikeStripLeft() {
-        pixelPlacerServoLeft.setPosition(PIXEL_PLACER_SERVO_SPIKE_STRIP_POS);
-    }
-
-    /**
-     * Places the left (From the back of the robot) pixel placer on the backdrop
-     */
-    public static void placePixelOnBackdropLeft() {
-        pixelPlacerServoLeft.setPosition(PIXEL_PLACER_SERVO_BACKDROP_POS);
-    }
-
-    /**
      * Retracts the left  (From the back of the robot) pixel placer
      */
     public static void retractPixelPlacerLeft() {
@@ -112,17 +94,10 @@ public class Auxiliaries {
     }
 
     /**
-     * Places the right (From the back of the robot) pixel placer on the backdrop
-     */
-    public static void placePixelOnBackdropRight() {
-        pixelPlacerServoRight.setPosition(PIXEL_PLACER_SERVO_BACKDROP_POS);
-    }
-
-    /**
      * Retracts the right (From the back of the robot) pixel placer on the backdrop
      */
     public static void retractPixelPlacerRight() {
-        pixelPlacerServoRight.setPosition(0.0);
+        pixelPlacerServoRight.setPosition(0.5);
     }
 
     /**
