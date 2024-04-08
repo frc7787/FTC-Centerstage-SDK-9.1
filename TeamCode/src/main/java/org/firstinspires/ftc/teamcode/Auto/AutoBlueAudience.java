@@ -127,20 +127,20 @@ public class AutoBlueAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(-36, 42))
                 .strafeTo(new Vector2d(-36, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(38, 42))
+                .strafeTo(new Vector2d(38, 40))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-35, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(38, 36))
+                .strafeTo(new Vector2d(38, 32))
                 .turn(Math.toRadians(180))
                 .build();
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .strafeTo(new Vector2d(-49, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(38, 30))
+                .strafeTo(new Vector2d(38, 27))
                 .turn(Math.toRadians(180))
                 .build();
 
