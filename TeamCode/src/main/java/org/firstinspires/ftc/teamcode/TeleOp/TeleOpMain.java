@@ -68,19 +68,21 @@ public class TeleOpMain extends OpMode {
 
         Arm.debug(telemetry);
 
+        telemetry.addData("Front Beam Break Is Broken", Auxiliaries.frontBeamBreakIsBroken());
+        telemetry.addData("Back Beam Break Is Broken", Auxiliaries.backBeamBreakIsBroken());
+
         double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
         double strafe = gamepad1.left_stick_x;
         double turn   = gamepad1.right_stick_x;
 
         MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.02);
 
+        ledController();
+
         switch (gamePeriod) {
            case NORMAL:
                gamepad1.setLedColor(0, 0, 255, Gamepad.LED_DURATION_CONTINUOUS);
                gamepad2.setLedColor(0,0,255, Gamepad.LED_DURATION_CONTINUOUS);
-
-               leftLEDRedChannel.enable(false);
-               rightLEDRedChannel.enable(false);
 
                normalPeriodLoop();
 
@@ -98,9 +100,6 @@ public class TeleOpMain extends OpMode {
                    gamepad2.rumble(1,1,1000);
                }
 
-               leftLEDRedChannel.enable(true);
-               rightLEDRedChannel.enable(true);
-
                endgameLoop();
                break;
        }
@@ -108,16 +107,16 @@ public class TeleOpMain extends OpMode {
        telemetry.update();
     }
 
-    void normalPeriodLEDController() {
-        if (Auxiliaries.backBeamBreakIsBroken()) {
+    private void ledController() {
+        if (Auxiliaries.frontBeamBreakIsBroken()) {
             leftLEDGreenChannel.enable(true);
-            leftLEDRedChannel.enable(false);
+            rightLEDRedChannel.enable(false);
         } else {
-            leftLEDRedChannel.enable(false);
             leftLEDGreenChannel.enable(false);
+            leftLEDRedChannel.enable(false);
         }
 
-        if (Auxiliaries.frontBeamBreakIsBroken()) {
+        if (Auxiliaries.backBeamBreakIsBroken()) {
             rightLEDGreenChannel.enable(true);
             rightLEDRedChannel.enable(false);
         } else {
@@ -128,8 +127,6 @@ public class TeleOpMain extends OpMode {
 
 
     private void endgameLoop() {
-        normalPeriodLEDController();
-
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
         if (Arm.wormTargetPos() == ENDGAME_POSITION) {
