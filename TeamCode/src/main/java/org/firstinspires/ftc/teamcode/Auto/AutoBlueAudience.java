@@ -439,7 +439,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 case CLEARING_PIXELS:
                     Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
 
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
+                    if (Arm.wormPos() <= YELLOW_PIXEL_CLEARING_WORM_POSITION - 20) {
                         placingState = PlacingState.RETRACTING;
                     }
                     break;
