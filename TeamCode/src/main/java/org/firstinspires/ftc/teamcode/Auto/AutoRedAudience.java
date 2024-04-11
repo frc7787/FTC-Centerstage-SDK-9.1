@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
 import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
 import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
@@ -30,6 +33,10 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorImplEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -41,7 +48,6 @@ import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
-import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -60,6 +66,10 @@ public class AutoRedAudience extends LinearOpMode {
     PropLocation location;
     OpenCvCamera camera;
 
+    DcMotorImplEx wormMotor, elevatorMotor;
+
+    ServoImplEx leftDoor, rightDoor;
+
     MecanumDriveBase mecanumDriveBase;
 
     AprilTagProcessor aprilTagProcessor;
@@ -70,10 +80,11 @@ public class AutoRedAudience extends LinearOpMode {
 
     enum PlacingState {
         START,
-        MOVING_TO_POS,
-        PLACING,
-        CLEARING_PIXELS,
-        RETRACTING,
+        ROTATING_TO_PLACE_YELLOW_PIXEL,
+        EXTENDING_TO_PLACE_YELLOW_PIXEL,
+        PLACING_YELLOW_PIXEL,
+        RETRACTING_ELEVATOR,
+        RETRACTING_WORM,
         PLACED
     }
 
@@ -97,6 +108,24 @@ public class AutoRedAudience extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        wormMotor     = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
+        elevatorMotor = hardwareMap.get(DcMotorImplEx.class, "ExtensionMotor");
+
+        elevatorMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
+        wormMotor.setMode(STOP_AND_RESET_ENCODER);
+
+        elevatorMotor.setMode(RUN_USING_ENCODER);
+        wormMotor.setMode(RUN_USING_ENCODER);
+
+        // Expansion Hub Port 1
+        leftDoor = hardwareMap.get(ServoImplEx.class, "LeftDoorServo");
+        // Expansion Hub Port 2
+        rightDoor = hardwareMap.get(ServoImplEx.class, "RightDoorServo");
+
         propDetector     = new PropDetector(PropColor.RED);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 
@@ -165,12 +194,9 @@ public class AutoRedAudience extends LinearOpMode {
 
         initAprilTagVisionProcessing();
 
-        Arm.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
 
-        Arm.update(false);
-
-        Arm.rotateWorm(1400);
+        rotateWorm(1400, 1.0);
 
         waitForStart();
 
@@ -210,7 +236,7 @@ public class AutoRedAudience extends LinearOpMode {
             location = PropLocation.NONE;
         }
 
-        Arm.rotateWorm(0);
+        rotateWorm(0, 1.0);
 
         sleep(0);
 
@@ -220,7 +246,7 @@ public class AutoRedAudience extends LinearOpMode {
         switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
 
                 centerOnAprilTag(4);
@@ -230,7 +256,7 @@ public class AutoRedAudience extends LinearOpMode {
             case CENTER:
             case NONE: // This case should copy center
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
                 centerOnAprilTag(5);
@@ -239,7 +265,7 @@ public class AutoRedAudience extends LinearOpMode {
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropRight);
 
                 centerOnAprilTag(6);
@@ -256,6 +282,30 @@ public class AutoRedAudience extends LinearOpMode {
         mecanumDriveBase.followTrajectorySequence(toPark);
 
         sleep(20000);
+    }
+
+    /**
+     * Extends the elevator to the provided position at the provided power
+     * @param targetPos The position to move the elevator to
+     * @param power The power to move to the target position at
+     */
+    private void extendElevator(int targetPos, double power) {
+        telemetry.addLine("Got to Extend elevator");
+        telemetry.update();
+        elevatorMotor.setTargetPosition(targetPos);
+        elevatorMotor.setMode(RUN_TO_POSITION);
+        elevatorMotor.setPower(power);
+    }
+
+    /**
+     * Rotates the worm to the provided position at the provided power
+     * @param pos The position to move the worm to
+     * @param power The power to move to the target position at
+     */
+    public void rotateWorm(int pos, double power) {
+        wormMotor.setTargetPosition(pos);
+        wormMotor.setMode(RUN_TO_POSITION);
+        wormMotor.setPower(power);
     }
 
     /**
@@ -340,6 +390,16 @@ public class AutoRedAudience extends LinearOpMode {
     }
 
     /**
+     * Opens the delivery tray door to the positions provided in the argument
+     * @param leftPos The position to move the left door to
+     * @param rightPos The position to move the right door to
+     */
+    public void openDeliveryTrayDoor(double leftPos, double rightPos) {
+        leftDoor.setPosition(leftPos);
+        rightDoor.setPosition(rightPos);
+    }
+
+    /**
      * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
      */
     @SuppressLint("DefaultLocale")
@@ -406,51 +466,59 @@ public class AutoRedAudience extends LinearOpMode {
     }
 
     private void placePixelOnBackdrop() {
-        while (placingState != PlacingState.PLACED) {
-            if (isStopRequested() || !opModeIsActive()) return;
 
-            Arm.update(false);
+        while (true) {
+            if (isStopRequested() || !opModeIsActive()) return;
 
             switch (placingState) {
                 case START:
-                    Arm.setElevatorPower(ELEVATOR_EXTENSION_SPEED_AUTO);
+                    rotateWorm(YELLOW_PIXEL_WORM_POSITION, 1.0);
 
-                    Arm.setTargetPos(YELLOW_PIXEL_ELEVATOR_POSITION, YELLOW_PIXEL_WORM_POSITION);
-
-                    placingState = PlacingState.MOVING_TO_POS;
+                    placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
-                case MOVING_TO_POS:
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = PlacingState.PLACING;
+                case ROTATING_TO_PLACE_YELLOW_PIXEL:
+                    if (wormMotor.getCurrentPosition() >= 750) {
+                        placingState = PlacingState.EXTENDING_TO_PLACE_YELLOW_PIXEL;
+                    }
+
+                    break;
+                case EXTENDING_TO_PLACE_YELLOW_PIXEL:
+                    extendElevator(YELLOW_PIXEL_ELEVATOR_POSITION, 1.0);
+
+                    if (elevatorMotor.getCurrentPosition() >= YELLOW_PIXEL_ELEVATOR_POSITION - 5) {
+                        placingState = PlacingState.PLACING_YELLOW_PIXEL;
+                    }
+
+                    break;
+                case PLACING_YELLOW_PIXEL:
+                    openDeliveryTrayDoor(0.1, 0.1);
+
+                    sleep(1000);
+
+                    openDeliveryTrayDoor(0.0, 0.0);
+
+                    placingState = PlacingState.RETRACTING_ELEVATOR;
+                    break;
+                case RETRACTING_ELEVATOR:
+                    extendElevator(0, 0.8);
+
+                    if (elevatorMotor.getCurrentPosition() < 100) {
+                        placingState = PlacingState.RETRACTING_WORM;
                     }
                     break;
-                case PLACING:
-                    Arm.openDeliveryTrayDoor(0.3);
+                case RETRACTING_WORM:
+                    rotateWorm(0, 0.8);
 
-                    sleep(700);
-
-                    Arm.openDeliveryTrayDoor(0.0);
-
-                    placingState = PlacingState.CLEARING_PIXELS;
-                    break;
-                case CLEARING_PIXELS:
-                    Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
-
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
-                        placingState = PlacingState.RETRACTING;
-                    }
-                case RETRACTING:
-                    Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
-
-                    Arm.setTargetPos(0, 0);
-                    Arm.update(false);
-
-                    if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
+                    if (wormMotor.getCurrentPosition() < 30) {
                         placingState = PlacingState.PLACED;
                     }
                     break;
                 case PLACED:
                     break;
+            }
+
+            if (placingState == PlacingState.PLACED) {
+                return;
             }
         }
     }

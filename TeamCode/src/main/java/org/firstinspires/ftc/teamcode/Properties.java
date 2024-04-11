@@ -22,9 +22,7 @@ public class Properties {
     public static volatile int HIGH_EXT_POS = 2894;
     public static volatile int HIGH_ROT_POS = 1920;
 
-    public static volatile int ANGLE_OFFSET = 150;
-
-    public static volatile int ENDGAME_POSITION = 2525;
+    public static volatile int ENDGAME_POSITION = 1590;
 
     public static volatile double DEFAULT_WORM_POWER     = 1.0;
     public static volatile double DEFAULT_ELEVATOR_POWER = 1.0; // 1.0;
@@ -34,9 +32,10 @@ public class Properties {
     // AUTO
 
     public static volatile int AUTO_INITIAL_WORM_POSITION          = 1400;
-    public static volatile int YELLOW_PIXEL_WORM_POSITION          = 800;
-    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 1980;
-    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1200;
+    public static volatile int YELLOW_PIXEL_WORM_POSITION          = 1100;
+    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 2200;
+
+    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1000;
 
     public static volatile double ELEVATOR_EXTENSION_SPEED_AUTO = 0.75;
     public static volatile double ELEVATOR_RETRACTION_SPEED_AUTO = 1.0;
@@ -56,7 +55,7 @@ public class Properties {
 
     // --------- DELIVERY TRAY PROPERTIES ---------- //
 
-    public static volatile double TRAY_DOOR_OPEN_POS   = 0.1;
+    public static volatile double TRAY_DOOR_OPEN_POS   = 0.23;
     public static volatile double TRAY_DOOR_CLOSED_POS = 0.0;
 
     // ---------- LAUNCHER PROPERTIES ---------- //
@@ -83,19 +82,19 @@ public class Properties {
 
     // ----------- AUTO PID / TOLERANCE PROPERTIES ---------- //
 
-    public static volatile double DRIVE_GAIN  = 0.025;
+    public static volatile double DRIVE_GAIN  = 0.027;
     public static volatile double STRAFE_GAIN = 0.07;
-    public static volatile double TURN_GAIN   = 0.04;
+    public static volatile double TURN_GAIN   = 0.03;
 
     public static volatile double DRIVE_D  = 0.0025;
     public static volatile double STRAFE_D = 0.00002;
-    public static volatile double TURN_D   = 0.0012;
+    public static volatile double TURN_D   = 0.0013;
 
     public static volatile double YAW_ERROR_TOLERANCE     = 0.5;
     public static volatile double BEARING_ERROR_TOLERANCE = 0.5;
     public static volatile double RANGE_ERROR_TOLERANCE   = 0.5;
 
-    public static volatile double DESIRED_DISTANCE_FROM_APRIL_TAG_IN = 17.5;
+    public static volatile double DESIRED_DISTANCE_FROM_APRIL_TAG_IN = 15.5;
 
     public static volatile double MAX_DRIVE_SPEED  = 0.5;
     public static volatile double MAX_TURN_SPEED   = 0.5;

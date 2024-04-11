@@ -127,20 +127,20 @@ public class AutoBlueAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(-36, 42))
                 .strafeTo(new Vector2d(-36, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(38, 42))
+                .strafeTo(new Vector2d(38, 40))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-35, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(38, 36))
+                .strafeTo(new Vector2d(38, 33))
                 .turn(Math.toRadians(180))
                 .build();
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .strafeTo(new Vector2d(-49, 12))
                 .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(38, 30))
+                .strafeTo(new Vector2d(38, 27))
                 .turn(Math.toRadians(180))
                 .build();
 
@@ -221,7 +221,7 @@ public class AutoBlueAudience extends LinearOpMode {
         switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
 
                 centerOnAprilTag(1);
@@ -231,7 +231,7 @@ public class AutoBlueAudience extends LinearOpMode {
             case CENTER:
             case NONE:
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
                 centerOnAprilTag(2);
@@ -240,7 +240,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropRight);
 
                 centerOnAprilTag(3);
@@ -250,8 +250,8 @@ public class AutoBlueAudience extends LinearOpMode {
         }
 
         toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(45, 16))
-                .lineTo(new Vector2d(60, 16))
+                .strafeTo(new Vector2d(45, 10))
+                .lineTo(new Vector2d(60, 10))
                 .build();
 
         mecanumDriveBase.followTrajectorySequence(toPark);
@@ -259,7 +259,10 @@ public class AutoBlueAudience extends LinearOpMode {
         sleep(20000);
     }
 
-    void initAprilTagVisionProcessing() {
+    /**
+     * Initializes the April Tag Processing Pipeline
+     */
+    public void initAprilTagVisionProcessing() {
         aprilTagProcessor = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
@@ -302,7 +305,7 @@ public class AutoBlueAudience extends LinearOpMode {
     /**
      * Note, this function is blocking
      */
-    boolean detectAprilTags(int desiredTagId) {
+    private boolean detectAprilTags(int desiredTagId) {
         int count = 0;
 
         boolean targetDetected = false;
@@ -345,10 +348,6 @@ public class AutoBlueAudience extends LinearOpMode {
         if (isWithinTolerance()) return;
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
-            telemetry.addData("Range Error", rangeErr);
-            telemetry.addData("Yaw Error", yawErr);
-            telemetry.addData("Bearing Error", bearingErr);
-
             if (isStopRequested() || !opModeIsActive()) return;
 
             // Quit loop if it takes more than 5 seconds to center
@@ -389,9 +388,9 @@ public class AutoBlueAudience extends LinearOpMode {
                 }
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
-            }
 
-            telemetry.update();
+                if (isWithinTolerance()) break;
+            }
         }
 
         mecanumDriveBase.updatePoseEstimate();
@@ -410,6 +409,8 @@ public class AutoBlueAudience extends LinearOpMode {
             Arm.update(false);
 
             telemetry.addData("Placing State", placingState);
+            telemetry.addData("Worm Pos", Arm.wormPos());
+            telemetry.addData("Elevator Pos", Arm.elevatorPos());
             telemetry.update();
 
             switch (placingState) {
@@ -437,9 +438,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 case CLEARING_PIXELS:
                     Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
 
-                    Arm.update(false);
-
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
+                    if (Arm.wormPos() <= YELLOW_PIXEL_CLEARING_WORM_POSITION - 20) {
                         placingState = PlacingState.RETRACTING;
                     }
                     break;
@@ -447,7 +446,6 @@ public class AutoBlueAudience extends LinearOpMode {
                     Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
 
                     Arm.setTargetPos(0, 0);
-                    Arm.update(false);
 
                     if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
                         placingState = PlacingState.PLACED;

@@ -41,12 +41,14 @@ public class TeleOpMain extends OpMode {
         driveBase.init();
         Arm.init(hardwareMap);
 
-        Auxiliaries.retractPixelPlacerLeft();
-        Auxiliaries.retractPixelPlacerRight();
+        Auxiliaries.retractPixelPlacerServo();
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(AUTO);
         }
+
+        Auxiliaries.retractPixelFixerLeft();
+        Auxiliaries.retractFixerRight();
 
         leftLEDRedChannel    = hardwareMap.get(LED.class, "LeftLEDRedChannel");
         leftLEDGreenChannel  = hardwareMap.get(LED.class, "LeftLEDGreenChannel");
@@ -78,6 +80,34 @@ public class TeleOpMain extends OpMode {
         MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.02);
 
         ledController();
+
+        if (gamepad1.left_bumper) {
+            Auxiliaries.disableLeftPixelPlacer();
+        }
+
+        if (gamepad1.right_bumper) {
+            Auxiliaries.disableRightPixelPlacer();
+        }
+
+        if (gamepad1.square) {
+            Auxiliaries.moveToFixingPositionLevelOneRight();
+        } else if (gamepad1.triangle) {
+            Auxiliaries.moveToFixingPositionLevelTwoRight();
+        } else if (gamepad1.cross) {
+            Auxiliaries.enableRightPixelPlacer();
+            Auxiliaries.retractFixerRight();
+        }
+
+        if (gamepad1.dpad_left) {
+            Auxiliaries.moveToFixingPositionLevelOneLeft();
+        } else if (gamepad1.dpad_up) {
+            Auxiliaries.moveToFixingPositionLevelTwoLeft();
+        } else if (gamepad1.share) {
+            Auxiliaries.moveToFixingPositionLevelThreeLeft();
+        } else if (gamepad1.dpad_down){
+            Auxiliaries.enableLeftPixelPlacer();
+            Auxiliaries.retractPixelFixerLeft();
+        }
 
         switch (gamePeriod) {
            case NORMAL:
@@ -134,23 +164,11 @@ public class TeleOpMain extends OpMode {
 
             if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
 
-            if (gamepad2.dpad_down) Arm.setTargetPos(0,0);
+            if (gamepad2.dpad_down) Arm.setTargetPos(0,-200);
         }
     }
 
     private void normalPeriodLoop() {
-        if (gamepad1.dpad_up) { // Mosaic Fixing Left Control
-            Auxiliaries.movePixelPlacerToMosaicFixingPositionLeft();
-        } else if (gamepad1.dpad_down) {
-            Auxiliaries.retractPixelPlacerLeft();
-        }
-
-        if (gamepad1.triangle) { // Mosaic Fixing Right Control
-            Auxiliaries.movePixelPlacerToMosaicFixingPositionRight();
-        } else if (gamepad1.cross) {
-            Auxiliaries.retractPixelPlacerRight();
-        }
-
         if (Arm.wormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
             if (gamepad2.left_trigger > 0.9) {
                 Intake.intake();
@@ -189,9 +207,9 @@ public class TeleOpMain extends OpMode {
         } else if (gamepad2.cross) {
             Arm.setTargetPos(BOTTOM_EXT_POS, BOTTOM_ROT_POS);
         } else if (gamepad2.square) {
-            Arm.setTargetPos(LOW_EXT_POS, LOW_ROT_POS);
+            Arm.setTargetPos(LOW_EXT_POS - 10, LOW_ROT_POS - 10);
         } else if (gamepad2.circle) {
-            Arm.setTargetPos(MED_EXT_POS, MED_ROT_POS);
+            Arm.setTargetPos(MED_EXT_POS - 180, MED_ROT_POS - 250);
         } else if (gamepad2.triangle) {
             Arm.setTargetPos(HIGH_EXT_POS, HIGH_ROT_POS);
         }

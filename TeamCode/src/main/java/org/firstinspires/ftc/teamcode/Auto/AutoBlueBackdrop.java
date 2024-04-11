@@ -214,7 +214,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
         switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
 
                 centerOnAprilTag(1);
@@ -224,7 +224,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
             case CENTER:
             case NONE:
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
                 centerOnAprilTag(2);
@@ -233,7 +233,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
-                Auxiliaries.placePixelOnSpikeStripRight();
+                Auxiliaries.retractPixelPlacerServo();
                 mecanumDriveBase.followTrajectorySequence(toBackdropRight);
 
                 centerOnAprilTag(3);

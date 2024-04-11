@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 
@@ -17,7 +18,9 @@ public class ServoTest extends OpMode {
         leftBumperWasPressed  = false;
         rightBumperWasPressed = false;
 
-        testServo = hardwareMap.get(ServoImplEx.class, "PixelPlacerServoRight");
+        testServo = hardwareMap.get(ServoImplEx.class, "PixelFixerLeft");
+
+        testServo.setDirection(Servo.Direction.REVERSE);
     }
 
     @Override public void init_loop() {
@@ -25,6 +28,15 @@ public class ServoTest extends OpMode {
         telemetry.addLine("Press Right Bumper to decrement start position");
 
         telemetry.addLine("Press options (The one on the left) the reset the start position.");
+
+        if (gamepad1.square) {
+            testServo.setPwmDisable();
+        }
+
+        if (gamepad1.circle) {
+            testServo.setPwmEnable();
+            SERVO_POS = 0.0d;
+        }
 
         if (gamepad1.options) SERVO_POS = 0.0d;
 
