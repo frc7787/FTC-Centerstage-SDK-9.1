@@ -22,7 +22,7 @@ public class Properties {
     public static volatile int HIGH_EXT_POS = 2894;
     public static volatile int HIGH_ROT_POS = 1920;
 
-    public static volatile int ENDGAME_POSITION = 1590;
+    public static volatile int ENDGAME_POSITION = 2133;
 
     public static volatile double DEFAULT_WORM_POWER     = 1.0;
     public static volatile double DEFAULT_ELEVATOR_POWER = 1.0; // 1.0;
@@ -55,7 +55,7 @@ public class Properties {
 
     // --------- DELIVERY TRAY PROPERTIES ---------- //
 
-    public static volatile double TRAY_DOOR_OPEN_POS   = 0.23;
+    public static volatile double TRAY_DOOR_OPEN_POS   = 0.25;
     public static volatile double TRAY_DOOR_CLOSED_POS = 0.0;
 
     // ---------- LAUNCHER PROPERTIES ---------- //

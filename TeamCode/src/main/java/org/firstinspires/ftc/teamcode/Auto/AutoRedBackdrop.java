@@ -236,8 +236,6 @@ public class AutoRedBackdrop extends LinearOpMode {
      * @param power The power to move to the target position at
      */
     private void extendElevator(int targetPos, double power) {
-        telemetry.addLine("Got to Extend elevator");
-        telemetry.update();
         elevatorMotor.setTargetPosition(targetPos);
         elevatorMotor.setMode(RUN_TO_POSITION);
         elevatorMotor.setPower(power);

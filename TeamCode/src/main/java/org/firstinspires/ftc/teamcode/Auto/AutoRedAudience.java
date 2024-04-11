@@ -150,13 +150,13 @@ public class AutoRedAudience extends LinearOpMode {
 
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(-42, -12))
-                .lineTo(new Vector2d(38, -12))
+                .lineTo(new Vector2d(38, -14))
                 .strafeTo(new Vector2d(38, -30))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-36, -12))
-                .lineTo(new Vector2d(38, -12))
+                .lineTo(new Vector2d(38, -14))
                 .strafeTo(new Vector2d(38, -36))
                 .build();
 
@@ -164,7 +164,7 @@ public class AutoRedAudience extends LinearOpMode {
                 .lineToLinearHeading(new Pose2d(-24, -38, Math.toRadians(180)))
                 .lineToConstantHeading(new Vector2d(-40, -36))
                 .strafeTo(new Vector2d(-40, -12))
-                .lineTo(new Vector2d(38, -12))
+                .lineTo(new Vector2d(38, -14))
                 .strafeTo(new Vector2d(38, -42))
                 .turn(Math.toRadians(180))
                 .build();
@@ -418,6 +418,8 @@ public class AutoRedAudience extends LinearOpMode {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 break;
             }
+
+            if (isWithinTolerance()) return;
 
             if (detectAprilTags(desiredTagId)) {
                 prevRangeErr = rangeErr;

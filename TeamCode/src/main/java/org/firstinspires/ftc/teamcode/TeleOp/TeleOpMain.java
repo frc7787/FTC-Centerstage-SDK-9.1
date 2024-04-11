@@ -25,7 +25,7 @@ public class TeleOpMain extends OpMode {
         ENDGAME
     }
 
-    LED leftLEDRedChannel, leftLEDGreenChannel, rightLEDRedChannel, rightLEDGreenChannel;
+    LED leftLED, rightLED;
     MecanumDriveBase driveBase;
 
     boolean outtakeTrayWasFull, outtakeTrayIsFull;
@@ -50,15 +50,11 @@ public class TeleOpMain extends OpMode {
         Auxiliaries.retractPixelFixerLeft();
         Auxiliaries.retractFixerRight();
 
-        leftLEDRedChannel    = hardwareMap.get(LED.class, "LeftLEDRedChannel");
-        leftLEDGreenChannel  = hardwareMap.get(LED.class, "LeftLEDGreenChannel");
-        rightLEDRedChannel   = hardwareMap.get(LED.class, "RightLEDRedChannel");
-        rightLEDGreenChannel = hardwareMap.get(LED.class, "RightLEDGreenChannel");
+        leftLED  = hardwareMap.get(LED.class, "LeftLED");
+        rightLED = hardwareMap.get(LED.class, "RightLED");
 
-        leftLEDRedChannel.enable(false);
-        leftLEDGreenChannel.enableLight(false);
-        rightLEDRedChannel.enable(false);
-        rightLEDGreenChannel.enable(false);
+        leftLED.enable(false);
+        rightLED.enable(false);
 
         gamePeriod = NORMAL;
     }
@@ -67,11 +63,6 @@ public class TeleOpMain extends OpMode {
         Intake.update(); // This HAS to come before Arm.update()
 
         Arm.update(Intake.isActive());
-
-        Arm.debug(telemetry);
-
-        telemetry.addData("Front Beam Break Is Broken", Auxiliaries.frontBeamBreakIsBroken());
-        telemetry.addData("Back Beam Break Is Broken", Auxiliaries.backBeamBreakIsBroken());
 
         double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
         double strafe = gamepad1.left_stick_x;
@@ -139,19 +130,15 @@ public class TeleOpMain extends OpMode {
 
     private void ledController() {
         if (Auxiliaries.frontBeamBreakIsBroken()) {
-            leftLEDGreenChannel.enable(true);
-            rightLEDRedChannel.enable(false);
+            leftLED.enable(true);
         } else {
-            leftLEDGreenChannel.enable(false);
-            leftLEDRedChannel.enable(false);
+            leftLED.enable(false);
         }
 
         if (Auxiliaries.backBeamBreakIsBroken()) {
-            rightLEDGreenChannel.enable(true);
-            rightLEDRedChannel.enable(false);
+            rightLED.enable(true);
         } else {
-            rightLEDGreenChannel.enable(false);
-            rightLEDRedChannel.enable(false);
+            rightLED.enable(false);
         }
     }
 
@@ -159,13 +146,14 @@ public class TeleOpMain extends OpMode {
     private void endgameLoop() {
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
-        if (Arm.wormTargetPos() == ENDGAME_POSITION) {
-            Auxiliaries.releaseHanger(); // Automatically release hanging hook when we go to hang
+        if (gamepad2.left_trigger > 0.8) Auxiliaries.releaseLauncher();
 
-            if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
-
-            if (gamepad2.dpad_down) Arm.setTargetPos(0,-200);
+        if (gamepad2.right_bumper) {
+            Arm.setTargetPos(0, 2500);
+            Auxiliaries.releaseHanger();
         }
+
+        if (gamepad2.dpad_down) Arm.setTargetPos(0,-200);
     }
 
     private void normalPeriodLoop() {

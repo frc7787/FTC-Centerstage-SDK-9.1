@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
 import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
 import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
@@ -33,6 +35,9 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorImplEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -78,14 +83,19 @@ public class AutoBlueBackdrop extends LinearOpMode {
                        toBackdropRight,
                        toPark;
 
+    DcMotorImplEx wormMotor, elevatorMotor;
+
+    Servo leftDoor, rightDoor;
+
     int maxAprilTagDetections = 25;
 
     enum PlacingState {
         START,
-        MOVING_TO_POS,
-        PLACING,
-        CLEARING_PIXELS,
-        RETRACTING,
+        ROTATING_TO_PLACE_YELLOW_PIXEL,
+        EXTENDING_TO_PLACE_YELLOW_PIXEL,
+        PLACING_YELLOW_PIXEL,
+        RETRACTING_ELEVATOR,
+        RETRACTING_WORM,
         PLACED
     }
 
@@ -102,6 +112,16 @@ public class AutoBlueBackdrop extends LinearOpMode {
     @Override public void runOpMode() throws InterruptedException {
         propDetector     = new PropDetector(PropColor.BLUE);
         mecanumDriveBase = new MecanumDriveBase(hardwareMap);
+
+        wormMotor     = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
+        elevatorMotor = hardwareMap.get(DcMotorImplEx.class, "ExtensionMotor");
+
+        elevatorMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
+        wormMotor.setMode(STOP_AND_RESET_ENCODER);
 
         mecanumDriveBase.init();
 
@@ -253,6 +273,38 @@ public class AutoBlueBackdrop extends LinearOpMode {
     }
 
     /**
+     * Opens the delivery tray door to the positions provided in the argument
+     * @param leftPos The position to move the left door to
+     * @param rightPos The position to move the right door to
+     */
+    public void openDeliveryTrayDoor(double leftPos, double rightPos) {
+        leftDoor.setPosition(leftPos);
+        rightDoor.setPosition(rightPos);
+    }
+
+    /**
+     * Rotates the worm to the provided position at the provided power
+     * @param pos The position to move the worm to
+     * @param power The power to move to the target position at
+     */
+    public void rotateWorm(int pos, double power) {
+        wormMotor.setTargetPosition(pos);
+        wormMotor.setMode(RUN_TO_POSITION);
+        wormMotor.setPower(power);
+    }
+
+    /**
+     * Extends the elevator to the provided position at the provided power
+     * @param targetPos The position to move the elevator to
+     * @param power The power to move to the target position at
+     */
+    private void extendElevator(int targetPos, double power) {
+        elevatorMotor.setTargetPosition(targetPos);
+        elevatorMotor.setMode(RUN_TO_POSITION);
+        elevatorMotor.setPower(power);
+    }
+
+    /**
      * Initializes the April Tag Processing Pipeline
      */
     void initAprilTagVisionProcessing() {
@@ -395,71 +447,61 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);
     }
 
-    void placePixelOnBackdrop() {
-        while (placingState != PlacingState.PLACED) {
+    private void placePixelOnBackdrop() {
 
-            telemetry.addData("Placing State", placingState);
-            telemetry.addData("Worm Position", Arm.wormPos());
-
+        while (true) {
             if (isStopRequested() || !opModeIsActive()) return;
 
             switch (placingState) {
                 case START:
-                    Arm.setElevatorPower(ELEVATOR_EXTENSION_SPEED_AUTO);
+                    rotateWorm(YELLOW_PIXEL_WORM_POSITION, 1.0);
 
-                    Arm.setTargetPos(0, YELLOW_PIXEL_WORM_POSITION);
-
-                    Arm.update(false);
-
-                    placingState = PlacingState.MOVING_TO_POS;
+                    placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
-                case MOVING_TO_POS:
-                    Arm.setElevatorPower(0.8);
+                case ROTATING_TO_PLACE_YELLOW_PIXEL:
+                    if (wormMotor.getCurrentPosition() >= 750) {
+                        placingState = PlacingState.EXTENDING_TO_PLACE_YELLOW_PIXEL;
+                    }
 
-                    Arm.elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    break;
+                case EXTENDING_TO_PLACE_YELLOW_PIXEL:
+                    extendElevator(YELLOW_PIXEL_ELEVATOR_POSITION, 1.0);
 
-                    if (Arm.wormPos() > Arm.WORM_SAFETY_LIMIT) {
-                        if (!Arm.bothOuttakeLimitSwitchesArePressed()) {
-                            Arm.powerElevator(0.8);
-                        } else {
-                            Arm.powerElevator(0.0);
-                            placingState = PlacingState.PLACING;
-                        }
+                    if (elevatorMotor.getCurrentPosition() >= YELLOW_PIXEL_ELEVATOR_POSITION - 5) {
+                        placingState = PlacingState.PLACING_YELLOW_PIXEL;
+                    }
+
+                    break;
+                case PLACING_YELLOW_PIXEL:
+                    openDeliveryTrayDoor(0.1, 0.1);
+
+                    sleep(1000);
+
+                    openDeliveryTrayDoor(0.0, 0.0);
+
+                    placingState = PlacingState.RETRACTING_ELEVATOR;
+                    break;
+                case RETRACTING_ELEVATOR:
+                    extendElevator(0, 0.8);
+
+                    if (elevatorMotor.getCurrentPosition() < 100) {
+                        placingState = PlacingState.RETRACTING_WORM;
                     }
                     break;
-                case PLACING:
-                    Arm.openDeliveryTrayDoor(0.3);
+                case RETRACTING_WORM:
+                    rotateWorm(0, 0.8);
 
-                    sleep(700);
-
-                    Arm.openDeliveryTrayDoor(0.0);
-
-                    placingState = PlacingState.CLEARING_PIXELS;
-                    break;
-                case CLEARING_PIXELS:
-                    Arm.setTargetPos(Arm.elevatorPos(), YELLOW_PIXEL_CLEARING_WORM_POSITION);
-
-                    Arm.update(false);
-
-                    if (Arm.wormPos() > YELLOW_PIXEL_CLEARING_WORM_POSITION - 30) {
-                        placingState = PlacingState.RETRACTING;
-                    }
-                    break;
-                case RETRACTING:
-                    Arm.setElevatorPower(ELEVATOR_RETRACTION_SPEED_AUTO);
-
-                    Arm.update(false);
-
-                    Arm.setTargetPos(0, 0);
-
-                    if (Arm.wormPos() < 5 && Arm.elevatorPos() < 5) {
+                    if (wormMotor.getCurrentPosition() < 30) {
                         placingState = PlacingState.PLACED;
                     }
                     break;
                 case PLACED:
                     break;
             }
-            telemetry.update();
+
+            if (placingState == PlacingState.PLACED) {
+                return;
+            }
         }
     }
 }
