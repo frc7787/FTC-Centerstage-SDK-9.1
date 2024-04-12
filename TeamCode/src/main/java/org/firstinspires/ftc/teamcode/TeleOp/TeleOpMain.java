@@ -146,7 +146,7 @@ public class TeleOpMain extends OpMode {
     private void endgameLoop() {
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
-        if (gamepad2.left_trigger > 0.8) Auxiliaries.releaseLauncher();
+        if (gamepad2.right_trigger > 0.8 || gamepad2.left_trigger > 0.8) Auxiliaries.releaseLauncher();
 
         if (gamepad2.right_bumper) {
             Arm.setTargetPos(0, 2500);
