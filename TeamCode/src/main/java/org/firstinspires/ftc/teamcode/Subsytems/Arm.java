@@ -138,23 +138,17 @@ public class Arm {
 
                     // If we are trying to home  and the worm limit switch is pressed, we want
                     // to stop and reset the encoder when the limit switch is pressed.
-                    if (wormLimitSwitch.isPressed()) {
-                        wormMotor.setMode(STOP_AND_RESET_ENCODER);
-                    }
+                    if (wormLimitSwitch.isPressed()) wormMotor.setMode(STOP_AND_RESET_ENCODER);
 
                     // If we are trying to home and the elevator limit switch is pressed,
                     // we want to stop and reset the encoder when the limit switch is pressed.
-                    if (elevatorLimitSwitch.isPressed()) {
-                        elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
-                    }
+                    if (elevatorLimitSwitch.isPressed()) elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
 
                     // If we are going homing and both of the limit switches are pressed
                     // then we know we have gotten home, even if the motors are still busy
                     // we don't need to stop and reset encoders since this evaluates after
                     // the previous two if statements
-                    if (wormLimitSwitch.isPressed() && elevatorLimitSwitch.isPressed()) {
-                        normalPeriodArmState = AT_POS;
-                    }
+                    if (wormLimitSwitch.isPressed() && elevatorLimitSwitch.isPressed()) normalPeriodArmState = AT_POS;
 
                     // If the worm motor is greater than or equal to  the safety limit and the
                     // position of the elevator motor is greater than 30 we know that we can safely

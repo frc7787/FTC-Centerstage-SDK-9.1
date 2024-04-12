@@ -64,47 +64,19 @@ public class TeleOpMain extends OpMode {
 
         Arm.update(Intake.isActive());
 
-        double drive  = gamepad1.left_stick_y * -1.0; // Left stick y is inverted
-        double strafe = gamepad1.left_stick_x;
-        double turn   = gamepad1.right_stick_x;
-
-        MecanumDriveBase.driveManualFF(drive, strafe, turn, 0.02);
+        MecanumDriveBase.driveManualFF(
+                gamepad1.left_stick_y * -1.0,
+                gamepad1.left_stick_x,
+                gamepad1.right_stick_x,
+                0.02
+        );
 
         ledController();
 
-        if (gamepad1.left_bumper) {
-            Auxiliaries.disableLeftPixelPlacer();
-        }
-
-        if (gamepad1.right_bumper) {
-            Auxiliaries.disableRightPixelPlacer();
-        }
-
-        if (gamepad1.square) {
-            Auxiliaries.moveToFixingPositionLevelOneRight();
-        } else if (gamepad1.triangle) {
-            Auxiliaries.moveToFixingPositionLevelTwoRight();
-        } else if (gamepad1.cross) {
-            Auxiliaries.enableRightPixelPlacer();
-            Auxiliaries.retractFixerRight();
-        }
-
-        if (gamepad1.dpad_left) {
-            Auxiliaries.moveToFixingPositionLevelOneLeft();
-        } else if (gamepad1.dpad_up) {
-            Auxiliaries.moveToFixingPositionLevelTwoLeft();
-        } else if (gamepad1.share) {
-            Auxiliaries.moveToFixingPositionLevelThreeLeft();
-        } else if (gamepad1.dpad_down){
-            Auxiliaries.enableLeftPixelPlacer();
-            Auxiliaries.retractPixelFixerLeft();
-        }
+        gamepadLedController();
 
         switch (gamePeriod) {
            case NORMAL:
-               gamepad1.setLedColor(0, 0, 255, Gamepad.LED_DURATION_CONTINUOUS);
-               gamepad2.setLedColor(0,0,255, Gamepad.LED_DURATION_CONTINUOUS);
-
                normalPeriodLoop();
 
                if (gamepad2.share) {
@@ -115,6 +87,7 @@ public class TeleOpMain extends OpMode {
 
                break;
            case ENDGAME:
+               
                if (gamepad2.options) {
                    gamePeriod = NORMAL;
                    gamepad1.rumble(1,1, 1000);
@@ -128,7 +101,18 @@ public class TeleOpMain extends OpMode {
        telemetry.update();
     }
 
-    private void ledController() {
+    void gamepadLedController() {
+        switch (gamePeriod) {
+            case NORMAL:
+                gamepad1.setLedColor(0,0,255, Gamepad.LED_DURATION_CONTINUOUS);
+                gamepad2.setLedColor(0,0,255, Gamepad.LED_DURATION_CONTINUOUS);
+            case ENDGAME:
+                gamepad1.setLedColor(255,0,0, Gamepad.LED_DURATION_CONTINUOUS);
+                gamepad1.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
+        }
+    }
+
+    void ledController() {
         if (Auxiliaries.frontBeamBreakIsBroken()) {
             leftLED.enable(true);
         } else {
@@ -143,7 +127,7 @@ public class TeleOpMain extends OpMode {
     }
 
 
-    private void endgameLoop() {
+    void endgameLoop() {
         if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
 
         if (gamepad2.left_trigger > 0.8) Auxiliaries.releaseLauncher();
@@ -156,7 +140,19 @@ public class TeleOpMain extends OpMode {
         if (gamepad2.dpad_down) Arm.setTargetPos(0,-280);
     }
 
-    private void normalPeriodLoop() {
+    void normalPeriodLoop() {
+        if (gamepad1.dpad_up) { // Mosaic Fixing Left Control
+            Auxiliaries.movePixelPlacerToMosaicFixingPositionLeft();
+        } else if (gamepad1.dpad_down) {
+            Auxiliaries.retractPixelPlacerLeft();
+        }
+
+        if (gamepad1.triangle) { // Mosaic Fixing Right Control
+            Auxiliaries.movePixelPlacerToMosaicFixingPositionRight();
+        } else if (gamepad1.cross) {
+            Auxiliaries.retractPixelPlacerRight();
+        }
+
         if (Arm.wormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
             if (gamepad2.left_trigger > 0.9) {
                 Intake.intake();

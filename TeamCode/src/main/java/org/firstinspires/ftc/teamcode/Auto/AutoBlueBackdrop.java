@@ -81,6 +81,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                        toBackdropLeft,
                        toBackdropCenter,
                        toBackdropRight,
+                       toPixelStackCenter,
+                       toBackdropCenterAgain,
                        toPark;
 
     DcMotorImplEx wormMotor, elevatorMotor;
@@ -148,7 +150,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(23, 38))
-                .lineToLinearHeading(new Pose2d(38, 42, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(38, 40, Math.toRadians(0)))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -158,7 +160,17 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .lineToLinearHeading(new Pose2d(0, 38, Math.toRadians(0)))
-                .lineToConstantHeading(new Vector2d(38, 30))
+                .lineToConstantHeading(new Vector2d(38, 27))
+                .build();
+
+        toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                .strafeTo(new Vector2d(38, 12))
+                .lineToConstantHeading(new Vector2d(-54, 12))
+                .build();
+
+        toBackdropCenterAgain = mecanumDriveBase.trajectorySequenceBuilder(toPixelStackCenter.end())
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
                 .build();
 
         int cameraMonitorViewId = hardwareMap

@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
 import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
 import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
+import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
+import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
 import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
 import static org.firstinspires.ftc.teamcode.Properties.GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
@@ -20,11 +20,13 @@ import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
 import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
+import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
@@ -46,7 +48,9 @@ import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
+import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -76,6 +80,8 @@ public class AutoBlueAudience extends LinearOpMode {
                        toBackdropLeft,
                        toBackdropCenter,
                        toBackdropRight,
+                       toPixelStackCenter,
+                       toBackdropCenterAgain,
                        toPark;
 
     int maxAprilTagDetections = 25;
@@ -160,6 +166,16 @@ public class AutoBlueAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(38, 12))
                 .strafeTo(new Vector2d(40, 24))
                 .turn(Math.toRadians(180))
+                .build();
+
+        toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                .strafeTo(new Vector2d(38, 12))
+                .lineToConstantHeading(new Vector2d(-54, 12))
+                .build();
+
+        toBackdropCenterAgain = mecanumDriveBase.trajectorySequenceBuilder(toPixelStackCenter.end())
+                .lineToConstantHeading(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(38, 36))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
@@ -265,8 +281,8 @@ public class AutoBlueAudience extends LinearOpMode {
         }
 
         toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(45, 12))
-                .lineTo(new Vector2d(60, 12))
+                .strafeTo(new Vector2d(45, 16))
+                .lineTo(new Vector2d(60, 16))
                 .build();
 
         mecanumDriveBase.followTrajectorySequence(toPark);
