@@ -450,7 +450,6 @@ public class AutoBlueBackdrop extends LinearOpMode {
     }
 
     private void placePixelOnBackdrop() {
-
         while (true) {
             if (isStopRequested() || !opModeIsActive()) return;
 
