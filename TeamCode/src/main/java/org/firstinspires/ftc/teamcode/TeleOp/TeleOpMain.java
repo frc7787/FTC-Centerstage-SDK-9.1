@@ -153,7 +153,7 @@ public class TeleOpMain extends OpMode {
             Auxiliaries.releaseHanger();
         }
 
-        if (gamepad2.dpad_down) Arm.setTargetPos(0,-200);
+        if (gamepad2.dpad_down) Arm.setTargetPos(0,-280);
     }
 
     private void normalPeriodLoop() {

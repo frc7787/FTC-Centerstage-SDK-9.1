@@ -38,6 +38,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -49,7 +50,6 @@ import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
-import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -123,6 +123,9 @@ public class AutoBlueBackdrop extends LinearOpMode {
         elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
         wormMotor.setMode(STOP_AND_RESET_ENCODER);
 
+        leftDoor  = hardwareMap.get(ServoImplEx.class, "LeftDoorServo");
+        rightDoor = hardwareMap.get(ServoImplEx.class, "RightDoorServo");
+
         mecanumDriveBase.init();
 
         Pose2d startPose = new Pose2d(11, 63, Math.toRadians(90));
@@ -149,7 +152,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(12, 38))
-                .lineToConstantHeading(new Vector2d(38, 36))
+                .lineToConstantHeading(new Vector2d(38, 36.5))
                 .build();
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
@@ -180,12 +183,9 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         initAprilTagVisionProcessing();
 
-        Arm.init(hardwareMap);
         Auxiliaries.init(hardwareMap);
 
-        Arm.update(false);
-
-        Arm.rotateWorm(AUTO_INITIAL_WORM_POSITION);
+        rotateWorm(AUTO_INITIAL_WORM_POSITION, 1.0);
 
         waitForStart();
 
@@ -227,7 +227,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
         telemetry.addData("PROP LOCATION: ", location);
         telemetry.update();
 
-        Arm.rotateWorm(0);
+        rotateWorm(0, 1.0);
 
         sleep(0);
 
@@ -400,6 +400,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 break;
             }
+
+            if (isWithinTolerance()) return;
 
             if (detectAprilTags(desiredTagId)) {
                 prevRangeErr = rangeErr;
