@@ -209,21 +209,21 @@ public class AutoRedBackdrop extends LinearOpMode {
                 break;
             case CENTER:
             case NONE:
-               mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-               Auxiliaries.placePixelOnSpikeStrip();
-               mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
+                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
+                Auxiliaries.placePixelOnSpikeStrip();
+                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
-               centerOnAprilTag(5);
+                centerOnAprilTag(5);
 
                 placePixelOnBackdrop(
                         YELLOW_PIXEL_WORM_POSITION - 75,
                         YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000);
-               mecanumDriveBase.followTrajectorySequence(toPixelStack);
-               openDeliveryTrayDoor(0.3, 0.3);
-               Intake.intake();
+                mecanumDriveBase.followTrajectorySequence(toPixelStack);
+                openDeliveryTrayDoor(0.3, 0.3);
+                Intake.intake();
                 elevatorMotor.setPower(-0.2);
-               sleep(2000);
+                sleep(2000);
                 placingState = PlacingState.START;
 
                 mecanumDriveBase.followTrajectorySequence(toBackdropAgain);

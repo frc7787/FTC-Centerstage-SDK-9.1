@@ -141,18 +141,6 @@ public class TeleOpMain extends OpMode {
     }
 
     void normalPeriodLoop() {
-        if (gamepad1.dpad_up) { // Mosaic Fixing Left Control
-            Auxiliaries.movePixelPlacerToMosaicFixingPositionLeft();
-        } else if (gamepad1.dpad_down) {
-            Auxiliaries.retractPixelPlacerLeft();
-        }
-
-        if (gamepad1.triangle) { // Mosaic Fixing Right Control
-            Auxiliaries.movePixelPlacerToMosaicFixingPositionRight();
-        } else if (gamepad1.cross) {
-            Auxiliaries.retractPixelPlacerRight();
-        }
-
         if (Arm.wormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
             if (gamepad2.left_trigger > 0.9) {
                 Intake.intake();
