@@ -195,7 +195,7 @@ public class AutoRedBackdrop extends LinearOpMode {
                 openDeliveryTrayDoor(0.3, 0.3);
                 Intake.intake();
                 elevatorMotor.setPower(-0.2);
-                sleep(2000);
+                sleep(1000);
                 placingState = PlacingState.START;
 
                 mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
@@ -223,7 +223,7 @@ public class AutoRedBackdrop extends LinearOpMode {
                 openDeliveryTrayDoor(0.3, 0.3);
                 Intake.intake();
                 elevatorMotor.setPower(-0.2);
-                sleep(2000);
+                sleep(1000);
                 placingState = PlacingState.START;
 
                 mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
@@ -251,7 +251,7 @@ public class AutoRedBackdrop extends LinearOpMode {
                 openDeliveryTrayDoor(0.3, 0.3);
                 Intake.intake();
                 elevatorMotor.setPower(-0.2);
-                sleep(2000);
+                sleep(1000);
 
                 placingState = PlacingState.START;
 
