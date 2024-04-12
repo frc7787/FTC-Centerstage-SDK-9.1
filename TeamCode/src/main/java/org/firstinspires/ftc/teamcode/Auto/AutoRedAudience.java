@@ -83,6 +83,7 @@ public class AutoRedAudience extends LinearOpMode {
         ROTATING_TO_PLACE_YELLOW_PIXEL,
         EXTENDING_TO_PLACE_YELLOW_PIXEL,
         PLACING_YELLOW_PIXEL,
+        CLEARING_PIXELS,
         RETRACTING_ELEVATOR,
         RETRACTING_WORM,
         PLACED
@@ -96,6 +97,10 @@ public class AutoRedAudience extends LinearOpMode {
                        toBackdropLeft,
                        toBackdropCenter,
                        toBackdropRight,
+    toPixelStack,
+    toBackdropAgain,
+    toPixelStackCenter,
+    toBackdropAgainCenter,
                        toPark;
 
     double drive, strafe, turn;
@@ -167,6 +172,23 @@ public class AutoRedAudience extends LinearOpMode {
                 .lineTo(new Vector2d(38, -14))
                 .strafeTo(new Vector2d(38, -42))
                 .turn(Math.toRadians(180))
+                .build();
+
+        toPixelStack = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                .strafeTo(new Vector2d(38, -12))
+                .lineToConstantHeading(new Vector2d(-60, -12))
+                .build();
+
+        toBackdropAgain = mecanumDriveBase.trajectorySequenceBuilder(toPixelStack.end())
+                .lineToConstantHeading(new Vector2d(38, -12))
+                .strafeTo(new Vector2d(38, 33.5))
+                .build();
+
+        toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
+                .lineToConstantHeading(new Vector2d(-60, -36))
+                .build();
+        toBackdropAgainCenter = mecanumDriveBase.trajectorySequenceBuilder(toPixelStackCenter.end())
+                .lineToConstantHeading(new Vector2d(38, -36))
                 .build();
 
         int cameraMonitorViewId = hardwareMap
@@ -251,9 +273,21 @@ public class AutoRedAudience extends LinearOpMode {
 
                 centerOnAprilTag(4);
 
-                placePixelOnBackdrop();
+                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                mecanumDriveBase.followTrajectorySequence(toPixelStack);
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
                 break;
             case CENTER:
+                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
+                Auxiliaries.retractPixelPlacerServo();
+                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
+
+                centerOnAprilTag(5);
+
+                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                mecanumDriveBase.followTrajectorySequence(toPixelStackCenter);
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgainCenter);
+                break;
             case NONE: // This case should copy center
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.retractPixelPlacerServo();
@@ -261,7 +295,7 @@ public class AutoRedAudience extends LinearOpMode {
 
                 centerOnAprilTag(5);
 
-                placePixelOnBackdrop();
+                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -270,7 +304,8 @@ public class AutoRedAudience extends LinearOpMode {
 
                 centerOnAprilTag(6);
 
-                placePixelOnBackdrop();
+                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+
                 break;
         }
 
@@ -467,27 +502,27 @@ public class AutoRedAudience extends LinearOpMode {
                 && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);
     }
 
-    private void placePixelOnBackdrop() {
+    private void placePixelOnBackdrop(int wormPos, int elevatorPos, int outtakeSleep) {
 
         while (true) {
             if (isStopRequested() || !opModeIsActive()) return;
 
             switch (placingState) {
                 case START:
-                    rotateWorm(YELLOW_PIXEL_WORM_POSITION, 1.0);
+                    rotateWorm(wormPos, 1.0);
 
                     placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
                 case ROTATING_TO_PLACE_YELLOW_PIXEL:
-                    if (wormMotor.getCurrentPosition() >= 750) {
+                    if (wormMotor.getCurrentPosition() >= 710) {
                         placingState = PlacingState.EXTENDING_TO_PLACE_YELLOW_PIXEL;
                     }
 
                     break;
                 case EXTENDING_TO_PLACE_YELLOW_PIXEL:
-                    extendElevator(YELLOW_PIXEL_ELEVATOR_POSITION, 1.0);
+                    extendElevator(elevatorPos, 1.0);
 
-                    if (elevatorMotor.getCurrentPosition() >= YELLOW_PIXEL_ELEVATOR_POSITION - 5) {
+                    if (elevatorMotor.getCurrentPosition() >= elevatorPos - 5) {
                         placingState = PlacingState.PLACING_YELLOW_PIXEL;
                     }
 
@@ -495,9 +530,16 @@ public class AutoRedAudience extends LinearOpMode {
                 case PLACING_YELLOW_PIXEL:
                     openDeliveryTrayDoor(0.1, 0.1);
 
-                    sleep(1000);
+                    sleep(outtakeSleep);
 
                     openDeliveryTrayDoor(0.0, 0.0);
+
+                    placingState = PlacingState.CLEARING_PIXELS;
+                    break;
+                case CLEARING_PIXELS:
+                    rotateWorm(wormPos + 200, 0.8);
+
+                    sleep(400);
 
                     placingState = PlacingState.RETRACTING_ELEVATOR;
                     break;
@@ -511,9 +553,7 @@ public class AutoRedAudience extends LinearOpMode {
                 case RETRACTING_WORM:
                     rotateWorm(0, 0.8);
 
-                    if (wormMotor.getCurrentPosition() < 30) {
-                        placingState = PlacingState.PLACED;
-                    }
+                    placingState = PlacingState.PLACED;
                     break;
                 case PLACED:
                     break;
