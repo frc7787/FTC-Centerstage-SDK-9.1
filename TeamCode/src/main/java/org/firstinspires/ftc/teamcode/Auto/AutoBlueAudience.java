@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
 import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
@@ -281,8 +283,8 @@ public class AutoBlueAudience extends LinearOpMode {
         }
 
         toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(45, 16))
-                .lineTo(new Vector2d(60, 16))
+                .strafeTo(new Vector2d(45, 14))
+                .lineTo(new Vector2d(60, 14))
                 .build();
 
         mecanumDriveBase.followTrajectorySequence(toPark);
