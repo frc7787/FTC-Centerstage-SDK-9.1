@@ -75,6 +75,34 @@ public class TeleOpMain extends OpMode {
 
         gamepadLedController();
 
+        if (gamepad1.left_bumper) {
+            Auxiliaries.disableLeftPixelPlacer();
+        }
+
+        if (gamepad1.right_bumper) {
+            Auxiliaries.disableRightPixelPlacer();
+        }
+
+        if (gamepad1.square) {
+            Auxiliaries.moveToFixingPositionLevelOneRight();
+        } else if (gamepad1.triangle) {
+            Auxiliaries.moveToFixingPositionLevelTwoRight();
+        } else if (gamepad1.cross) {
+            Auxiliaries.enableRightPixelPlacer();
+            Auxiliaries.retractFixerRight();
+        }
+
+        if (gamepad1.dpad_left) {
+            Auxiliaries.moveToFixingPositionLevelOneLeft();
+        } else if (gamepad1.dpad_up) {
+            Auxiliaries.moveToFixingPositionLevelTwoLeft();
+        } else if (gamepad1.share) {
+            Auxiliaries.moveToFixingPositionLevelThreeLeft();
+        } else if (gamepad1.dpad_down) {
+            Auxiliaries.enableLeftPixelPlacer();
+            Auxiliaries.retractPixelFixerLeft();
+        }
+
         switch (gamePeriod) {
            case NORMAL:
                normalPeriodLoop();
