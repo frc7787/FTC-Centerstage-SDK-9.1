@@ -187,25 +187,10 @@ public class AutoRedBackdrop extends LinearOpMode {
                 centerOnAprilTag(4);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 75,
+                        YELLOW_PIXEL_WORM_POSITION - 80,
                         YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000);
 
-                mecanumDriveBase.followTrajectorySequence(toPixelStack);
-                openDeliveryTrayDoor(0.3, 0.3);
-                Intake.intake();
-                elevatorMotor.setPower(-0.2);
-                sleep(1000);
-                placingState = PlacingState.START;
-
-                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
-                Intake.stop();
-                elevatorMotor.setPower(-0.0);
-                openDeliveryTrayDoor(0.0, 0.0);
-                placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 150,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
-                        1500);
                 break;
             case CENTER:
             case NONE:
@@ -216,24 +201,10 @@ public class AutoRedBackdrop extends LinearOpMode {
                 centerOnAprilTag(5);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 75,
+                        YELLOW_PIXEL_WORM_POSITION - 80,
                         YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000);
-                mecanumDriveBase.followTrajectorySequence(toPixelStack);
-                openDeliveryTrayDoor(0.3, 0.3);
-                Intake.intake();
-                elevatorMotor.setPower(-0.2);
-                sleep(1000);
-                placingState = PlacingState.START;
 
-                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
-                Intake.stop();
-                elevatorMotor.setPower(-0.0);
-                openDeliveryTrayDoor(0.0, 0.0);
-                placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 150,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
-                        1500);
                break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -243,27 +214,10 @@ public class AutoRedBackdrop extends LinearOpMode {
                 centerOnAprilTag(6);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 75,
+                        YELLOW_PIXEL_WORM_POSITION - 80,
                         YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000);
 
-                mecanumDriveBase.followTrajectorySequence(toPixelStack);
-                openDeliveryTrayDoor(0.3, 0.3);
-                Intake.intake();
-                elevatorMotor.setPower(-0.2);
-                sleep(1000);
-
-                placingState = PlacingState.START;
-
-                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
-                Intake.stop();
-                elevatorMotor.setPower(0.0);
-
-                openDeliveryTrayDoor(0.0, 0.0);
-                placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 150,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
-                        1500);
                 break;
        }
 
@@ -354,7 +308,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToConstantHeading(new Vector2d(12, -36))
-                .lineToLinearHeading(new Pose2d(-4, -32, Math.toRadians(-180)))
+                .lineToLinearHeading(new Pose2d(-3, -32, Math.toRadians(-180)))
                 .build();
 
         toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
@@ -380,7 +334,7 @@ public class AutoRedBackdrop extends LinearOpMode {
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .strafeTo(new Vector2d(25, -12))
                 .lineTo(new Vector2d(38, -12))
-                .strafeTo(new Vector2d(38, -42))
+                .strafeTo(new Vector2d(38, -42.5))
                 .build();
 
         toPixelStack = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
@@ -577,7 +531,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
                     break;
                 case EXTENDING_TO_PLACE_YELLOW_PIXEL:
-                    extendElevator(elevatorPos, 0.8);
+                    extendElevator(elevatorPos, 0.7);
 
                     if (elevatorMotor.getCurrentPosition() >= elevatorPos - 5) {
                         placingState = PlacingState.PLACING_YELLOW_PIXEL;

@@ -150,7 +150,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
                 .strafeTo(new Vector2d(23, 38))
-                .lineToLinearHeading(new Pose2d(38, 40, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(38, 44, Math.toRadians(0)))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -160,7 +160,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .lineToLinearHeading(new Pose2d(0, 38, Math.toRadians(0)))
-                .lineToConstantHeading(new Vector2d(38, 27))
+                .lineToConstantHeading(new Vector2d(38, 31))
                 .build();
 
         toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
@@ -252,7 +252,10 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 centerOnAprilTag(1);
 
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        1000);
                 break;
             case CENTER:
             case NONE:
@@ -262,7 +265,10 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 centerOnAprilTag(2);
 
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        1000);
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -271,7 +277,10 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                 centerOnAprilTag(3);
 
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        1000);
                 break;
         }
 

@@ -132,7 +132,7 @@ public class AutoBlueAudience extends LinearOpMode {
 
         toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPos)
                 .lineToConstantHeading(new Vector2d(-36, 36))
-                .lineToLinearHeading(new Pose2d(-20, 32, Math.toRadians(0)))
+                .lineToLinearHeading(new Pose2d(-21, 32, Math.toRadians(0)))
                 .build();
 
         toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPos)
@@ -148,25 +148,25 @@ public class AutoBlueAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(-36, 42))
                 .strafeTo(new Vector2d(-36, 12))
                 .lineToConstantHeading(new Vector2d(41.5, 13))
-                .strafeTo(new Vector2d(41.5, 45.3))
+                .strafeTo(new Vector2d(41, 44.5))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-35, 12))
                 .lineToConstantHeading(new Vector2d(43, 12))
-                .strafeTo(new Vector2d(41.5, 29))
+                .strafeTo(new Vector2d(40.5, 29))
                 .turn(Math.toRadians(180))
                 .build();
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .strafeTo(new Vector2d(-49, 11.5))
                 .lineToConstantHeading(new Vector2d(43, 11.5))
-                .strafeTo(new Vector2d(41.5, 23))
+                .strafeTo(new Vector2d(40.5, 23))
                 .turn(Math.toRadians(180))
                 .build();
 
         toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(41, 12))
+                .strafeTo(new Vector2d(40.5, 12))
                 .lineToConstantHeading(new Vector2d(-54, 12))
                 .build();
 
@@ -255,8 +255,8 @@ public class AutoBlueAudience extends LinearOpMode {
                 centerOnAprilTag(1);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 30,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 120,
+                        YELLOW_PIXEL_WORM_POSITION,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000
                 );
                 break;
@@ -269,8 +269,8 @@ public class AutoBlueAudience extends LinearOpMode {
                 centerOnAprilTag(2);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 30,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 120,
+                        YELLOW_PIXEL_WORM_POSITION,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000
                 );
                 break;
@@ -282,8 +282,8 @@ public class AutoBlueAudience extends LinearOpMode {
                 centerOnAprilTag(3);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 30,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 120,
+                        YELLOW_PIXEL_WORM_POSITION,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
                         1000
                         );
                 break;
@@ -291,27 +291,24 @@ public class AutoBlueAudience extends LinearOpMode {
 
         switch (location) {
             case LEFT:
-                mecanumDriveBase.updatePoseEstimate();
-
                 toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropLeft.end())
-                        .strafeTo(new Vector2d(45, 10.9))
-                        .lineTo(new Vector2d(60, 10.9))
+                        .strafeTo(new Vector2d(45, 61))
+                        .lineTo(new Vector2d(60, 61))
                         .build();
+                break;
             case CENTER:
             case NONE:
-                mecanumDriveBase.updatePoseEstimate();
-
                 toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
-                        .strafeTo(new Vector2d(45, 10.9))
-                        .lineTo(new Vector2d(60, 10.9))
+                        .strafeTo(new Vector2d(45, 57))
+                        .lineTo(new Vector2d(60, 57))
                         .build();
+                break;
             case RIGHT:
-                mecanumDriveBase.updatePoseEstimate();
-
                 toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropRight.end())
-                        .strafeTo(new Vector2d(45, 10.9))
-                        .lineTo(new Vector2d(60, 10.9))
+                        .strafeTo(new Vector2d(45, 57))
+                        .lineTo(new Vector2d(60, 57))
                         .build();
+                break;
         }
 
         mecanumDriveBase.followTrajectorySequence(toPark);
@@ -529,7 +526,7 @@ public class AutoBlueAudience extends LinearOpMode {
                     placingState = PlacingState.CLEARING_PIXELS;
                     break;
                 case CLEARING_PIXELS:
-                    rotateWorm(wormPos + 200, 0.8);
+                    rotateWorm(wormPos + 200, 0.7);
 
                     sleep(600);
 

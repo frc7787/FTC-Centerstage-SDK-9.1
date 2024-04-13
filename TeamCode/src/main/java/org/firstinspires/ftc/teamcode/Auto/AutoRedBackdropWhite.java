@@ -3,13 +3,12 @@ package org.firstinspires.ftc.teamcode.Auto;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
 import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
 import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
 import static org.firstinspires.ftc.teamcode.Properties.GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
@@ -22,7 +21,6 @@ import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
 import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
@@ -36,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.Range;
 
@@ -49,7 +48,7 @@ import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
+import org.firstinspires.ftc.teamcode.Subsytems.Intake;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -60,21 +59,21 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous(name = "Red - Audience", group = "Red")
-public class AutoRedAudience extends LinearOpMode {
+@Autonomous(name = "Red - Backdrop White", group = "Red")
+public class AutoRedBackdropWhite extends LinearOpMode {
     PropDetector propDetector;
     PropLocation location;
     OpenCvCamera camera;
-
-    DcMotorImplEx wormMotor, elevatorMotor;
-
-    ServoImplEx leftDoor, rightDoor;
 
     MecanumDriveBase mecanumDriveBase;
 
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
     VisionPortal visionPortal;
+
+    DcMotorImplEx wormMotor, elevatorMotor;
+
+    Servo leftDoor, rightDoor;
 
     int maxAprilTagDetections = 25;
 
@@ -83,21 +82,23 @@ public class AutoRedAudience extends LinearOpMode {
         ROTATING_TO_PLACE_YELLOW_PIXEL,
         EXTENDING_TO_PLACE_YELLOW_PIXEL,
         PLACING_YELLOW_PIXEL,
-        CLEARING_PIXELS,
         RETRACTING_ELEVATOR,
         RETRACTING_WORM,
+        CLEARING_PIXELS,
         PLACED
     }
 
-    PlacingState placingState = PlacingState.START;
-
     TrajectorySequence toSpikeLeft,
-                       toSpikeCenter,
-                       toSpikeRight,
-                       toBackdropLeft,
-                       toBackdropCenter,
-                       toBackdropRight,
-                       toPark;
+            toSpikeCenter,
+            toSpikeRight,
+            toBackdropLeft,
+            toBackdropCenter,
+            toBackdropRight,
+            toPixelStack,
+            toBackdropAgain,
+            toPark;
+
+    PlacingState placingState = PlacingState.START;
 
     double drive, strafe, turn;
     double rangeErr, yawErr, bearingErr;
@@ -107,8 +108,8 @@ public class AutoRedAudience extends LinearOpMode {
     PIDController strafePID = new PIDController(STRAFE_GAIN, 0.0, STRAFE_D);
     PIDController drivePID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
-    @Override
-    public void runOpMode() throws InterruptedException {
+    @Override public void runOpMode() throws InterruptedException {
+        Intake.init(hardwareMap);
         wormMotor     = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
         elevatorMotor = hardwareMap.get(DcMotorImplEx.class, "ExtensionMotor");
 
@@ -127,48 +128,195 @@ public class AutoRedAudience extends LinearOpMode {
         // Expansion Hub Port 2
         rightDoor = hardwareMap.get(ServoImplEx.class, "RightDoorServo");
 
+       initRoadRunner();
+       initPropDetection();
+       initAprilTagVisionProcessing();
+       initSubsystems();
+
+       waitForStart();
+
+       if (isStopRequested()) return;
+
+       location = propDetector.getPropLocation();
+
+       int leftCount   = 0;
+       int rightCount  = 0;
+       int centerCount = 0;
+       int noneCount   = 0;
+
+       for (int i = 0; i <= 20; i++) {
+            switch (propDetector.getPropLocation()) {
+                case LEFT:
+                    leftCount += 1;
+                    break;
+                case RIGHT:
+                    rightCount += 1;
+                    break;
+                case CENTER:
+                    centerCount += 1;
+                    break;
+                case NONE:
+                    noneCount += 1;
+                    break;
+            }
+       }
+
+       if (leftCount >= rightCount && leftCount >= noneCount && leftCount >= centerCount) {
+            location = PropLocation.LEFT;
+       } else if (rightCount >= leftCount && rightCount >= noneCount && rightCount >= centerCount) {
+            location = PropLocation.RIGHT;
+       } else if (centerCount >= noneCount) {
+            location = PropLocation.CENTER;
+       } else {
+            location = PropLocation.NONE;
+       }
+
+       telemetry.addData("PROP LOCATION: ", location);
+       telemetry.update();
+
+       rotateWorm(0, 1.0);
+
+       sleep(0);
+
+       switch (location) {
+            case LEFT:
+                mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
+                Auxiliaries.placePixelOnSpikeStrip();
+                mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
+
+                centerOnAprilTag(4);
+
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION - 75,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        1000);
+
+                mecanumDriveBase.followTrajectorySequence(toPixelStack);
+                openDeliveryTrayDoor(0.3, 0.3);
+                Intake.intake();
+                elevatorMotor.setPower(-0.2);
+                sleep(1000);
+                placingState = PlacingState.START;
+
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
+                Intake.stop();
+                elevatorMotor.setPower(-0.0);
+                openDeliveryTrayDoor(0.0, 0.0);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION + 150,
+                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
+                        1500);
+                break;
+            case CENTER:
+            case NONE:
+                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
+                Auxiliaries.placePixelOnSpikeStrip();
+                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
+
+                centerOnAprilTag(5);
+
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION - 75,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        1000);
+                mecanumDriveBase.followTrajectorySequence(toPixelStack);
+                openDeliveryTrayDoor(0.3, 0.3);
+                Intake.intake();
+                elevatorMotor.setPower(-0.2);
+                sleep(1000);
+                placingState = PlacingState.START;
+
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
+                Intake.stop();
+                elevatorMotor.setPower(-0.0);
+                openDeliveryTrayDoor(0.0, 0.0);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION + 150,
+                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
+                        1500);
+               break;
+            case RIGHT:
+                mecanumDriveBase.followTrajectorySequence(toSpikeRight);
+                Auxiliaries.placePixelOnSpikeStrip();
+                mecanumDriveBase.followTrajectorySequence(toBackdropRight);
+
+                centerOnAprilTag(6);
+
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION - 75,
+                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        1000);
+
+                mecanumDriveBase.followTrajectorySequence(toPixelStack);
+                openDeliveryTrayDoor(0.3, 0.3);
+                Intake.intake();
+                elevatorMotor.setPower(-0.2);
+                sleep(1000);
+
+                placingState = PlacingState.START;
+
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
+                Intake.stop();
+                elevatorMotor.setPower(0.0);
+
+                openDeliveryTrayDoor(0.0, 0.0);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION + 150,
+                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
+                        1500);
+                break;
+       }
+
+       toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
+                .strafeTo(new Vector2d(45, -64))
+                .lineTo(new Vector2d(60, -64))
+                .build();
+
+       mecanumDriveBase.followTrajectorySequence(toPark);
+
+       sleep(20000);
+    }
+
+    void initSubsystems() {
+        Auxiliaries.init(hardwareMap);
+
+        rotateWorm(AUTO_INITIAL_WORM_POSITION, 1.0);
+    }
+
+    /**
+     * Opens the delivery tray door to the positions provided in the argument
+     * @param leftPos The position to move the left door to
+     * @param rightPos The position to move the right door to
+     */
+    public void openDeliveryTrayDoor(double leftPos, double rightPos) {
+        leftDoor.setPosition(leftPos);
+        rightDoor.setPosition(rightPos);
+    }
+
+    /**
+     * Extends the elevator to the provided position at the provided power
+     * @param targetPos The position to move the elevator to
+     * @param power The power to move to the target position at
+     */
+    private void extendElevator(int targetPos, double power) {
+        elevatorMotor.setTargetPosition(targetPos);
+        elevatorMotor.setMode(RUN_TO_POSITION);
+        elevatorMotor.setPower(power);
+    }
+
+    /**
+     * Rotates the worm to the provided position at the provided power
+     * @param pos The position to move the worm to
+     * @param power The power to move to the target position at
+     */
+    public void rotateWorm(int pos, double power) {
+        wormMotor.setTargetPosition(pos);
+        wormMotor.setMode(RUN_TO_POSITION);
+        wormMotor.setPower(power);
+    }
+
+    void initPropDetection() {
         propDetector     = new PropDetector(PropColor.RED);
-        mecanumDriveBase = new MecanumDriveBase(hardwareMap);
-
-        mecanumDriveBase.init();
-
-        Pose2d startPose = new Pose2d(-35, -63, Math.toRadians(270.0));
-
-        mecanumDriveBase.setPoseEstimate(startPose);
-
-        toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(-35, -39, Math.toRadians(-158)))
-                .lineToConstantHeading(new Vector2d(-23, -36))
-                .build();
-
-        toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(-36, -20, Math.toRadians(0)))
-                .build();
-
-        toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
-                .lineToLinearHeading(new Pose2d(-42, -21, Math.toRadians(0)))
-                .build();
-
-        toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
-                .strafeTo(new Vector2d(-42, -12))
-                .lineTo(new Vector2d(42, -14))
-                .strafeTo(new Vector2d(42, -33))
-                .build();
-
-        toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
-                .strafeTo(new Vector2d(-36, -12))
-                .lineTo(new Vector2d(42, -14))
-                .strafeTo(new Vector2d(42, -40))
-                .build();
-
-        toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
-                .lineToLinearHeading(new Pose2d(-24, -38, Math.toRadians(180)))
-                .lineToConstantHeading(new Vector2d(-40, -36))
-                .strafeTo(new Vector2d(-40, -12))
-                .lineTo(new Vector2d(41, -14))
-                .strafeTo(new Vector2d(42, -40))
-                .turn(Math.toRadians(180))
-                .build();
 
         int cameraMonitorViewId = hardwareMap
                 .appContext
@@ -193,122 +341,59 @@ public class AutoRedAudience extends LinearOpMode {
             }
         });
 
-        initAprilTagVisionProcessing();
-
-        Auxiliaries.init(hardwareMap);
-
-        rotateWorm(1400, 1.0);
-
-        waitForStart();
-
-        if (isStopRequested()) { return; }
-
-        location = propDetector.getPropLocation();
-
-        int leftCount   = 0;
-        int rightCount  = 0;
-        int centerCount = 0;
-        int noneCount   = 0;
-
-        for (int i = 0; i <= 20;  i++) {
-            switch (propDetector.getPropLocation()) {
-                case LEFT:
-                    leftCount += 1;
-                    break;
-                case RIGHT:
-                    rightCount += 1;
-                    break;
-                case CENTER:
-                    centerCount += 1;
-                    break;
-                case NONE:
-                    noneCount += 1;
-                    break;
-            }
-        }
-
-        if (leftCount >= rightCount && leftCount >= centerCount && leftCount >= noneCount) {
-            location = PropLocation.LEFT;
-        } else if (rightCount >= leftCount && rightCount >= noneCount && rightCount >= centerCount) {
-            location = PropLocation.RIGHT;
-        } else if (centerCount >= noneCount) {
-            location = PropLocation.CENTER;
-        } else {
-            location = PropLocation.NONE;
-        }
-
-        rotateWorm(0, 1.0);
-
-        sleep(0);
-
-        telemetry.addData("PROP LOCATION: ", location);
-        telemetry.update();
-
-        switch (location) {
-            case LEFT:
-                mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
-                Auxiliaries.retractPixelPlacerServo();
-                mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
-
-                centerOnAprilTag(4);
-
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
-                break;
-            case CENTER:
-            case NONE: // This case should copy center
-                mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
-                Auxiliaries.retractPixelPlacerServo();
-                mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
-
-                centerOnAprilTag(5);
-
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
-                break;
-
-            case RIGHT:
-                mecanumDriveBase.followTrajectorySequence(toSpikeRight);
-                Auxiliaries.retractPixelPlacerServo();
-                mecanumDriveBase.followTrajectorySequence(toBackdropRight);
-
-                centerOnAprilTag(6);
-
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
-
-                break;
-        }
-
-        toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                        .strafeTo(new Vector2d(45, -65))
-                        .lineTo(new Vector2d(60, -65))
-                        .build();
-
-        mecanumDriveBase.followTrajectorySequence(toPark);
-
-        sleep(20000);
     }
 
-    /**
-     * Extends the elevator to the provided position at the provided power
-     * @param targetPos The position to move the elevator to
-     * @param power The power to move to the target position at
-     */
-    private void extendElevator(int targetPos, double power) {
-        telemetry.addLine("Got to Extend elevator");
-        telemetry.update();
-        elevatorMotor.setTargetPosition(targetPos);
-        elevatorMotor.setMode(RUN_TO_POSITION);
-        elevatorMotor.setPower(power);
-    }
+    void initRoadRunner() {
+        mecanumDriveBase = new MecanumDriveBase(hardwareMap);
 
-    /**
-     * Rotates the worm to the provided position at the provided power
-     * @param pos The position to move the worm to
-     * @param power The power to move to the target position at
-     */
-    public void rotateWorm(int pos, double power) {
-        wormMotor.setTargetPosition(pos);
-        wormMotor.setMode(RUN_TO_POSITION);
-        wormMotor.setPower(power);
+        mecanumDriveBase.init();
+
+        Pose2d startPose = new Pose2d(11, -63, Math.toRadians(270));
+
+        mecanumDriveBase.setPoseEstimate(startPose);
+
+        toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+                .lineToConstantHeading(new Vector2d(12, -36))
+                .lineToLinearHeading(new Pose2d(-4, -32, Math.toRadians(-180)))
+                .build();
+
+        toSpikeCenter = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+                .lineToLinearHeading(new Pose2d(11, -20, Math.toRadians(0)))
+                .build();
+
+        toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
+                .lineToLinearHeading(new Pose2d(25, -20, Math.toRadians(0)))
+                .build();
+
+        toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
+                .strafeTo(new Vector2d(-4, -38))
+                .lineToConstantHeading(new Vector2d(38, -30))
+                .turn(Math.toRadians(180))
+                .build();
+
+        toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
+                .strafeTo(new Vector2d(11, -12))
+                .lineTo(new Vector2d(38, -12))
+                .strafeTo(new Vector2d(38, -39))
+                .build();
+
+        toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
+                .strafeTo(new Vector2d(25, -12))
+                .lineTo(new Vector2d(38, -12))
+                .strafeTo(new Vector2d(38, -42))
+                .build();
+
+        toPixelStack = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
+                .strafeTo(new Vector2d(38, -60))
+                .lineToConstantHeading(new Vector2d(-36, -60))
+                .lineToConstantHeading(new Vector2d(-60, -36))
+                .build();
+
+        toBackdropAgain = mecanumDriveBase.trajectorySequenceBuilder(toPixelStack.end())
+                .lineToConstantHeading(new Vector2d(-36, -60))
+                .lineToConstantHeading(new Vector2d(38, -60))
+                .strafeTo(new Vector2d(38, -42))
+                .build();
     }
 
     /**
@@ -367,62 +452,66 @@ public class AutoRedAudience extends LinearOpMode {
 
             List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
 
-            if (count > maxAprilTagDetections) {
-                break;
-            }
+            telemetry.addData("Number of tags detected", currentDetections.size());
+            telemetry.addData("Detection Attempts", count);
+
+            if (count > maxAprilTagDetections) break;
 
             for (AprilTagDetection detection : currentDetections) {
                 if (isStopRequested() || !opModeIsActive()) return false;
 
-                if (detection.metadata == null) continue;
+                telemetry.addData("Processing Detection", detection.id);
+
+                if (detection.metadata == null){
+                    count++;
+                    continue;
+                }
 
                 if (detection.id == desiredTagId) { // If the tag is the one we want, stop looking
-
                     desiredTag = detection;
+
+                    telemetry.addLine("Detected Desired Tag");
+                    telemetry.update();
 
                     targetDetected = true;
 
-                    break;
+                    return true;
                 }
             }
 
             count ++;
+
+            telemetry.update();
         }
 
         return targetDetected;
     }
 
-    /**
-     * Opens the delivery tray door to the positions provided in the argument
-     * @param leftPos The position to move the left door to
-     * @param rightPos The position to move the right door to
-     */
-    public void openDeliveryTrayDoor(double leftPos, double rightPos) {
-        leftDoor.setPosition(leftPos);
-        rightDoor.setPosition(rightPos);
-    }
-
-    /**
-     * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
-     */
     @SuppressLint("DefaultLocale")
-    public void centerOnAprilTag(int desiredTagId) {
+    void centerOnAprilTag(int desiredTagId) {
+
+        telemetry.addData("Entered Centering On April Tag", desiredTagId);
+        telemetry.update();
+
         boolean isAtTarget = false;
 
         long start = System.currentTimeMillis();
 
         mecanumDriveBase.updatePoseEstimate();
 
+        if (isWithinTolerance()) return;
+
+        telemetry.addLine("Got Past tolerance check.");
+        telemetry.update();
+
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;
 
-            // Quit loop if it takes more than 4 seconds to center
-            if (System.currentTimeMillis() - start > 4000) {
+            // Quit loop if it takes more than 5 seconds to center
+            if (System.currentTimeMillis() - start > 5000) {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
                 break;
             }
-
-            if (isWithinTolerance()) return;
 
             if (detectAprilTags(desiredTagId)) {
                 prevRangeErr = rangeErr;
@@ -457,14 +546,14 @@ public class AutoRedAudience extends LinearOpMode {
             } else {
                 MecanumDriveBase.driveManualFF(0.0, 0.0, 0.0, 0.0);
 
-                if (isWithinTolerance()) isAtTarget = true;
+                if (isWithinTolerance()) break;
             }
         }
 
         mecanumDriveBase.updatePoseEstimate();
     }
 
-    public boolean isWithinTolerance() {
+    private boolean isWithinTolerance() {
         return (Math.abs(rangeErr)      < RANGE_ERROR_TOLERANCE
                 && Math.abs(yawErr)     < YAW_ERROR_TOLERANCE
                 && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);

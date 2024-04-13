@@ -115,7 +115,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .setCameraResolution(resolution)
                 .setAutoStopLiveView(true)
                 .build();
