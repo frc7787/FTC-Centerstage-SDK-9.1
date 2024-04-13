@@ -25,7 +25,7 @@ public class TeleOpMain extends OpMode {
         ENDGAME
     }
 
-    LED leftLED, rightLED;
+    LED leftLEDRedChannel, rightLEDRedChannel, leftLEDGreenChannel, rightLEDGreenChannel;
     MecanumDriveBase driveBase;
 
     boolean outtakeTrayWasFull, outtakeTrayIsFull;
@@ -50,11 +50,14 @@ public class TeleOpMain extends OpMode {
         Auxiliaries.retractPixelFixerLeft();
         Auxiliaries.retractFixerRight();
 
-        leftLED  = hardwareMap.get(LED.class, "LeftLED");
-        rightLED = hardwareMap.get(LED.class, "RightLED");
+        leftLEDRedChannel    = hardwareMap.get(LED.class, "LeftLEDRedChannel");
+        leftLEDGreenChannel  = hardwareMap.get(LED.class, "LeftLEDGreenChannel");
+        rightLEDRedChannel   = hardwareMap.get(LED.class, "RightLEDRedChannel");
+        rightLEDGreenChannel = hardwareMap.get(LED.class, "RightLEDGreenChannel");
 
-        leftLED.enable(false);
-        rightLED.enable(false);
+
+        leftLEDRedChannel.enable(false);
+        rightLEDRedChannel.enable(false);
 
         gamePeriod = NORMAL;
     }
@@ -115,6 +118,14 @@ public class TeleOpMain extends OpMode {
 
                break;
            case ENDGAME:
+               gamepad1.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
+               gamepad2.setLedColor(255, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
+
+               leftLEDGreenChannel.enable(false);
+               rightLEDGreenChannel.enable(false);
+
+               leftLEDRedChannel.enable(true);
+               rightLEDRedChannel.enable(true);
                
                if (gamepad2.options) {
                    gamePeriod = NORMAL;
@@ -142,25 +153,23 @@ public class TeleOpMain extends OpMode {
 
     void ledController() {
         if (Auxiliaries.frontBeamBreakIsBroken()) {
-            leftLED.enable(true);
+            leftLEDRedChannel.enable(true);
         } else {
-            leftLED.enable(false);
+            leftLEDRedChannel.enable(false);
         }
 
         if (Auxiliaries.backBeamBreakIsBroken()) {
-            rightLED.enable(true);
+            rightLEDRedChannel.enable(true);
         } else {
-            rightLED.enable(false);
+            rightLEDRedChannel.enable(false);
         }
     }
 
 
     void endgameLoop() {
-        if (gamepad2.left_bumper) Arm.setTargetPos(0, ENDGAME_POSITION);
-
         if (gamepad2.right_trigger > 0.8 || gamepad2.left_trigger > 0.8) Auxiliaries.releaseLauncher();
 
-        if (gamepad2.right_bumper) {
+        if (gamepad2.right_bumper || gamepad2.left_bumper) {
             Arm.setTargetPos(0, 2500);
             Auxiliaries.releaseHanger();
         }
@@ -207,11 +216,13 @@ public class TeleOpMain extends OpMode {
         } else if (gamepad2.cross) {
             Arm.setTargetPos(BOTTOM_EXT_POS, BOTTOM_ROT_POS);
         } else if (gamepad2.square) {
-            Arm.setTargetPos(LOW_EXT_POS - 10, LOW_ROT_POS - 10);
+            Arm.setTargetPos(LOW_EXT_POS, LOW_ROT_POS );
         } else if (gamepad2.circle) {
-            Arm.setTargetPos(MED_EXT_POS - 180, MED_ROT_POS - 250);
+            Arm.setTargetPos(MED_EXT_POS, MED_ROT_POS);
         } else if (gamepad2.triangle) {
             Arm.setTargetPos(HIGH_EXT_POS, HIGH_ROT_POS);
+        } else if (gamepad2.options) {
+            Arm.setTargetPos(TOP_EXT_POS, TOP_ROT_POS);
         }
     }
 }

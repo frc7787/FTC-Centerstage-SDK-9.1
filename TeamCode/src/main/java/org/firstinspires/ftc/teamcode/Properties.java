@@ -13,14 +13,17 @@ public class Properties {
     public static volatile int BOTTOM_EXT_POS = 1580;
     public static volatile int BOTTOM_ROT_POS = 1250;
 
-    public static volatile int LOW_EXT_POS = 1820;
-    public static volatile int LOW_ROT_POS = 1470;
+    public static volatile int LOW_EXT_POS = 1782;
+    public static volatile int LOW_ROT_POS = 1432;
 
-    public static volatile int MED_EXT_POS = 2401;
-    public static volatile int MED_ROT_POS = 1814;
+    public static volatile int MED_EXT_POS = 2107;
+    public static volatile int MED_ROT_POS = 1713;
 
-    public static volatile int HIGH_EXT_POS = 2894;
-    public static volatile int HIGH_ROT_POS = 1920;
+    public static volatile int HIGH_EXT_POS = 2415;
+    public static volatile int HIGH_ROT_POS = 1822;
+
+    public static volatile int TOP_EXT_POS = 2667;
+    public static volatile int TOP_ROT_POS = 1909;
 
     public static volatile int ENDGAME_POSITION = 2133;
 

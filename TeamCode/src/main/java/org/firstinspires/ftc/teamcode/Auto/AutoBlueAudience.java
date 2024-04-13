@@ -8,8 +8,6 @@ import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
 import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
 import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
 import static org.firstinspires.ftc.teamcode.Properties.GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
@@ -22,13 +20,11 @@ import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
 import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
-import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
@@ -50,9 +46,7 @@ import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
-import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -93,6 +87,7 @@ public class AutoBlueAudience extends LinearOpMode {
         ROTATING_TO_PLACE_YELLOW_PIXEL,
         EXTENDING_TO_PLACE_YELLOW_PIXEL,
         PLACING_YELLOW_PIXEL,
+        CLEARING_PIXELS,
         RETRACTING_ELEVATOR,
         RETRACTING_WORM,
         PLACED
@@ -152,26 +147,26 @@ public class AutoBlueAudience extends LinearOpMode {
                 .strafeTo(new Vector2d(-20, 38))
                 .lineToConstantHeading(new Vector2d(-36, 42))
                 .strafeTo(new Vector2d(-36, 12))
-                .lineToConstantHeading(new Vector2d(40, 12))
-                .strafeTo(new Vector2d(40, 44))
+                .lineToConstantHeading(new Vector2d(41.5, 13))
+                .strafeTo(new Vector2d(41.5, 45.3))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-35, 12))
-                .lineToConstantHeading(new Vector2d(40, 12))
-                .strafeTo(new Vector2d(40, 29))
+                .lineToConstantHeading(new Vector2d(43, 12))
+                .strafeTo(new Vector2d(41.5, 29))
                 .turn(Math.toRadians(180))
                 .build();
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
-                .strafeTo(new Vector2d(-49, 12))
-                .lineToConstantHeading(new Vector2d(38, 12))
-                .strafeTo(new Vector2d(40, 24))
+                .strafeTo(new Vector2d(-49, 11.5))
+                .lineToConstantHeading(new Vector2d(43, 11.5))
+                .strafeTo(new Vector2d(41.5, 23))
                 .turn(Math.toRadians(180))
                 .build();
 
         toPixelStackCenter = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(38, 12))
+                .strafeTo(new Vector2d(41, 12))
                 .lineToConstantHeading(new Vector2d(-54, 12))
                 .build();
 
@@ -259,7 +254,11 @@ public class AutoBlueAudience extends LinearOpMode {
 
                 centerOnAprilTag(1);
 
-                placePixelOnBackdrop();
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION + 30,
+                        YELLOW_PIXEL_ELEVATOR_POSITION + 120,
+                        1000
+                );
                 break;
             case CENTER:
             case NONE:
@@ -269,7 +268,11 @@ public class AutoBlueAudience extends LinearOpMode {
 
                 centerOnAprilTag(2);
 
-                placePixelOnBackdrop();
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION + 30,
+                        YELLOW_PIXEL_ELEVATOR_POSITION + 120,
+                        1000
+                );
                 break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -278,14 +281,38 @@ public class AutoBlueAudience extends LinearOpMode {
 
                 centerOnAprilTag(3);
 
-                placePixelOnBackdrop();
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION + 30,
+                        YELLOW_PIXEL_ELEVATOR_POSITION + 120,
+                        1000
+                        );
                 break;
         }
 
-        toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
-                .strafeTo(new Vector2d(45, 14))
-                .lineTo(new Vector2d(60, 14))
-                .build();
+        switch (location) {
+            case LEFT:
+                mecanumDriveBase.updatePoseEstimate();
+
+                toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropLeft.end())
+                        .strafeTo(new Vector2d(45, 10.9))
+                        .lineTo(new Vector2d(60, 10.9))
+                        .build();
+            case CENTER:
+            case NONE:
+                mecanumDriveBase.updatePoseEstimate();
+
+                toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
+                        .strafeTo(new Vector2d(45, 10.9))
+                        .lineTo(new Vector2d(60, 10.9))
+                        .build();
+            case RIGHT:
+                mecanumDriveBase.updatePoseEstimate();
+
+                toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropRight.end())
+                        .strafeTo(new Vector2d(45, 10.9))
+                        .lineTo(new Vector2d(60, 10.9))
+                        .build();
+        }
 
         mecanumDriveBase.followTrajectorySequence(toPark);
 
@@ -467,26 +494,27 @@ public class AutoBlueAudience extends LinearOpMode {
                 && Math.abs(bearingErr) < BEARING_ERROR_TOLERANCE);
     }
 
-    private void placePixelOnBackdrop() {
+    private void placePixelOnBackdrop(int wormPos, int elevatorPos, int outtakeSleep) {
+
         while (true) {
             if (isStopRequested() || !opModeIsActive()) return;
 
             switch (placingState) {
                 case START:
-                    rotateWorm(YELLOW_PIXEL_WORM_POSITION, 1.0);
+                    rotateWorm(wormPos, 1.0);
 
                     placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
                 case ROTATING_TO_PLACE_YELLOW_PIXEL:
-                    if (wormMotor.getCurrentPosition() >= 750) {
+                    if (wormMotor.getCurrentPosition() >= 710) {
                         placingState = PlacingState.EXTENDING_TO_PLACE_YELLOW_PIXEL;
                     }
 
                     break;
                 case EXTENDING_TO_PLACE_YELLOW_PIXEL:
-                    extendElevator(YELLOW_PIXEL_ELEVATOR_POSITION, 1.0);
+                    extendElevator(elevatorPos, 0.7);
 
-                    if (elevatorMotor.getCurrentPosition() >= YELLOW_PIXEL_ELEVATOR_POSITION - 5) {
+                    if (elevatorMotor.getCurrentPosition() >= elevatorPos - 5) {
                         placingState = PlacingState.PLACING_YELLOW_PIXEL;
                     }
 
@@ -494,9 +522,16 @@ public class AutoBlueAudience extends LinearOpMode {
                 case PLACING_YELLOW_PIXEL:
                     openDeliveryTrayDoor(0.1, 0.1);
 
-                    sleep(1000);
+                    sleep(outtakeSleep);
 
                     openDeliveryTrayDoor(0.0, 0.0);
+
+                    placingState = PlacingState.CLEARING_PIXELS;
+                    break;
+                case CLEARING_PIXELS:
+                    rotateWorm(wormPos + 200, 0.8);
+
+                    sleep(600);
 
                     placingState = PlacingState.RETRACTING_ELEVATOR;
                     break;
@@ -510,9 +545,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 case RETRACTING_WORM:
                     rotateWorm(0, 0.8);
 
-                    if (wormMotor.getCurrentPosition() < 30) {
-                        placingState = PlacingState.PLACED;
-                    }
+                    placingState = PlacingState.PLACED;
                     break;
                 case PLACED:
                     break;
