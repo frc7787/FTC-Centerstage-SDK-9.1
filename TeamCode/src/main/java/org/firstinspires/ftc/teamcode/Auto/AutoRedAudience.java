@@ -422,8 +422,6 @@ public class AutoRedAudience extends LinearOpMode {
                 break;
             }
 
-            if (isWithinTolerance()) return;
-
             if (detectAprilTags(desiredTagId)) {
                 prevRangeErr = rangeErr;
                 rangeErr     = (desiredTag.ftcPose.range - DESIRED_DISTANCE_FROM_APRIL_TAG_IN);
