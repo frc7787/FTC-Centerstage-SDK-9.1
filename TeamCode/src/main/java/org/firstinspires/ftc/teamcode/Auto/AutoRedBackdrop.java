@@ -453,8 +453,6 @@ public class AutoRedBackdrop extends LinearOpMode {
 
         mecanumDriveBase.updatePoseEstimate();
 
-        if (isWithinTolerance()) return;
-
         telemetry.addLine("Got Past tolerance check.");
         telemetry.update();
 

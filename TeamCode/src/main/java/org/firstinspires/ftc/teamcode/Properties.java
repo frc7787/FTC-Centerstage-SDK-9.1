@@ -97,7 +97,7 @@ public class Properties {
     public static volatile double BEARING_ERROR_TOLERANCE = 0.5;
     public static volatile double RANGE_ERROR_TOLERANCE   = 0.5;
 
-    public static volatile double DESIRED_DISTANCE_FROM_APRIL_TAG_IN = 15.5;
+    public static volatile double DESIRED_DISTANCE_FROM_APRIL_TAG_IN = 15;
 
     public static volatile double MAX_DRIVE_SPEED  = 0.5;
     public static volatile double MAX_TURN_SPEED   = 0.5;
