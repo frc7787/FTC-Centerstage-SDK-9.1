@@ -20,9 +20,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
  * with the DeliveryTray subsystem.
  */
 public class Intake {
-    static DcMotorImplEx intakeMotor;
+    private static DcMotorImplEx intakeMotor;
 
-    static boolean isActive;
+    private static boolean isActive;
 
     /**
      * Initializes the motor subsystem.
@@ -36,10 +36,17 @@ public class Intake {
         isActive = false;
     }
 
+    /**
+     * Function to run every iteration of the main TeleOp loop
+     * This function updates whether or not the intake is currently active.
+     */
     public static void update() {
         isActive = intakeMotor.getPower() != 0;
     }
 
+    /**
+     * @return True if the intake is currently running, false if it is not
+     */
     public static boolean isActive() {
         return isActive;
     }
@@ -63,21 +70,6 @@ public class Intake {
     }
 
     /**
-     * Spins the intake in the intake direction (FORWARD) for the specified amount of time
-     *
-     * @param durationMills The time to spin the intake for in milliseconds
-     * @param intakePower The power to spin the intake at
-     */
-    public static void intakeForDuration(long durationMills, double intakePower) {
-        long start = System.currentTimeMillis();
-
-        while (start + durationMills < System.currentTimeMillis()) {
-            intake(intakePower);
-        }
-    }
-
-
-    /**
      * Spins the intake in the outtake direction at the speed defined by DEFAULT_OUTTAKE_POWER
      */
     public static void outtake() {
@@ -98,14 +90,17 @@ public class Intake {
     public static void debug(@NonNull Telemetry telemetry, @NonNull CurrentUnit currentUnit) {
         telemetry.addLine("Intake Debug");
 
-        telemetry.addData("Intake direction", intakeMotor.getDirection());
-        telemetry.addData("Intake power", intakeMotor.getPower());
-
-        switch (currentUnit) {
-            case AMPS:
-                telemetry.addData("Intake current Amps", intakeMotor.getCurrent(AMPS));
-            case MILLIAMPS:
-                telemetry.addData("Intake current Milli-amps", intakeMotor.getCurrent(MILLIAMPS));
-        }
+        telemetry.addData(
+                "Intake direction",
+                intakeMotor.getDirection());
+        telemetry.addData(
+                "Intake power",
+                intakeMotor.getPower());
+        telemetry.addData(
+                "Intake Current",
+                intakeMotor.getCurrent(currentUnit));
+        telemetry.addData(
+                "Intake Zero Power Behaviour",
+                intakeMotor.getZeroPowerBehavior());
     }
 }
