@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Auto.Utility;
 
 import android.util.Size;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "Utility - April Tag Tuning", group = "Utility")
+@Disabled
 public class AprilTagTuning extends OpMode {
     private AprilTagProcessor aprilTagProcessor;
 

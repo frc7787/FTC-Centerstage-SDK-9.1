@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Test - Center On April Tag", group = "Testing")
+@Disabled
 public class CenterOnAprilTagTest extends LinearOpMode {
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
