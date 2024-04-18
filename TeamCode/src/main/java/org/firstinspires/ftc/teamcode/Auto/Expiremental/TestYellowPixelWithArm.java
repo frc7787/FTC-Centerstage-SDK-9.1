@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.Auto.Expiremental;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 
 @Autonomous(name = "Test - Place Yellow Pixel With Arm")
+@Disabled
 public class TestYellowPixelWithArm extends LinearOpMode {
 
     enum PlacingState {

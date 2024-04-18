@@ -20,8 +20,8 @@ import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
 import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION_AUDIENCE;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
@@ -148,7 +148,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(-36, 42))
                 .strafeTo(new Vector2d(-36, 12))
                 .lineToConstantHeading(new Vector2d(41.5, 13))
-                .strafeTo(new Vector2d(41, 44.5))
+                .strafeTo(new Vector2d(41, 45))
                 .build();
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
@@ -255,8 +255,8 @@ public class AutoBlueAudience extends LinearOpMode {
                 centerOnAprilTag(1);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
                         1000
                 );
                 break;
@@ -269,8 +269,8 @@ public class AutoBlueAudience extends LinearOpMode {
                 centerOnAprilTag(2);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
                         1000
                 );
                 break;
@@ -282,18 +282,18 @@ public class AutoBlueAudience extends LinearOpMode {
                 centerOnAprilTag(3);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
                         1000
-                        );
+                );
                 break;
         }
 
         switch (location) {
             case LEFT:
                 toPark = mecanumDriveBase.trajectorySequenceBuilder(toBackdropLeft.end())
-                        .strafeTo(new Vector2d(45, 61))
-                        .lineTo(new Vector2d(60, 61))
+                        .strafeTo(new Vector2d(45, 64))
+                        .lineTo(new Vector2d(60, 64))
                         .build();
                 break;
             case CENTER:
@@ -310,6 +310,8 @@ public class AutoBlueAudience extends LinearOpMode {
                         .build();
                 break;
         }
+
+        sleep(500);
 
         mecanumDriveBase.followTrajectorySequence(toPark);
 
@@ -433,8 +435,6 @@ public class AutoBlueAudience extends LinearOpMode {
         long start = System.currentTimeMillis();
 
         mecanumDriveBase.updatePoseEstimate();
-
-        if (isWithinTolerance()) return;
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;

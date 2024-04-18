@@ -7,8 +7,6 @@ import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
 import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
 import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
 import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
 import static org.firstinspires.ftc.teamcode.Properties.GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
@@ -22,9 +20,8 @@ import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
 import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP;
+import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION_BACKDROP;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
@@ -51,7 +48,6 @@ import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -145,7 +141,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
         toSpikeRight = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(12, 39, Math.toRadians(22)))
-                .lineToConstantHeading(new Vector2d(-2, 36))
+                .lineToConstantHeading(new Vector2d(-1.5, 36))
                 .build();
 
         toBackdropLeft = mecanumDriveBase.trajectorySequenceBuilder(toSpikeLeft.end())
@@ -253,8 +249,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 centerOnAprilTag(1);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
                 break;
             case CENTER:
@@ -266,8 +262,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 centerOnAprilTag(2);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
                 break;
             case RIGHT:
@@ -278,8 +274,8 @@ public class AutoBlueBackdrop extends LinearOpMode {
                 centerOnAprilTag(3);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
                 break;
         }

@@ -1,28 +1,8 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
-import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
-import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
-import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
-import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
-import static org.firstinspires.ftc.teamcode.Properties.GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_STRAFE_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_TURN_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.RANGE_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.STRAFE_D;
-import static org.firstinspires.ftc.teamcode.Properties.STRAFE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
-import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.*;
+
+import static org.firstinspires.ftc.teamcode.Properties.*;
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
@@ -187,10 +167,9 @@ public class AutoRedBackdrop extends LinearOpMode {
                 centerOnAprilTag(4);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 80,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
-
                 break;
             case CENTER:
             case NONE:
@@ -201,10 +180,9 @@ public class AutoRedBackdrop extends LinearOpMode {
                 centerOnAprilTag(5);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 80,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
-
                break;
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
@@ -214,10 +192,9 @@ public class AutoRedBackdrop extends LinearOpMode {
                 centerOnAprilTag(6);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 80,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
-
                 break;
        }
 
@@ -444,17 +421,11 @@ public class AutoRedBackdrop extends LinearOpMode {
     @SuppressLint("DefaultLocale")
     void centerOnAprilTag(int desiredTagId) {
 
-        telemetry.addData("Entered Centering On April Tag", desiredTagId);
-        telemetry.update();
-
         boolean isAtTarget = false;
 
         long start = System.currentTimeMillis();
 
         mecanumDriveBase.updatePoseEstimate();
-
-        telemetry.addLine("Got Past tolerance check.");
-        telemetry.update();
 
         while (!isAtTarget) { // Wait for the robot to center on the April Tag
             if (isStopRequested() || !opModeIsActive()) return;

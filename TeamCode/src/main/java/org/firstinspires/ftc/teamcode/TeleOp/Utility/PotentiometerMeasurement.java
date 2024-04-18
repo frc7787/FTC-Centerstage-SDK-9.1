@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode.TeleOp.Utility;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 
 @TeleOp(name = "Utility - Potentiometer Measurement", group = "Utility")
+@Disabled
 public class PotentiometerMeasurement extends OpMode {
     private AnalogInput analogSensor;
 

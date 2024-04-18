@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeleOp.Test;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -9,6 +10,7 @@ import org.firstinspires.ftc.teamcode.Subsytems.*;
 import static org.firstinspires.ftc.teamcode.Properties.*;
 
 @TeleOp(name = "Test - Drone Launcher", group = "Testing")
+@Disabled
 public class DroneLaunchTest extends OpMode {
 
     @Override public void init() {

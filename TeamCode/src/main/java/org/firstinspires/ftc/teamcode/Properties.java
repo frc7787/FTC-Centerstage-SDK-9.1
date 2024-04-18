@@ -35,14 +35,15 @@ public class Properties {
     // AUTO
 
     public static volatile int AUTO_INITIAL_WORM_POSITION          = 1400;
-    public static volatile int YELLOW_PIXEL_WORM_POSITION          = 1100;
-    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION      = 2200;
 
-    public static volatile int YELLOW_PIXEL_CLEARING_WORM_POSITION = 1000;
+    public static volatile int YELLOW_PIXEL_WORM_POSITION_BACKDROP     = 1015;
+    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP = 2115;
 
-    public static volatile double ELEVATOR_EXTENSION_SPEED_AUTO = 0.75;
-    public static volatile double ELEVATOR_RETRACTION_SPEED_AUTO = 1.0;
+    public static volatile int YELLOW_PIXEL_WORM_POSITION_AUDIENCE     = 1100;
+    public static volatile int YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE = 2200;
 
+    public static volatile int WHITE_PIXEL_WORM_POSITION      = 1250;
+    public static volatile int WHITE_PIXEL_ELEVATOR_POSITION  = 2500;
 
     // ----------- DRIVE PROPERTIES ---------- //
 
@@ -86,11 +87,11 @@ public class Properties {
     // ----------- AUTO PID / TOLERANCE PROPERTIES ---------- //
 
     public static volatile double DRIVE_GAIN  = 0.027;
-    public static volatile double STRAFE_GAIN = 0.07;
+    public static volatile double STRAFE_GAIN = 0.04;
     public static volatile double TURN_GAIN   = 0.03;
 
     public static volatile double DRIVE_D  = 0.0025;
-    public static volatile double STRAFE_D = 0.00002;
+    public static volatile double STRAFE_D = 0.001;
     public static volatile double TURN_D   = 0.0013;
 
     public static volatile double YAW_ERROR_TOLERANCE     = 0.5;

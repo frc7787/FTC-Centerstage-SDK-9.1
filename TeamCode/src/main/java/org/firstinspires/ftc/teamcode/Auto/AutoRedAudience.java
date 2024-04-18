@@ -1,30 +1,8 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
-import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
-import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
-import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
-import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_EXTENSION_SPEED_AUTO;
-import static org.firstinspires.ftc.teamcode.Properties.ELEVATOR_RETRACTION_SPEED_AUTO;
-import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
-import static org.firstinspires.ftc.teamcode.Properties.GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_STRAFE_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_TURN_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.RANGE_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.STRAFE_D;
-import static org.firstinspires.ftc.teamcode.Properties.STRAFE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
-import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_CLEARING_WORM_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.*;
+import static org.firstinspires.ftc.teamcode.Properties.*;
+
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
@@ -49,7 +27,6 @@ import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -166,7 +143,7 @@ public class AutoRedAudience extends LinearOpMode {
                 .lineToConstantHeading(new Vector2d(-40, -36))
                 .strafeTo(new Vector2d(-40, -12))
                 .lineTo(new Vector2d(41, -14))
-                .strafeTo(new Vector2d(42, -40))
+                .strafeTo(new Vector2d(42, -40.5))
                 .turn(Math.toRadians(180))
                 .build();
 
@@ -252,7 +229,11 @@ public class AutoRedAudience extends LinearOpMode {
 
                 centerOnAprilTag(4);
 
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
+                        1000
+                );
                 break;
             case CENTER:
             case NONE: // This case should copy center
@@ -262,7 +243,11 @@ public class AutoRedAudience extends LinearOpMode {
 
                 centerOnAprilTag(5);
 
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
+                        1000
+                );
                 break;
 
             case RIGHT:
@@ -272,7 +257,10 @@ public class AutoRedAudience extends LinearOpMode {
 
                 centerOnAprilTag(6);
 
-                placePixelOnBackdrop(YELLOW_PIXEL_WORM_POSITION, YELLOW_PIXEL_ELEVATOR_POSITION, 1000);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
+                        1000);
 
                 break;
         }

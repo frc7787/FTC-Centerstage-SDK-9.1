@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeleOp.Test;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.LED;
@@ -8,6 +9,7 @@ import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
 
 @TeleOp(name = "Beam Break Test", group = "Test")
+@Disabled
 public class BeamBreakTest extends OpMode {
 
     LED LeftLEDRedChannel, LeftLEDGreenChannel, RightLEDRedChannel, RightLEDGreenChannel;

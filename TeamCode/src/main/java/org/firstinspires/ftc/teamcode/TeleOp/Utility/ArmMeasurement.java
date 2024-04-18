@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeleOp.Utility;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -7,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "Utility - Arm Measurement", group = "Utility")
+@Disabled
 public class ArmMeasurement extends OpMode {
     private DcMotorImplEx wormMotor, elevatorMotor;
 

@@ -1,28 +1,9 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
-import static org.firstinspires.ftc.teamcode.Properties.AUTO_INITIAL_WORM_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.BEARING_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.CAMERA_RESOLUTION;
-import static org.firstinspires.ftc.teamcode.Properties.DESIRED_DISTANCE_FROM_APRIL_TAG_IN;
-import static org.firstinspires.ftc.teamcode.Properties.DRIVE_D;
-import static org.firstinspires.ftc.teamcode.Properties.DRIVE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.EXPOSURE_MS;
-import static org.firstinspires.ftc.teamcode.Properties.GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_DRIVE_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_STRAFE_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.MAX_TURN_SPEED;
-import static org.firstinspires.ftc.teamcode.Properties.RANGE_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.STRAFE_D;
-import static org.firstinspires.ftc.teamcode.Properties.STRAFE_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
-import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
-import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION;
-import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.*;
+import static org.firstinspires.ftc.teamcode.Properties.*;
+
+
 import static org.firstinspires.ftc.vision.VisionPortal.CameraState.STREAMING;
 
 import android.annotation.SuppressLint;
@@ -30,7 +11,6 @@ import android.annotation.SuppressLint;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
@@ -60,8 +40,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous(name = "Red - Backdrop White", group = "Red")
-@Disabled
+@Autonomous(name = "Red - Backdrop - White", group = "Red")
 public class AutoRedBackdropWhite extends LinearOpMode {
     PropDetector propDetector;
     PropLocation location;
@@ -97,6 +76,7 @@ public class AutoRedBackdropWhite extends LinearOpMode {
             toBackdropCenter,
             toBackdropRight,
             toPixelStack,
+            getPixels,
             toBackdropAgain,
             toPark;
 
@@ -189,14 +169,17 @@ public class AutoRedBackdropWhite extends LinearOpMode {
                 centerOnAprilTag(4);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 75,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
 
                 mecanumDriveBase.followTrajectorySequence(toPixelStack);
                 openDeliveryTrayDoor(0.3, 0.3);
                 Intake.intake();
                 elevatorMotor.setPower(-0.2);
+                mecanumDriveBase.followTrajectorySequence(getPixels);
+
+
                 sleep(1000);
                 placingState = PlacingState.START;
 
@@ -205,8 +188,8 @@ public class AutoRedBackdropWhite extends LinearOpMode {
                 elevatorMotor.setPower(-0.0);
                 openDeliveryTrayDoor(0.0, 0.0);
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 150,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
+                        WHITE_PIXEL_WORM_POSITION,
+                        WHITE_PIXEL_ELEVATOR_POSITION,
                         1500);
                 break;
             case CENTER:
@@ -218,13 +201,15 @@ public class AutoRedBackdropWhite extends LinearOpMode {
                 centerOnAprilTag(5);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 75,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
                         1000);
                 mecanumDriveBase.followTrajectorySequence(toPixelStack);
                 openDeliveryTrayDoor(0.3, 0.3);
                 Intake.intake();
+
                 elevatorMotor.setPower(-0.2);
+                mecanumDriveBase.followTrajectorySequence(getPixels);
                 sleep(1000);
                 placingState = PlacingState.START;
 
@@ -233,8 +218,8 @@ public class AutoRedBackdropWhite extends LinearOpMode {
                 elevatorMotor.setPower(-0.0);
                 openDeliveryTrayDoor(0.0, 0.0);
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 150,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
+                        WHITE_PIXEL_WORM_POSITION,
+                        WHITE_PIXEL_ELEVATOR_POSITION,
                         1500);
                break;
             case RIGHT:
@@ -245,14 +230,15 @@ public class AutoRedBackdropWhite extends LinearOpMode {
                 centerOnAprilTag(6);
 
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION - 75,
-                        YELLOW_PIXEL_ELEVATOR_POSITION,
+                        YELLOW_PIXEL_WORM_POSITION_AUDIENCE,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_AUDIENCE,
                         1000);
 
                 mecanumDriveBase.followTrajectorySequence(toPixelStack);
                 openDeliveryTrayDoor(0.3, 0.3);
                 Intake.intake();
                 elevatorMotor.setPower(-0.2);
+                mecanumDriveBase.followTrajectorySequence(getPixels);
                 sleep(1000);
 
                 placingState = PlacingState.START;
@@ -263,8 +249,8 @@ public class AutoRedBackdropWhite extends LinearOpMode {
 
                 openDeliveryTrayDoor(0.0, 0.0);
                 placePixelOnBackdrop(
-                        YELLOW_PIXEL_WORM_POSITION + 150,
-                        YELLOW_PIXEL_ELEVATOR_POSITION + 300,
+                        WHITE_PIXEL_WORM_POSITION,
+                        WHITE_PIXEL_ELEVATOR_POSITION,
                         1500);
                 break;
        }
@@ -386,14 +372,16 @@ public class AutoRedBackdropWhite extends LinearOpMode {
                 .build();
 
         toPixelStack = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
-                .strafeTo(new Vector2d(38, -60))
-                .lineToConstantHeading(new Vector2d(-36, -60))
-                .lineToConstantHeading(new Vector2d(-60, -36))
+                .strafeTo(new Vector2d(38, -6))
+                .lineToConstantHeading(new Vector2d(-36, -62))
+                .build();
+        getPixels = mecanumDriveBase.trajectorySequenceBuilder(toPixelStack.end())
+                .lineToConstantHeading(new Vector2d(-62, -36))
                 .build();
 
-        toBackdropAgain = mecanumDriveBase.trajectorySequenceBuilder(toPixelStack.end())
-                .lineToConstantHeading(new Vector2d(-36, -60))
-                .lineToConstantHeading(new Vector2d(38, -60))
+        toBackdropAgain = mecanumDriveBase.trajectorySequenceBuilder(getPixels.end())
+                .lineToConstantHeading(new Vector2d(-36, -62))
+                .lineToConstantHeading(new Vector2d(38, -62))
                 .strafeTo(new Vector2d(38, -42))
                 .build();
     }
