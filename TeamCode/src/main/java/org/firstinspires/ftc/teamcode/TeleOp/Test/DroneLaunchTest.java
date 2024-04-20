@@ -10,8 +10,8 @@ import org.firstinspires.ftc.teamcode.Subsytems.*;
 import static org.firstinspires.ftc.teamcode.Properties.*;
 
 @TeleOp(name = "Test - Drone Launcher", group = "Testing")
-@Disabled
 public class DroneLaunchTest extends OpMode {
+    private int LAUNCH_POSITION = 2000;
 
     @Override public void init() {
         RobotPropertyParser.populateConstantsClass();
@@ -23,22 +23,34 @@ public class DroneLaunchTest extends OpMode {
         telemetry.update();
     }
 
-
-    @Override public void start() {
-        Arm.setTargetPos(0, ENDGAME_POSITION);
-        Arm.update(false);
-    }
-
     @Override public void loop() {
+        Arm.setTargetPos(0, LAUNCH_POSITION);
+
         telemetry.addLine("Press left trigger to release the launcher.");
         telemetry.addLine("Press right trigger to reset it.");
+        telemetry.addLine("Press dpad up and dpad down to adjust the launch angle");
 
         Arm.update(false);
 
-        if (gamepad2.left_trigger > 0.9) Auxiliaries.releaseLauncher();
+        if (gamepad1.left_trigger > 0.9 || gamepad2.left_trigger > 0.9) {
+            Auxiliaries.releaseLauncher();
+        }
 
-        if (gamepad2.right_trigger > 0.9) Auxiliaries.resetLauncher();
+        if (gamepad1.right_trigger > 0.9 || gamepad2.right_trigger > 0.9) {
+            Auxiliaries.resetLauncher();
+        }
 
+        if (gamepad1.dpad_up || gamepad2.dpad_up) {
+            LAUNCH_POSITION += 10;
+        }
+
+        if (gamepad1.dpad_down || gamepad2.dpad_down) {
+            LAUNCH_POSITION -= 10;
+        }
+
+        telemetry.addData("Launch Position", LAUNCH_POSITION);
+
+        Arm.update(false);
         telemetry.update();
     }
 }

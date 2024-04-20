@@ -19,6 +19,8 @@ import static org.firstinspires.ftc.teamcode.Properties.STRAFE_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_D;
 import static org.firstinspires.ftc.teamcode.Properties.TURN_GAIN;
 import static org.firstinspires.ftc.teamcode.Properties.WHITE_BALANCE;
+import static org.firstinspires.ftc.teamcode.Properties.WHITE_PIXEL_ELEVATOR_POSITION;
+import static org.firstinspires.ftc.teamcode.Properties.WHITE_PIXEL_WORM_POSITION;
 import static org.firstinspires.ftc.teamcode.Properties.YAW_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP;
 import static org.firstinspires.ftc.teamcode.Properties.YELLOW_PIXEL_WORM_POSITION_BACKDROP;
@@ -48,6 +50,7 @@ import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
+import org.firstinspires.ftc.teamcode.Subsytems.Intake;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -138,6 +141,8 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
 
         mecanumDriveBase.setPoseEstimate(startPose);
 
+        Intake.init(hardwareMap);
+
         toSpikeLeft = mecanumDriveBase.trajectorySequenceBuilder(startPose)
                 .lineToLinearHeading(new Pose2d(23, 34, Math.toRadians(0)))
                 .build();
@@ -168,42 +173,42 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
 
         toPixelStackLeft = mecanumDriveBase.trajectorySequenceBuilder(toBackdropLeft.end())
                 .strafeTo(new Vector2d(38, 62))
-                .lineToConstantHeading(new Vector2d(-36, 62))
+                .lineToConstantHeading(new Vector2d(-36, 64))
                 .build();
         getPixelsLeft = mecanumDriveBase.trajectorySequenceBuilder(toPixelStackLeft.end())
-                .lineToConstantHeading(new Vector2d(-62, 36))
+                .lineToConstantHeading(new Vector2d(-62, 40))
                 .build();
 
         toBackdropAgainLeft = mecanumDriveBase.trajectorySequenceBuilder(getPixelsLeft.end())
-                .lineToConstantHeading(new Vector2d(-36, 62))
-                .lineToConstantHeading(new Vector2d(38, 62))
-                .strafeTo(new Vector2d(38, 42))
+                .lineToConstantHeading(new Vector2d(-36, 64))
+                .lineToConstantHeading(new Vector2d(38, 64))
+                .strafeTo(new Vector2d(38, 47))
                 .build();
 
         toPixelStack = mecanumDriveBase.trajectorySequenceBuilder(toBackdropCenter.end())
-                .strafeTo(new Vector2d(38, 62))
-                .lineToConstantHeading(new Vector2d(-36, 62))
+                .strafeTo(new Vector2d(38, 64))
+                .lineToConstantHeading(new Vector2d(-36, 64))
                 .build();
         getPixels = mecanumDriveBase.trajectorySequenceBuilder(toPixelStack.end())
-                .lineToConstantHeading(new Vector2d(-62, 36))
+                .lineToConstantHeading(new Vector2d(-62, 40))
                 .build();
 
         toBackdropAgain = mecanumDriveBase.trajectorySequenceBuilder(getPixels.end())
-                .lineToConstantHeading(new Vector2d(-36, 62))
-                .lineToConstantHeading(new Vector2d(38, 62))
+                .lineToConstantHeading(new Vector2d(-36, 64))
+                .lineToConstantHeading(new Vector2d(38, 64))
                 .strafeTo(new Vector2d(38, 42))
                 .build();
 
         toPixelStackRight = mecanumDriveBase.trajectorySequenceBuilder(toBackdropRight.end())
-                .strafeTo(new Vector2d(38, 62))
-                .lineToConstantHeading(new Vector2d(-36, 62))
+                .strafeTo(new Vector2d(38, 64))
+                .lineToConstantHeading(new Vector2d(-36, 64))
                 .build();
         getPixelsRight = mecanumDriveBase.trajectorySequenceBuilder(toPixelStackRight.end())
-                .lineToConstantHeading(new Vector2d(-62, 36))
+                .lineToConstantHeading(new Vector2d(-62, 40))
                 .build();
 
         toBackdropAgainRight = mecanumDriveBase.trajectorySequenceBuilder(getPixelsRight.end())
-                .lineToConstantHeading(new Vector2d(-36, 62))
+                .lineToConstantHeading(new Vector2d(-36, 64))
                 .lineToConstantHeading(new Vector2d(38, 62))
                 .strafeTo(new Vector2d(38, 42))
                 .build();
@@ -291,6 +296,23 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
                         YELLOW_PIXEL_WORM_POSITION_BACKDROP,
                         YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
                         1000);
+                placingState = placingState.START;
+                mecanumDriveBase.followTrajectorySequence(toPixelStackLeft);
+                openDeliveryTrayDoor(0.25, 0.25);
+                Intake.intake();
+                elevatorMotor.setPower(-0.2);
+                mecanumDriveBase.followTrajectorySequence(getPixelsLeft);
+                sleep(1500);
+                Intake.stop();
+                sleep(2000);
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgainLeft);
+
+                elevatorMotor.setPower(-0.0);
+                openDeliveryTrayDoor(0.0, 0.0);
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
+                        1000);
                 break;
             case CENTER:
             case NONE:
@@ -300,6 +322,23 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
 
                 centerOnAprilTag(2);
 
+                placePixelOnBackdrop(
+                        YELLOW_PIXEL_WORM_POSITION_BACKDROP,
+                        YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
+                        1000);
+                placingState = placingState.START;
+                mecanumDriveBase.followTrajectorySequence(toPixelStack);
+                openDeliveryTrayDoor(0.25, 0.25);
+                Intake.intake();
+                elevatorMotor.setPower(-0.2);
+                mecanumDriveBase.followTrajectorySequence(getPixels);
+                sleep(1500);
+                Intake.stop();
+                sleep(2000);
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgain);
+
+                elevatorMotor.setPower(-0.0);
+                openDeliveryTrayDoor(0.0, 0.0);
                 placePixelOnBackdrop(
                         YELLOW_PIXEL_WORM_POSITION_BACKDROP,
                         YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
@@ -315,6 +354,21 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
                 placePixelOnBackdrop(
                         YELLOW_PIXEL_WORM_POSITION_BACKDROP,
                         YELLOW_PIXEL_ELEVATOR_POSITION_BACKDROP,
+                        1000);
+                placingState = placingState.START;
+                mecanumDriveBase.followTrajectorySequence(toPixelStackRight);
+                openDeliveryTrayDoor(0.25, 0.25);
+                Intake.intake();
+                elevatorMotor.setPower(-0.2);
+                mecanumDriveBase.followTrajectorySequence(getPixelsRight);
+                sleep(700);
+                mecanumDriveBase.followTrajectorySequence(toBackdropAgainRight);
+                Intake.stop();
+                elevatorMotor.setPower(-0.0);
+                openDeliveryTrayDoor(0.0, 0.0);
+                placePixelOnBackdrop(
+                        WHITE_PIXEL_WORM_POSITION,
+                        WHITE_PIXEL_ELEVATOR_POSITION,
                         1000);
                 break;
         }
@@ -513,7 +567,7 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
 
             switch (placingState) {
                 case START:
-                    rotateWorm(wormPos, 1.0);
+                    rotateWorm(wormPos + 25, 1.0);
 
                     placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
@@ -524,7 +578,7 @@ public class AutoBlueBackdropWhite extends LinearOpMode {
 
                     break;
                 case EXTENDING_TO_PLACE_YELLOW_PIXEL:
-                    extendElevator(elevatorPos, 1.0);
+                    extendElevator(elevatorPos + 45, 1.0);
 
                     if (elevatorMotor.getCurrentPosition() >= elevatorPos - 5) {
                         placingState = PlacingState.PLACING_YELLOW_PIXEL;

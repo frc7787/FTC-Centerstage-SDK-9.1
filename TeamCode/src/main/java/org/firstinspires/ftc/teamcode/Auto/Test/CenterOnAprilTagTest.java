@@ -280,7 +280,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
                     placingState = PlacingState.MOVING_TO_POS;
                     break;
                 case MOVING_TO_POS:
-                    if (Arm.armState() == NormalPeriodArmState.AT_POS) {
+                    if (Arm.state() == NormalPeriodArmState.AT_POS) {
                         placingState = PlacingState.PLACING;
                     }
                     break;

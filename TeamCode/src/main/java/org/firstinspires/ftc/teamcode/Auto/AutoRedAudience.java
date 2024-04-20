@@ -39,6 +39,10 @@ import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Red - Audience", group = "Red")
 public class AutoRedAudience extends LinearOpMode {
+    long initial_sleep      = 0;
+    long purple_pixel_sleep = 0;
+    long before_park_sleep  = 0;
+
     PropDetector propDetector;
     PropLocation location;
     OpenCvCamera camera;
@@ -216,15 +220,20 @@ public class AutoRedAudience extends LinearOpMode {
 
         rotateWorm(0, 1.0);
 
-        sleep(0);
+        sleep(initial_sleep);
 
         telemetry.addData("PROP LOCATION: ", location);
         telemetry.update();
+
+        sleep(0);
 
         switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
                 Auxiliaries.retractPixelPlacerServo();
+
+                sleep(purple_pixel_sleep);
+
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
 
                 centerOnAprilTag(4);
@@ -239,6 +248,9 @@ public class AutoRedAudience extends LinearOpMode {
             case NONE: // This case should copy center
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.retractPixelPlacerServo();
+
+                sleep(purple_pixel_sleep);
+
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
                 centerOnAprilTag(5);
@@ -253,6 +265,9 @@ public class AutoRedAudience extends LinearOpMode {
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
                 Auxiliaries.retractPixelPlacerServo();
+
+                sleep(purple_pixel_sleep);
+
                 mecanumDriveBase.followTrajectorySequence(toBackdropRight);
 
                 centerOnAprilTag(6);
@@ -264,6 +279,8 @@ public class AutoRedAudience extends LinearOpMode {
 
                 break;
         }
+
+        sleep(before_park_sleep);
 
         toPark = mecanumDriveBase.trajectorySequenceBuilder(mecanumDriveBase.getPoseEstimate())
                         .strafeTo(new Vector2d(45, -65))

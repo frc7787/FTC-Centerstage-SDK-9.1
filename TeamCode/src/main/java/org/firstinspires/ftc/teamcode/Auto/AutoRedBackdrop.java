@@ -156,8 +156,6 @@ public class AutoRedBackdrop extends LinearOpMode {
 
        rotateWorm(0, 1.0);
 
-       sleep(0);
-
        switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
@@ -173,6 +171,7 @@ public class AutoRedBackdrop extends LinearOpMode {
                 break;
             case CENTER:
             case NONE:
+
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.placePixelOnSpikeStrip();
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
@@ -489,7 +488,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
             switch (placingState) {
                 case START:
-                    rotateWorm(wormPos, 1.0);
+                    rotateWorm(wormPos + 30, 1.0);
 
                     placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
@@ -500,7 +499,7 @@ public class AutoRedBackdrop extends LinearOpMode {
 
                     break;
                 case EXTENDING_TO_PLACE_YELLOW_PIXEL:
-                    extendElevator(elevatorPos, 0.7);
+                    extendElevator(elevatorPos + 35, 0.7);
 
                     if (elevatorMotor.getCurrentPosition() >= elevatorPos - 5) {
                         placingState = PlacingState.PLACING_YELLOW_PIXEL;

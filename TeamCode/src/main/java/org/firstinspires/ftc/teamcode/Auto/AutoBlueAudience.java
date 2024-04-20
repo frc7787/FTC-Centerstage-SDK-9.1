@@ -60,6 +60,10 @@ import java.util.concurrent.TimeUnit;
 @Autonomous(name = "Blue - Audience", group = "Blue")
 @Config
 public class AutoBlueAudience extends LinearOpMode {
+    long initial_sleep                       = 0;
+    long after_purple_pixel_placement_sleep  = 10000;
+    long before_park_sleep                   = 20000;
+
     PropDetector propDetector;
     PropLocation location;
     OpenCvCamera camera;
@@ -153,15 +157,15 @@ public class AutoBlueAudience extends LinearOpMode {
 
         toBackdropCenter = mecanumDriveBase.trajectorySequenceBuilder(toSpikeCenter.end())
                 .strafeTo(new Vector2d(-35, 12))
-                .lineToConstantHeading(new Vector2d(43, 12))
-                .strafeTo(new Vector2d(40.5, 29))
+                .lineToConstantHeading(new Vector2d(43.5, 9))
+                .strafeTo(new Vector2d(41.5, 29))
                 .turn(Math.toRadians(180))
                 .build();
 
         toBackdropRight = mecanumDriveBase.trajectorySequenceBuilder(toSpikeRight.end())
                 .strafeTo(new Vector2d(-49, 11.5))
                 .lineToConstantHeading(new Vector2d(43, 11.5))
-                .strafeTo(new Vector2d(40.5, 23))
+                .strafeTo(new Vector2d(40.5, 22))
                 .turn(Math.toRadians(180))
                 .build();
 
@@ -244,12 +248,15 @@ public class AutoBlueAudience extends LinearOpMode {
 
         rotateWorm(0, 1.0);
 
-        sleep(0);
+        sleep(initial_sleep);
 
         switch (location) {
             case LEFT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeLeft);
                 Auxiliaries.retractPixelPlacerServo();
+
+                sleep(after_purple_pixel_placement_sleep);
+
                 mecanumDriveBase.followTrajectorySequence(toBackdropLeft);
 
                 centerOnAprilTag(1);
@@ -264,6 +271,9 @@ public class AutoBlueAudience extends LinearOpMode {
             case NONE:
                 mecanumDriveBase.followTrajectorySequence(toSpikeCenter);
                 Auxiliaries.retractPixelPlacerServo();
+
+                sleep(after_purple_pixel_placement_sleep);
+
                 mecanumDriveBase.followTrajectorySequence(toBackdropCenter);
 
                 centerOnAprilTag(2);
@@ -277,6 +287,9 @@ public class AutoBlueAudience extends LinearOpMode {
             case RIGHT:
                 mecanumDriveBase.followTrajectorySequence(toSpikeRight);
                 Auxiliaries.retractPixelPlacerServo();
+
+                sleep(after_purple_pixel_placement_sleep);
+
                 mecanumDriveBase.followTrajectorySequence(toBackdropRight);
 
                 centerOnAprilTag(3);
@@ -311,7 +324,7 @@ public class AutoBlueAudience extends LinearOpMode {
                 break;
         }
 
-        sleep(500);
+        sleep(before_park_sleep);
 
         mecanumDriveBase.followTrajectorySequence(toPark);
 

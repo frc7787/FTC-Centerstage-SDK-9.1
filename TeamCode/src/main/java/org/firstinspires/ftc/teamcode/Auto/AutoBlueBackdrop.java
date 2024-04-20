@@ -474,7 +474,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
             switch (placingState) {
                 case START:
-                    rotateWorm(wormPos, 1.0);
+                    rotateWorm(wormPos + 25, 1.0);
 
                     placingState = PlacingState.ROTATING_TO_PLACE_YELLOW_PIXEL;
                     break;
@@ -485,7 +485,7 @@ public class AutoBlueBackdrop extends LinearOpMode {
 
                     break;
                 case EXTENDING_TO_PLACE_YELLOW_PIXEL:
-                    extendElevator(elevatorPos, 1.0);
+                    extendElevator(elevatorPos + 45, 1.0);
 
                     if (elevatorMotor.getCurrentPosition() >= elevatorPos - 5) {
                         placingState = PlacingState.PLACING_YELLOW_PIXEL;

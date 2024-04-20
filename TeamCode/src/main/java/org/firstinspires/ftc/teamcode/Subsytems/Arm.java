@@ -14,7 +14,6 @@ import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
@@ -26,8 +25,8 @@ import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 public class Arm {
     public static final int WORM_SAFETY_LIMIT = 700;
 
-    private static final double ELEVATOR_HOMING_POWER = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
-    private static final double WORM_HOMING_POWER     = -Math.abs(Properties.WORM_HOMING_POWER);
+    private static final double ELEVATOR_HOMING_POWER        = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
+    private static final double WORM_HOMING_POWER            = -Math.abs(Properties.WORM_HOMING_POWER);
     private static final double WORM_BACKLASH_REMOVING_POWER = 0.25;
 
     private static final double SAFETY_VOLTAGE = 0.8;
@@ -35,7 +34,6 @@ public class Arm {
     public static DcMotorImplEx wormMotor, elevatorMotor;
     private static ServoImplEx leftDoor, rightDoor;
     private static RevTouchSensor wormLimitSwitch, elevatorLimitSwitch;
-    private static DigitalChannel leftOuttakeLimitSwitch, rightOuttakeLimitSwitch;
 
     private static AnalogInput wormPotentiometer;
 
@@ -55,9 +53,6 @@ public class Arm {
         wormLimitSwitch  = hardwareMap.get(RevTouchSensor.class, "WormLimitSwitch");
         // Expansion Hub Digital Port 0
         elevatorLimitSwitch = hardwareMap.get(RevTouchSensor.class, "ExtensionLimitSwitch");
-
-        leftOuttakeLimitSwitch  = hardwareMap.get(DigitalChannel.class, "LeftOuttakeLimitSwitch");
-        rightOuttakeLimitSwitch = hardwareMap.get(DigitalChannel.class, "RightOuttakeLimitSwitch");
 
         // Expansion Hub Motor Port 0
         wormMotor  = hardwareMap.get(DcMotorImplEx.class, "WormMotor");
@@ -80,9 +75,6 @@ public class Arm {
         elevatorMotor.setMode(RUN_USING_ENCODER);
         wormMotor.setMode(RUN_USING_ENCODER);
 
-        leftOuttakeLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
-        rightOuttakeLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
-
         elevatorTargetPos = 0;
         wormTargetPos     = 0;
 
@@ -96,14 +88,6 @@ public class Arm {
     }
 
     /**
-     * Applies power to the elevator bypassing the state machine
-     * @param power The power to apply to the elevator motor
-     */
-    public static void powerElevator(double power) {
-        elevatorMotor.setPower(power);
-    }
-
-    /**
      * Function to update the state of the arm every loop, moves the arm to the target pos
      * and checks if the arm should be homing.
      */
@@ -112,8 +96,7 @@ public class Arm {
         if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && !intaking) {
             openDeliveryTrayDoor(TRAY_DOOR_CLOSED_POS);
         }
-        //telemetry.addLine("Arm update called");
-        //telemetry.addData("normalPeriodArmState",normalPeriodArmState);
+
         switch (normalPeriodArmState) {
             case AT_POS:
                 if (wormMotor.getTargetPosition() >= 5) break;
@@ -125,12 +108,6 @@ public class Arm {
                 }
                 break;
             case TO_POS:
-                // If neither of the motors are trying to move to a position, we know we are at
-                // position and should change to the appropriate state.
-                if (!elevatorMotor.isBusy() && !wormMotor.isBusy()) {
-                    normalPeriodArmState = AT_POS;
-                }
-
                 // If the target position is 0 and the limit switches are not pressed then we know
                 // that we are trying to reach home but have not yet reached it. It also tells us
                 // that we have to determine a safe way to return home.
@@ -164,8 +141,6 @@ public class Arm {
                         rotateWorm(WORM_SAFETY_LIMIT + 20, wormPower);
                         extendElevator(1000);
 
-                    // I'm not really sure what this check is trying to accomplish. I am honestly
-                    // at a loss for what this really does.
                     } else if (90 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
                         extendElevator(0, elevatorPower);
                     } else {
@@ -190,35 +165,25 @@ public class Arm {
                         extendElevator(elevatorTargetPos, elevatorPower);
                     }
                 }
+
+                // If neither of the motors are trying to move to a position, we know we are at
+                // position and should change to the appropriate state.
+                if (!elevatorMotor.isBusy() && !wormMotor.isBusy()) {
+                    normalPeriodArmState = AT_POS;
+                }
                 break;
-            case UNKNOWN: // If we don't know what the current state of the robot is (For example when we start TeleOp) we want to starting homing
+            // If we don't know what the current state of the robot is we need to home.
+            // This is mostly used at the beginning of TeleOp because we don't know what the state
+            // of the arm is. It is also useful to automatically home after an unexpected robot
+            // disconnect
+            case UNKNOWN:
                 setHoming();
                 break;
-            case HOMING: // Homing sequence should only be called when the arm state is homing
+            // Homing sequence should only be called when the arm state is homing
+            case HOMING:
                 home();
                 break;
         }
-    }
-
-    public static boolean elevatorBusy() {
-        return elevatorMotor.isBusy();
-    }
-
-    public static boolean wormBusy() {
-        return wormMotor.isBusy();
-    }
-
-    public static int elevatorTargetPosition() {
-        return elevatorMotor.getTargetPosition();
-    }
-
-    public static int localElevatorTargetPosition() { return elevatorTargetPos; }
-
-    /**
-     * @return True if both outtake limit switches are pressed ; False if not
-     */
-    public static boolean bothOuttakeLimitSwitchesArePressed() {
-        return !leftOuttakeLimitSwitch.getState() && !rightOuttakeLimitSwitch.getState();
     }
 
     /**
@@ -244,21 +209,12 @@ public class Arm {
         Arm.wormTargetPos     = wormTargetPos;
     }
 
-    /**
-     * Sets the elevator power to the input
-     * @param power The power to set the elevator to
-     */
-    public static void setElevatorPower(double power) {
-        Arm.elevatorPower = power;
+    public static void setWormTargetPos(int wormTargetPosition) {
+        normalPeriodArmState = TO_POS;
+
+        Arm.wormTargetPos = wormTargetPosition;
     }
 
-    /**
-     * Sets the worm power to the input
-     * @param power The power to set the worm to
-     */
-    public static void setWormPower(double power) {
-        Arm.wormPower = power;
-    }
 
     /**
      * Homes the arm and worm. First, it homes the elevator, then the worm after it is finished
@@ -365,14 +321,6 @@ public class Arm {
     }
 
     /**
-     * Rotates the worm to the the provided position at the power defined by DEFAULT_WORM_POWER
-     * @param targetPos The position to move the worm to
-     */
-    public static void rotateWorm(int targetPos) {
-        rotateWorm(targetPos, DEFAULT_WORM_POWER);
-    }
-
-    /**
      * Opens the delivery tray door to the positions provided in the argument
      * @param leftPos The position to move the left door to
      * @param rightPos The position to move the right door to
@@ -411,16 +359,16 @@ public class Arm {
      * @param telemetry The telemetry to display the information about
      */
     public static void debugWorm(@NonNull Telemetry telemetry) {
-        //telemetry.addLine("Worm Debug");
+        telemetry.addLine("Worm Debug");
 
-        //telemetry.addData("Worm Limit Switch Is Pressed", wormLimitSwitch.isPressed());
-        //telemetry.addData("Worm Motor Direction", wormMotor.getDirection());
-        //telemetry.addData("Worm Motor Power", wormMotor.getPower());
-        //telemetry.addData("Worm Motor Current (Amps)", wormMotor.getCurrent(AMPS));
-        //telemetry.addData("Worm Current Pos", wormMotor.getCurrentPosition());
-        //telemetry.addData("Worm Target Pos", wormMotor.getTargetPosition());
-        //telemetry.addData("Elevator Motor LOCAL Target Pos", wormTargetPos);
-        //telemetry.addData("Worm Run Mode", wormMotor.getMode());
+        telemetry.addData("Worm Limit Switch Is Pressed", wormLimitSwitch.isPressed());
+        telemetry.addData("Worm Motor Direction", wormMotor.getDirection());
+        telemetry.addData("Worm Motor Power", wormMotor.getPower());
+        telemetry.addData("Worm Motor Current (Amps)", wormMotor.getCurrent(AMPS));
+        telemetry.addData("Worm Current Pos", wormMotor.getCurrentPosition());
+        telemetry.addData("Worm Target Pos", wormMotor.getTargetPosition());
+        telemetry.addData("Elevator Motor LOCAL Target Pos", wormTargetPos);
+        telemetry.addData("Worm Run Mode", wormMotor.getMode());
     }
 
     /**
@@ -430,14 +378,14 @@ public class Arm {
     public static void debugElevator(@NonNull Telemetry telemetry) {
         telemetry.addLine("Elevator Debug");
 
-        //telemetry.addData("Elevator Limit Switch Is Pressed", elevatorLimitSwitch.isPressed());
-        //telemetry.addData("Elevator Motor Direction", elevatorMotor.getDirection());
-        //telemetry.addData("Elevator Motor Power", elevatorMotor.getPower());
-        //telemetry.addData("Elevator Motor Current (AMPS)", elevatorMotor.getCurrent(AMPS));
-        //telemetry.addData("Elevator Motor Current Pos", elevatorMotor.getCurrentPosition());
-        //telemetry.addData("Elevator Motor Target Pos", elevatorMotor.getTargetPosition());
-        //telemetry.addData("Elevator Motor LOCAL Target Pos", elevatorTargetPos);
-        //telemetry.addData("Elevator Motor Run Mode", elevatorMotor.getMode());
+        telemetry.addData("Elevator Limit Switch Is Pressed", elevatorLimitSwitch.isPressed());
+        telemetry.addData("Elevator Motor Direction", elevatorMotor.getDirection());
+        telemetry.addData("Elevator Motor Power", elevatorMotor.getPower());
+        telemetry.addData("Elevator Motor Current (AMPS)", elevatorMotor.getCurrent(AMPS));
+        telemetry.addData("Elevator Motor Current Pos", elevatorMotor.getCurrentPosition());
+        telemetry.addData("Elevator Motor Target Pos", elevatorMotor.getTargetPosition());
+        telemetry.addData("Elevator Motor LOCAL Target Pos", elevatorTargetPos);
+        telemetry.addData("Elevator Motor Run Mode", elevatorMotor.getMode());
     }
 
     /**
@@ -451,8 +399,8 @@ public class Arm {
         // however, since these are the higher quality servos we just change it in firmware
         // so what the SDK thinks the direction is and the actual direction are different
 
-        //telemetry.addData("Left Door Servo Commanded Position", leftDoor.getPosition());
-        //telemetry.addData("Right Door Servo Commanded Position", rightDoor.getPosition());
+        telemetry.addData("Left Door Servo Commanded Position", leftDoor.getPosition());
+        telemetry.addData("Right Door Servo Commanded Position", rightDoor.getPosition());
     }
 
     /**
@@ -460,11 +408,13 @@ public class Arm {
      * @param telemetry The telemetry to display the information on
      */
     public static void debugArm(@NonNull Telemetry telemetry) {
-        //telemetry.addLine("Arm Debug");
+        telemetry.addLine("Arm Debug");
 
-        //telemetry.addData("Arm State - Normal Period", normalPeriodArmState);
-        //telemetry.addData("Homing State", homingState);
-        //telemetry.addData("Total Arm Current (AMPS) ", elevatorMotor.getCurrent(AMPS) + wormMotor.getCurrent(AMPS));
+        telemetry.addData("Arm State - Normal Period", normalPeriodArmState);
+        telemetry.addData("Homing State", homingState);
+        telemetry.addData(
+                "Total Arm Current (AMPS) ",
+                elevatorMotor.getCurrent(AMPS) + wormMotor.getCurrent(AMPS));
     }
 
     /**
@@ -502,7 +452,7 @@ public class Arm {
     /**
      * @return The state of the arm in the normal period
      */
-    public static NormalPeriodArmState armState() {
+    public static NormalPeriodArmState state() {
         return normalPeriodArmState;
     }
 
