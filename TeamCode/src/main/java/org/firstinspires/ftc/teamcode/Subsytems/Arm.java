@@ -115,7 +115,7 @@ public class Arm {
             case TO_POS:
                 // If the target position is 0 and the limit switches are not pressed then we know
                 // that we are trying to reach home but have not yet reached it.
-                if (elevatorTargetPos == 0 && wormTargetPos == 0) {
+                if (elevatorTargetPos == 0 && wormTargetPos == 1) {
 //                    if (wormLimitSwitch.isPressed()) wormMotor.setMode(STOP_AND_RESET_ENCODER);
 //
 //                    if (elevatorLimitSwitch.isPressed()) elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
@@ -141,7 +141,7 @@ public class Arm {
                     } else if (90 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
                         extendElevator(0, elevatorPower);
                     } else {
-                        rotateWorm(0, wormPower);
+                        rotateWorm(wormTargetPos, wormPower);
                     }
                 // If the elevator position is greater than 0 and the worm position is less than
                 // the safety limit we need to rotate up to the max of the current position and the

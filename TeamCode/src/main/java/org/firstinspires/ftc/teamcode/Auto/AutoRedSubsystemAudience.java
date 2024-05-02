@@ -196,9 +196,9 @@ public class AutoRedSubsystemAudience extends LinearOpMode {
             location = PropLocation.NONE;
         }
 
+        sendArmToPosition(0,1000);
+        sendArmToPosition(800,3000);
         sendArmToPosition(0,0);
-        sendArmToPosition(0,3000);
-        sendArmToPosition(0,1);
 
         sleep(initial_sleep);
 
