@@ -34,9 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Config
 public class PropDetector extends OpenCvPipeline {
-    private final AtomicReference<Bitmap> lastFrame =
-            new AtomicReference<>(Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565));
-
     public PropColor propColor;
 
     public static int VIEW_DISPLAYED = 1;

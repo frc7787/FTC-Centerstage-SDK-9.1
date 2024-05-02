@@ -4,6 +4,7 @@ import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.LogoFacingDirec
 import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.UsbFacingDirection.UP;
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS;
 import static org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.MILLIAMPS;
 import static org.firstinspires.ftc.teamcode.Properties.DEAD_ZONE_HIGH;
@@ -51,26 +52,20 @@ public class DriveBase {
         imu = hardwareMap.get(IMU.class, "imu");
 
         imu.initialize(imuParameters);
+        imu.resetYaw();
 
         MotorUtility.setDirection(REVERSE, frontLeft, backLeft);
         MotorUtility.setZeroPowerBehaviour(BRAKE, driveMotors);
     }
 
     /**
-     * Returns the value if is outise of the range defined by the DEAD_ZONE_LOW and DEAD_ZONE_HIGH values.
+     * Returns the value if is outside the range defined by the DEAD_ZONE_LOW and DEAD_ZONE_HIGH values.
      * If the value is in range, returns 0.0d
      * @param value: The value to check
      */
     private static double deadZone(double value) {
         if (DEAD_ZONE_LOW < value && DEAD_ZONE_HIGH > value ) { return 0.0d; }
         return value;
-    }
-
-    public static void setMotorPowers(double fL, double fR, double bL, double bR) {
-        frontLeft.setPower(fL);
-        frontRight.setPower(fR);
-        backLeft.setPower(bL);
-        backRight.setPower(bR);
     }
 
     /**
@@ -81,28 +76,36 @@ public class DriveBase {
      * @param turn: THe rotational value
      */
     public static void driveManualFieldCentric(double drive, double strafe, double turn) {
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        if (Math.abs(drive)  < 0.05) drive  = 0.0d;
+        if (Math.abs(strafe) < 0.05) strafe = 0.0d;
+        if (Math.abs(turn)   < 0.05) turn   = 0.0d;
 
-        // Our controller has a slight drift so we artificially increase the dead zone
-        drive  = deadZone(drive);
-        strafe = deadZone(strafe);
+        double theta = Math.atan2(drive, strafe);
+        double power = Math.hypot(strafe, drive);
 
-        drive  = drive  * Math.cos(-botHeading) - strafe * Math.sin(-botHeading);
-        strafe = drive  * Math.sin(-botHeading) + strafe * Math.cos(-botHeading);
+        theta -= imu.getRobotYawPitchRollAngles().getYaw(RADIANS);
 
-        strafe *= STRAFE_OFFSET; // Mecanum strafing is not perfect so we slightly correct
+        double sin_theta = Math.sin(theta - Math.PI / 4.0);
+        double cos_theta = Math.cos(theta - Math.PI / 4.0);
 
-        double motorPowerRatio = Math.max(Math.abs(drive) + Math.abs(strafe) + Math.abs(turn), 1);
+        double max = Math.max(Math.abs(sin_theta), Math.abs(cos_theta));
 
-        double fLPower = (drive + strafe + turn) / motorPowerRatio;
-        double fRPower = (drive - strafe - turn) / motorPowerRatio;
-        double bLPower = (drive - strafe + turn) / motorPowerRatio;
-        double bRPower = (drive + strafe - turn) / motorPowerRatio;
+        double frontLeftPower  = power * cos_theta / max + turn;
+        double frontRightPower = power * sin_theta / max - turn;
+        double backLeftPower   = power * sin_theta / max + turn;
+        double backRightPower  = power * cos_theta / max - turn;
 
-        frontLeft.setPower(fLPower);
-        frontRight.setPower(fRPower);
-        backLeft.setPower(bLPower);
-        backRight.setPower(bRPower);
+        if ((power + Math.abs(turn)) > 1.0) {
+            frontLeftPower  /= power + turn;
+            frontRightPower /= power + turn;
+            backLeftPower   /= power + turn;
+            backRightPower  /= power + turn;
+        }
+
+        frontLeft.setPower(frontLeftPower);
+        frontRight.setPower(frontRightPower);
+        backLeft.setPower(backLeftPower);
+        backRight.setPower(backRightPower);
     }
 
     /**

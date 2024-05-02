@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsytems;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.*;
+import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS;
@@ -12,7 +13,6 @@ import androidx.annotation.NonNull;
 
 import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorImplEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
@@ -23,7 +23,9 @@ import org.firstinspires.ftc.teamcode.Subsytems.Utility.HomingState;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 
 public class Arm {
-    public static final int WORM_SAFETY_LIMIT = 700;
+    public static final int WORM_SAFETY_LIMIT     = 700;
+    public static final int MAX_ELEVATOR_POSITION = 2750;
+    public static final int MAX_WORM_POSITION     = 2200;
 
     private static final double ELEVATOR_HOMING_POWER        = -Math.abs(Properties.ELEVATOR_HOMING_POWER);
     private static final double WORM_HOMING_POWER            = -Math.abs(Properties.WORM_HOMING_POWER);
@@ -67,13 +69,16 @@ public class Arm {
         wormPotentiometer = hardwareMap.analogInput.get("WormPotentiometer");
 
         elevatorMotor.setDirection(REVERSE);
-        elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        elevatorMotor.setZeroPowerBehavior(BRAKE);
 
         elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
         wormMotor.setMode(STOP_AND_RESET_ENCODER);
 
         elevatorMotor.setMode(RUN_USING_ENCODER);
         wormMotor.setMode(RUN_USING_ENCODER);
+
+        elevatorMotor.setPower(0.0);
+        wormMotor.setPower(0.0);
 
         elevatorTargetPos = 0;
         wormTargetPos     = 0;
@@ -99,7 +104,7 @@ public class Arm {
 
         switch (normalPeriodArmState) {
             case AT_POS:
-                if (wormMotor.getTargetPosition() >= 5) break;
+                if (!wormMotor.isBusy()) wormMotor.setPower(0.0);
 
                 if (intaking) {
                     elevatorMotor.setPower(-0.15);
@@ -109,44 +114,34 @@ public class Arm {
                 break;
             case TO_POS:
                 // If the target position is 0 and the limit switches are not pressed then we know
-                // that we are trying to reach home but have not yet reached it. It also tells us
-                // that we have to determine a safe way to return home.
+                // that we are trying to reach home but have not yet reached it.
                 if (elevatorTargetPos == 0 && wormTargetPos == 0) {
-
-                    // If we are trying to home  and the worm limit switch is pressed, we want
-                    // to stop and reset the encoder when the limit switch is pressed.
-                    if (wormLimitSwitch.isPressed()) wormMotor.setMode(STOP_AND_RESET_ENCODER);
-
-                    // If we are trying to home and the elevator limit switch is pressed,
-                    // we want to stop and reset the encoder when the limit switch is pressed.
-                    if (elevatorLimitSwitch.isPressed()) elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
-
-                    // If we are going homing and both of the limit switches are pressed
-                    // then we know we have gotten home, even if the motors are still busy
-                    // we don't need to stop and reset encoders since this evaluates after
-                    // the previous two if statements
-                    if (wormLimitSwitch.isPressed() && elevatorLimitSwitch.isPressed()) normalPeriodArmState = AT_POS;
+//                    if (wormLimitSwitch.isPressed()) wormMotor.setMode(STOP_AND_RESET_ENCODER);
+//
+//                    if (elevatorLimitSwitch.isPressed()) elevatorMotor.setMode(STOP_AND_RESET_ENCODER);
+//
+//                    // We don't stop and reset encoders as that would be redundant to the above checks
+//                    if (wormLimitSwitch.isPressed() && elevatorLimitSwitch.isPressed()) normalPeriodArmState = AT_POS;
 
                     // If the worm motor is greater than or equal to  the safety limit and the
                     // position of the elevator motor is greater than 30 we know that we can safely
                     // retract the elevator, and that we should so that it retracts fully and we
                     // can safely rotate the worm down.
-                    if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 30) {
+                    if (wormMotor.getCurrentPosition() > WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 40) {
                         extendElevator(0, elevatorPower);
+                    }
 
                     // If the position of the worm motor is less than the safety limit and the
                     // position of the elevator motor is greater than 900 we need to
                     // rotate the worm up to the safety limit so that we can retract the elevator.
-                    } else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900) {
+                     else if (wormMotor.getCurrentPosition() < WORM_SAFETY_LIMIT && elevatorMotor.getCurrentPosition() > 900) {
                         rotateWorm(WORM_SAFETY_LIMIT + 20, wormPower);
                         extendElevator(1000);
 
                     } else if (90 < elevatorMotor.getCurrentPosition() && elevatorMotor.getCurrentPosition() < 900) {
                         extendElevator(0, elevatorPower);
                     } else {
-                        if (elevatorMotor.getCurrentPosition() <= 90) {
-                            rotateWorm(0, wormPower);
-                        }
+                        rotateWorm(0, wormPower);
                     }
                 // If the elevator position is greater than 0 and the worm position is less than
                 // the safety limit we need to rotate up to the max of the current position and the
@@ -165,10 +160,9 @@ public class Arm {
                         extendElevator(elevatorTargetPos, elevatorPower);
                     }
                 }
+                if (wormMotor.getTargetPosition()==wormTargetPos && elevatorMotor.getTargetPosition()==elevatorTargetPos &&
+                        !elevatorMotor.isBusy() && !wormMotor.isBusy()) {
 
-                // If neither of the motors are trying to move to a position, we know we are at
-                // position and should change to the appropriate state.
-                if (!elevatorMotor.isBusy() && !wormMotor.isBusy()) {
                     normalPeriodArmState = AT_POS;
                 }
                 break;
@@ -199,22 +193,25 @@ public class Arm {
     /**
      * Sets the target position of the arm. Also sets the
      * normalPeriodArmState to TO_POS
-     * @param wormTargetPos New worm target position
+     * @param l_wormTargetPos New worm target position
      * @param elevatorTargetPos New elevator target position
      */
-    public static void setTargetPos(int elevatorTargetPos,  int wormTargetPos) {
+    public static void setTargetPos(int elevatorTargetPos,  int l_wormTargetPos) {
         normalPeriodArmState = TO_POS;
 
-        Arm.elevatorTargetPos = elevatorTargetPos;
-        Arm.wormTargetPos     = wormTargetPos;
+        Arm.elevatorTargetPos = Math.min(elevatorTargetPos, MAX_ELEVATOR_POSITION);
+        wormTargetPos     = Math.min(l_wormTargetPos, MAX_WORM_POSITION);
     }
 
-    public static void setWormTargetPos(int wormTargetPosition) {
+    /**
+     * Sets the target position of the worm drive
+     * @param l_wormTargetPosition The target position
+     */
+    public static void setWormTargetPos(int l_wormTargetPosition) {
         normalPeriodArmState = TO_POS;
 
-        Arm.wormTargetPos = wormTargetPosition;
+        Arm.wormTargetPos = Math.min(l_wormTargetPosition, MAX_WORM_POSITION);
     }
-
 
     /**
      * Homes the arm and worm. First, it homes the elevator, then the worm after it is finished
@@ -438,14 +435,14 @@ public class Arm {
     /**
      * @return The current position of the worm drive
      */
-    public static int wormPos() {
+    public static int getWormPos() {
         return wormMotor.getCurrentPosition();
     }
 
     /**
      * @return The target position of the worm drive
      */
-    public static int wormTargetPos() {
+    public static int getWormTargetPos() {
         return wormMotor.getTargetPosition();
     }
 

@@ -79,7 +79,7 @@ public class AutoBlueAudienceClean extends LinearOpMode {
     private final PIDController DRIVE_PID  = new PIDController(DRIVE_GAIN, 0.0, DRIVE_D);
 
     @Override public void runOpMode() throws InterruptedException {
-        initHardware();
+        initSubsystems();
         initAprilTagVisionProcessing();
         initPropDetection();
         initRoadrunner();
@@ -171,7 +171,7 @@ public class AutoBlueAudienceClean extends LinearOpMode {
         sleep(20000);
     }
 
-    private void initHardware() {
+    private void initSubsystems() {
         Auxiliaries.init(hardwareMap);
         Arm.init(hardwareMap);
 

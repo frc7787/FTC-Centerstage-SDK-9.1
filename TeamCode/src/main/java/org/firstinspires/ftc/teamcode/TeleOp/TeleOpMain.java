@@ -67,6 +67,8 @@ public class TeleOpMain extends OpMode {
 
         Arm.update(Intake.isActive());
 
+        Arm.debug(telemetry);
+
         MecanumDriveBase.driveManualFF(
                 gamepad1.left_stick_y * -1.0,
                 gamepad1.left_stick_x,
@@ -152,17 +154,9 @@ public class TeleOpMain extends OpMode {
     }
 
     void ledController() {
-        if (Auxiliaries.frontBeamBreakIsBroken()) {
-            leftLEDRedChannel.enable(true);
-        } else {
-            leftLEDRedChannel.enable(false);
-        }
+        leftLEDRedChannel.enable(Auxiliaries.frontBeamBreakIsBroken());
 
-        if (Auxiliaries.backBeamBreakIsBroken()) {
-            rightLEDRedChannel.enable(true);
-        } else {
-            rightLEDRedChannel.enable(false);
-        }
+        rightLEDRedChannel.enable(Auxiliaries.backBeamBreakIsBroken());
     }
 
 
@@ -182,7 +176,7 @@ public class TeleOpMain extends OpMode {
     }
 
     void normalPeriodLoop() {
-        if (Arm.wormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
+        if (Arm.getWormPos() < Arm.WORM_SAFETY_LIMIT) { // Intake and delivery tray logic
             if (gamepad2.left_trigger > 0.9) {
                 Intake.intake();
                 Arm.openDeliveryTrayDoor(TRAY_DOOR_OPEN_POS);
