@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Properties;
 
 public class RobotPropertyParser {
@@ -31,7 +32,9 @@ public class RobotPropertyParser {
      * @param key The name of the value you would like to read
      * @return The obtained value
      */
-    public static double getDouble(String key) { return Double.parseDouble(robotProperties.getProperty(key)); }
+    public static double getDouble(String key) {
+        return Double.parseDouble(robotProperties.getProperty(key));
+    }
 
     /**
      * Gets an integer for the robot_properties.txt file located in onbot Java.
@@ -48,7 +51,7 @@ public class RobotPropertyParser {
         try {
             // save the current properties to a back up file
             Date d = new Date();
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-M-dd-hh-mm");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-M-dd-hh-mm", Locale.CANADA);
             OutputStream backupOutputStream = new FileOutputStream(FILE_LOCATION +"backup-"+format.format(d)+".properties");
 
             robotProperties.store(backupOutputStream,null);
@@ -62,8 +65,6 @@ public class RobotPropertyParser {
             newOutputStream.flush();
             newOutputStream.close();
 
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -90,11 +91,12 @@ public class RobotPropertyParser {
             }
         }
     }
-    public static void populateConstantsClass(){
+    public static void populateConstantsClass() {
        loadProperties();
 
         Field[] fields = org.firstinspires.ftc.teamcode.Properties.class.getDeclaredFields();
         for (Field field1: fields){
+
             if(Modifier.isStatic(field1.getModifiers())){
                 String fieldName = field1.getName();
                 Class clazz = field1.getType();

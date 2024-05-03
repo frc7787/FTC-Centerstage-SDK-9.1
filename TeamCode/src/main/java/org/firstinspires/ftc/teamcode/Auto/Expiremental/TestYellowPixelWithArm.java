@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
+import org.firstinspires.ftc.teamcode.Subsytems.Utility.ArmState;
 
 @Autonomous(name = "Test - Place Yellow Pixel With Arm")
 @Disabled
@@ -69,7 +69,7 @@ public class TestYellowPixelWithArm extends LinearOpMode {
                     placingState = PlacingState.MOVING_TO_POS;
                     break;
                 case MOVING_TO_POS:
-                    if (Arm.state() == NormalPeriodArmState.AT_POS) {
+                    if (Arm.state() == ArmState.AT_POS) {
                         placingState = PlacingState.PLACING;
                     }
                     break;

@@ -7,7 +7,7 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 import static org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS;
 import static org.firstinspires.ftc.teamcode.Properties.*;
 import static org.firstinspires.ftc.teamcode.Subsytems.Utility.HomingState.*;
-import static org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState.*;
+import static org.firstinspires.ftc.teamcode.Subsytems.Utility.ArmState.*;
 
 import androidx.annotation.NonNull;
 
@@ -20,7 +20,7 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Properties;
 import org.firstinspires.ftc.teamcode.Subsytems.Utility.HomingState;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
+import org.firstinspires.ftc.teamcode.Subsytems.Utility.ArmState;
 
 public class Arm {
     public static final int WORM_SAFETY_LIMIT     = 700;
@@ -42,7 +42,7 @@ public class Arm {
     private static int elevatorTargetPos, wormTargetPos;
     private static double elevatorPower, wormPower;
 
-    private static NormalPeriodArmState normalPeriodArmState;
+    private static ArmState normalPeriodArmState;
     private static HomingState homingState;
     public static Telemetry telemetry;
 
@@ -449,7 +449,7 @@ public class Arm {
     /**
      * @return The state of the arm in the normal period
      */
-    public static NormalPeriodArmState state() {
+    public static ArmState state() {
         return normalPeriodArmState;
     }
 

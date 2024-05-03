@@ -110,4 +110,6 @@ public class Properties {
     public static volatile int STEP_1_SLEEP_MS  = 1000;
     public static volatile int STEP_2_SLEEP_MS  = 800;
     public static volatile int STEP_3_SLEEP_MS  = 2000;
+
+    public static volatile double TEST_PROPERTY = 1.04;
 }

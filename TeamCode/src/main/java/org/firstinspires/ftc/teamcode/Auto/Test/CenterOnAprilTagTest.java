@@ -14,8 +14,6 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.*;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
-import org.firstinspires.ftc.teamcode.Subsytems.Arm;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -24,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Test - Center On April Tag", group = "Testing")
-@Disabled
 public class CenterOnAprilTagTest extends LinearOpMode {
     AprilTagProcessor aprilTagProcessor;
     AprilTagDetection desiredTag;
@@ -49,24 +46,6 @@ public class CenterOnAprilTagTest extends LinearOpMode {
     final double MAX_AUTO_SPEED  = 0.5;
     final double MAX_AUTO_STRAFE = 0.5;
     final double MAX_AUTO_TURN   = 0.5;
-
-    enum PlacingState {
-        START,
-        MOVING_TO_POS,
-        PLACING,
-        PLACED
-    }
-
-    int wormTargetPos     = 830;
-    int elevatorTargetPos = 2430;
-
-    enum POSITION {
-        LEFT,
-        RIGHT
-    }
-
-    PlacingState placingState = PlacingState.START;
-    POSITION position = POSITION.LEFT;
 
     // "P" Value for drive, strafe, and turn
     final double DRIVE_GAIN  = 0.025;
@@ -93,17 +72,15 @@ public class CenterOnAprilTagTest extends LinearOpMode {
 
         driveBase.init();
 
-        Arm.init(hardwareMap);
-
         initVisionProcessing();
 
         waitForStart();
 
-        if (isStopRequested()) return;
+        while (opModeIsActive()) {
+            if (isStopRequested()) return;
 
-        centerOnAprilTag();
-
-        placePixelOnBackdrop();
+            centerOnAprilTag();
+        }
     }
 
     /**
@@ -196,7 +173,7 @@ public class CenterOnAprilTagTest extends LinearOpMode {
      * Tries to center the robot on the april tag with the id specified by DESIRED_TAG_ID
      */
     @SuppressLint("DefaultLocale")
-    public void centerOnAprilTag() {
+    private void centerOnAprilTag() {
         boolean isAtTarget = false;
 
         String errValues, driveValues;
@@ -262,40 +239,5 @@ public class CenterOnAprilTagTest extends LinearOpMode {
         return (Math.abs(rangeErr)      < rangeErrTolerance
                 && Math.abs(yawErr)     < yawErrTolerance
                 && Math.abs(bearingErr) < bearingErrTolerance);
-    }
-
-    private void placePixelOnBackdrop() {
-        while (placingState != PlacingState.PLACED) {
-            if (isStopRequested() || !opModeIsActive()) return;
-
-            Arm.update(false);
-
-            telemetry.addData("Placing State", placingState);
-            telemetry.update();
-
-            switch (placingState) {
-                case START:
-                    Arm.setTargetPos(elevatorTargetPos, wormTargetPos);
-
-                    placingState = PlacingState.MOVING_TO_POS;
-                    break;
-                case MOVING_TO_POS:
-                    if (Arm.state() == NormalPeriodArmState.AT_POS) {
-                        placingState = PlacingState.PLACING;
-                    }
-                    break;
-                case PLACING:
-                    Arm.openDeliveryTrayDoor(0.3);
-
-                    sleep(700);
-
-                    Arm.openDeliveryTrayDoor(0.0);
-
-                    placingState = PlacingState.PLACED;
-                    break;
-                case PLACED:
-                    break;
-            }
-        }
     }
 }

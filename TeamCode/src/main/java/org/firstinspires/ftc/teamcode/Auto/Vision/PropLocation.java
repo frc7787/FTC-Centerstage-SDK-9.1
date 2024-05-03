@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Auto.Core;
+package org.firstinspires.ftc.teamcode.Auto.Vision;
 
 public enum PropLocation {
     LEFT,

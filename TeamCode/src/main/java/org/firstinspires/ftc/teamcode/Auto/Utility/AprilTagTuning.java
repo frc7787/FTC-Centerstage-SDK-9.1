@@ -17,12 +17,26 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "Utility - April Tag Tuning", group = "Utility")
-@Disabled
 public class AprilTagTuning extends OpMode {
+    private final String SD_CARD_PATH = "/sdcard/FIRST/java/src/org/firstinspires/ftc/teamcode/";
+
+    private List<AprilTagDetection> list_of_all_detections = new ArrayList<AprilTagDetection>();
+
+    private File aprilTagLogFile;
+
     private AprilTagProcessor aprilTagProcessor;
 
     private static final int DESIRED_TAG_ID = 5; // -1 locks on to any tag
@@ -44,18 +58,9 @@ public class AprilTagTuning extends OpMode {
     private Gamepad currentGamepad, prevGamepad;
 
     @Override public void init() {
-        aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setDrawTagOutline(true)
-                .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
-                .build();
+        createAprilTagLogFile();
 
-        visionPortal = new VisionPortal.Builder()
-                .addProcessor(aprilTagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
-                .setCameraResolution(new Size(640, 480))
-                .setAutoStopLiveView(true)
-                .build();
-
+        initAprilTagDetection();
         getDefaultCameraSettings();
 
         myExposure     = 2;
@@ -90,6 +95,8 @@ public class AprilTagTuning extends OpMode {
             if (detection.metadata == null) continue;
 
             if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+                list_of_all_detections.add(detection);
+
                 telemetry.addData("Detected Tag", detection.id);
                 telemetry.addData("Distance From Detected Tag", detection.ftcPose.range);
                 telemetry.addData("Yaw From Tag", detection.ftcPose.yaw);
@@ -107,6 +114,24 @@ public class AprilTagTuning extends OpMode {
         setCameraProperties(myExposure, myGain, myWhiteBalance);
 
         telemetry.update();
+    }
+
+    @Override public void stop() {
+        saveAprilTagData();
+    }
+
+    private void initAprilTagDetection() {
+        aprilTagProcessor = new AprilTagProcessor.Builder()
+                .setDrawTagOutline(true)
+                .setLensIntrinsics(660.750, 660.75, 323.034, 230.681) // C615 measured kk Dec 5 2023
+                .build();
+
+        visionPortal = new VisionPortal.Builder()
+                .addProcessor(aprilTagProcessor)
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
+                .setCameraResolution(new Size(640, 480))
+                .setAutoStopLiveView(true)
+                .build();
     }
 
     private void getDefaultCameraSettings() {
@@ -184,5 +209,47 @@ public class AprilTagTuning extends OpMode {
 
         whiteBalanceControl.setMode(WhiteBalanceControl.Mode.MANUAL);
         whiteBalanceControl.setWhiteBalanceTemperature(white);
+    }
+
+    private void createAprilTagLogFile() {
+        String currentDate =
+                new SimpleDateFormat("MM/dd/yyyy", Locale.CANADA).format(new Date());
+        String currentTime =
+                new SimpleDateFormat("HH.mm.ss", Locale.CANADA).format(new Date());
+
+        String aprilTagLogFileName = "April-Tag-Log-" + currentDate + "-" + currentTime;
+
+        String path = SD_CARD_PATH + aprilTagLogFileName;
+
+        aprilTagLogFile = new File(path);
+
+        try {
+            if (aprilTagLogFile.createNewFile()) {
+                telemetry.addLine("Created April Tag Log File Successfully.");
+            } else {
+                telemetry.addLine("Failed to create April Tag Log File as it already exists");
+            }
+        } catch (IOException e) {
+            telemetry.addData("Exception", e);
+        }
+
+        telemetry.update();
+    }
+
+    private void saveAprilTagData() {
+        try {
+            FileWriter fileWriter         = new FileWriter(aprilTagLogFile, true);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+            for (AprilTagDetection detection: list_of_all_detections) {
+                bufferedWriter.write(detection.toString());
+                bufferedWriter.newLine();
+            }
+
+            bufferedWriter.close();
+        } catch (IOException e) {
+            telemetry.addData("Failed to write to file", e);
+        }
+
     }
 }

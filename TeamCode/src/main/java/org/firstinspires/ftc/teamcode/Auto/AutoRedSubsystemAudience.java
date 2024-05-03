@@ -16,14 +16,15 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.WhiteBalanceControl;
-import org.firstinspires.ftc.teamcode.Auto.Core.PropColor;
-import org.firstinspires.ftc.teamcode.Auto.Core.PropLocation;
+import org.firstinspires.ftc.teamcode.Auto.Vision.PropColor;
+import org.firstinspires.ftc.teamcode.Auto.Vision.PropDetector;
+import org.firstinspires.ftc.teamcode.Auto.Vision.PropLocation;
 import org.firstinspires.ftc.teamcode.Auto.Utility.PIDController;
 import org.firstinspires.ftc.teamcode.RoadRunner.drive.MecanumDriveBase;
 import org.firstinspires.ftc.teamcode.RoadRunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.Subsytems.Arm;
 import org.firstinspires.ftc.teamcode.Subsytems.Auxiliaries;
-import org.firstinspires.ftc.teamcode.Subsytems.Utility.NormalPeriodArmState;
+import org.firstinspires.ftc.teamcode.Subsytems.Utility.ArmState;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -413,7 +414,7 @@ public class AutoRedSubsystemAudience extends LinearOpMode {
         Arm.setTargetPos(elevatorTargetPosition, wormTargetPosition);
         Arm.update(false);
 
-        while (Arm.state() != NormalPeriodArmState.AT_POS) {
+        while (Arm.state() != ArmState.AT_POS) {
             if (isStopRequested()) { return; }
 
             Arm.update(false);
@@ -424,7 +425,7 @@ public class AutoRedSubsystemAudience extends LinearOpMode {
         Arm.setHoming();
         Arm.update(false);
 
-        while (Arm.state() != NormalPeriodArmState.AT_POS) {
+        while (Arm.state() != ArmState.AT_POS) {
             if (isStopRequested()) { return; }
 
             Arm.update(false);
