@@ -2,7 +2,8 @@ package org.firstinspires.ftc.teamcode.Auto.Utility;
 
 import android.util.Size;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import androidx.annotation.NonNull;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -22,18 +23,19 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "Utility - April Tag Tuning", group = "Utility")
 public class AprilTagTuning extends OpMode {
-    private final String SD_CARD_PATH = "/sdcard/FIRST/java/src/org/firstinspires/ftc/teamcode/";
-
-    private List<AprilTagDetection> list_of_all_detections = new ArrayList<AprilTagDetection>();
+    private Set<AprilTagDetection> allAprilTagDetections;
 
     private File aprilTagLogFile;
 
@@ -62,6 +64,8 @@ public class AprilTagTuning extends OpMode {
 
         initAprilTagDetection();
         getDefaultCameraSettings();
+
+        allAprilTagDetections = new HashSet<>();
 
         myExposure     = 2;
         myGain         = 0;
@@ -95,17 +99,17 @@ public class AprilTagTuning extends OpMode {
             if (detection.metadata == null) continue;
 
             if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                list_of_all_detections.add(detection);
+                allAprilTagDetections.add(detection);
 
                 telemetry.addData("Detected Tag", detection.id);
-                telemetry.addData("Distance From Detected Tag", detection.ftcPose.range);
-                telemetry.addData("Yaw From Tag", detection.ftcPose.yaw);
-                telemetry.addData("Pitch From Tag", detection.ftcPose.pitch);
-                telemetry.addData("Roll From Tag", detection.ftcPose.roll);
+                telemetry.addData("Distance From Tag", detection.ftcPose.range);
+                telemetry.addData("Yaw", detection.ftcPose.yaw);
+                telemetry.addData("Pitch", detection.ftcPose.pitch);
+                telemetry.addData("Roll", detection.ftcPose.roll);
             }
         }
 
-        listenForCameraAdjust();
+        listenForCameraPropertyAdjustments();
 
         myExposure     = Range.clip(myExposure, minExposure, maxExposure);
         myGain         = Range.clip(myGain, minGain, maxGain);
@@ -157,45 +161,33 @@ public class AprilTagTuning extends OpMode {
         myWhiteBalance  = whiteBalanceControl.getWhiteBalanceTemperature();
     }
 
-    private void listenForCameraAdjust() {
-        if (currentGamepad.left_bumper && !prevGamepad.left_bumper) {
-            myExposure ++;
-        }
+    private void listenForCameraPropertyAdjustments() {
+        if (currentGamepad.left_bumper && !prevGamepad.left_bumper) myExposure ++;
 
-        if (currentGamepad.left_trigger > 0.5 && !(prevGamepad.left_trigger > 0.5)) {
-            myExposure --;
-        }
+        if (currentGamepad.left_trigger > 0.5 && !(prevGamepad.left_trigger > 0.5)) myExposure --;
 
-        if (currentGamepad.right_bumper && !prevGamepad.right_bumper) {
-            myGain ++;
-        }
+        if (currentGamepad.right_bumper && !prevGamepad.right_bumper) myGain ++;
 
-        if (currentGamepad.right_trigger > 0.5 && !(prevGamepad.right_trigger > 0.5)) {
-            myGain --;
-        }
+        if (currentGamepad.right_trigger > 0.5 && !(prevGamepad.right_trigger > 0.5)) myGain --;
 
-        if (currentGamepad.dpad_up && !prevGamepad.dpad_up) {
-            myWhiteBalance ++;
-        }
+        if (currentGamepad.dpad_up && !prevGamepad.dpad_up) myWhiteBalance ++;
 
-        if (currentGamepad.dpad_down && !prevGamepad.dpad_down) {
-            myWhiteBalance --;
-        }
+        if (currentGamepad.dpad_down && !prevGamepad.dpad_down) myWhiteBalance --;
 
-        if (currentGamepad.dpad_left && !prevGamepad.dpad_left) {
-            myWhiteBalance += 10;
-        }
+        if (currentGamepad.dpad_left && !prevGamepad.dpad_left) myWhiteBalance += 1;
 
-        if (currentGamepad.dpad_right && !prevGamepad.dpad_right) {
-            myWhiteBalance -= 10;
-        }
+        if (currentGamepad.dpad_right && !prevGamepad.dpad_right) myWhiteBalance -= 10;
     }
 
     private void setCameraProperties(int exposureMS, int gain, int white) {
-        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) { // Wait for camera to start streaming
+        // Wait for camera to start streaming
+        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
             telemetry.addLine("Waiting for camera");
             telemetry.update();
         }
+
+        // Make sure that the telemetry clears properly after we exit the while loop
+        telemetry.update();
 
         ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
 
@@ -219,15 +211,15 @@ public class AprilTagTuning extends OpMode {
 
         String aprilTagLogFileName = "April-Tag-Log-" + currentDate + "-" + currentTime;
 
-        String path = SD_CARD_PATH + aprilTagLogFileName;
-
-        aprilTagLogFile = new File(path);
+        aprilTagLogFile = new File("/sdcard/FIRST/java/src/org/firstinspires/ftc/teamcode/"+ aprilTagLogFileName);
 
         try {
-            if (aprilTagLogFile.createNewFile()) {
+            if (!aprilTagLogFile.exists()) {
+                aprilTagLogFile.createNewFile();
+
                 telemetry.addLine("Created April Tag Log File Successfully.");
             } else {
-                telemetry.addLine("Failed to create April Tag Log File as it already exists");
+                telemetry.addLine("April tag log file with name " + aprilTagLogFileName + " already exists");
             }
         } catch (IOException e) {
             telemetry.addData("Exception", e);
@@ -241,7 +233,7 @@ public class AprilTagTuning extends OpMode {
             FileWriter fileWriter         = new FileWriter(aprilTagLogFile, true);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
-            for (AprilTagDetection detection: list_of_all_detections) {
+            for (AprilTagDetection detection: allAprilTagDetections) {
                 bufferedWriter.write(detection.toString());
                 bufferedWriter.newLine();
             }
@@ -250,6 +242,5 @@ public class AprilTagTuning extends OpMode {
         } catch (IOException e) {
             telemetry.addData("Failed to write to file", e);
         }
-
     }
 }
