@@ -35,9 +35,9 @@ import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "Utility - April Tag Tuning", group = "Utility")
 public class AprilTagTuning extends OpMode {
-    private Set<AprilTagDetection> allAprilTagDetections;
+    private final String SD_CARD_PATH = "/sdcard/FIRST/java/src/org/firstinspires/ftc/teamcode/";
 
-    private File aprilTagLogFile;
+    private Set<AprilTagDetection> allAprilTagDetections;
 
     private AprilTagProcessor aprilTagProcessor;
 
@@ -60,8 +60,6 @@ public class AprilTagTuning extends OpMode {
     private Gamepad currentGamepad, prevGamepad;
 
     @Override public void init() {
-        createAprilTagLogFile();
-
         initAprilTagDetection();
         getDefaultCameraSettings();
 
@@ -118,10 +116,13 @@ public class AprilTagTuning extends OpMode {
         setCameraProperties(myExposure, myGain, myWhiteBalance);
 
         telemetry.update();
+        if(gamepad1.options){
+            saveAprilTagData();
+        }
     }
 
     @Override public void stop() {
-        saveAprilTagData();
+
     }
 
     private void initAprilTagDetection() {
@@ -203,38 +204,26 @@ public class AprilTagTuning extends OpMode {
         whiteBalanceControl.setWhiteBalanceTemperature(white);
     }
 
-    private void createAprilTagLogFile() {
-        String currentDate =
-                new SimpleDateFormat("MM/dd/yyyy", Locale.CANADA).format(new Date());
-        String currentTime =
-                new SimpleDateFormat("HH.mm.ss", Locale.CANADA).format(new Date());
-
-        String aprilTagLogFileName = "April-Tag-Log-" + currentDate + "-" + currentTime;
-
-        aprilTagLogFile = new File("/sdcard/FIRST/java/src/org/firstinspires/ftc/teamcode/"+ aprilTagLogFileName);
-
-        try {
-            if (!aprilTagLogFile.exists()) {
-                aprilTagLogFile.createNewFile();
-
-                telemetry.addLine("Created April Tag Log File Successfully.");
-            } else {
-                telemetry.addLine("April tag log file with name " + aprilTagLogFileName + " already exists");
-            }
-        } catch (IOException e) {
-            telemetry.addData("Exception", e);
-        }
-
-        telemetry.update();
-    }
-
     private void saveAprilTagData() {
+        String currentDate =
+                new SimpleDateFormat("yyyyMMdd", Locale.CANADA).format(new Date());
+        String currentTime =
+                new SimpleDateFormat("HHmmss", Locale.CANADA).format(new Date());
+
+        String aprilTagLogFileName = "AprilTagLog_" + currentDate + "_" + currentTime + ".txt";
+
+
+        String pathToAprilTagLogFile = SD_CARD_PATH + aprilTagLogFileName;
+
+
+
         try {
+            File aprilTagLogFile = new File(pathToAprilTagLogFile);
             FileWriter fileWriter         = new FileWriter(aprilTagLogFile, true);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
             for (AprilTagDetection detection: allAprilTagDetections) {
-                bufferedWriter.write(detection.toString());
+                bufferedWriter.write(String.valueOf(detection.ftcPose.yaw));
                 bufferedWriter.newLine();
             }
 
@@ -242,5 +231,6 @@ public class AprilTagTuning extends OpMode {
         } catch (IOException e) {
             telemetry.addData("Failed to write to file", e);
         }
+
     }
 }
